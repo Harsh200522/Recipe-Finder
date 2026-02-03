@@ -1,0 +1,83 @@
+/* Global reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+/* App wrapper */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main content spacing */
+main {
+  flex: 1;
+  padding: 20px;
+}
+
+/* Center the loading screen */
+.text-center {
+  text-align: center;
+}
+
+.mt-5 {
+  margin-top: 3rem !important;
+}
+
+/* Header styles */
+header {
+  background-color: #007bff; /* Bootstrap primary */
+  color: #fff;
+  padding: 15px 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Links inside header */
+header a {
+  color: #fff;
+  margin: 0 10px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+header a:hover {
+  text-decoration: underline;
+}
+
+/* Card containers (for Home, Favorites, etc.) */
+.card {
+  border-radius: 10px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Auth page tweaks */
+form .btn-primary {
+  background-color: #007bff;
+  border: none;
+}
+
+form .btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.alert {
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+/* Responsive padding for smaller devices */
+@media (max-width: 768px) {
+  main {
+    padding: 10px;
+  }
+}

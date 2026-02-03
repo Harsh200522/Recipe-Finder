@@ -1,0 +1,640 @@
+/* src/style/mealplanner.css */
+
+.meal-planner {
+  position: relative;
+  min-height: 100vh;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  overflow-x: hidden;
+}
+
+/* 🎥 Top Video Banner */
+.video-banner {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  border-radius: 15px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.top-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 160%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.video-overlay h1 {
+  color: white;
+  font-size: 3rem;
+  text-align: center;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 0 20px;
+}
+
+/* Background video (keep your existing bg-video if you want both) */
+.bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  opacity: 0.3;
+}
+
+/* Loading state */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.5rem;
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+/* Main content container */
+.meal-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+/* Header (remove h2 from meal-content if using video banner) */
+.meal-content h2 {
+  text-align: center;
+  color: #2E7D32;
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 3px solid #4CAF50;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Grid layout for days */
+.meal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+/* Day card */
+.day-card {
+  background: linear-gradient(145deg, #ffffff, #f0f0f0);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border-left: 5px solid #4CAF50;
+}
+
+.day-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.day-card h3 {
+  color: #2E7D32;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed #C8E6C9;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+/* Meal rows - FIXED LAYOUT */
+.meal-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+  min-height: 70px;
+}
+
+.meal-row:hover {
+  background: rgba(200, 230, 201, 0.3);
+}
+
+.meal-row > span:first-child {
+  font-weight: bold;
+  color: #388E3C;
+  width: 100px;
+  min-width: 100px;
+  text-transform: capitalize;
+  flex-shrink: 0;
+}
+
+/* Meal details container - FIXED */
+.meal-details {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 15px;
+  min-width: 0; /* Important for text truncation */
+  max-width: calc(100% - 200px);
+}
+
+.meal-details img {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid #4CAF50;
+  flex-shrink: 0;
+}
+
+.meal-details span {
+  font-weight: 500;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Not set text - FIXED VISIBILITY */
+.not-set {
+  flex: 1;
+  margin: 0 15px;
+  color: #999;
+  font-style: italic;
+  font-size: 0.9rem;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  padding-left: 20px;
+}
+
+.not-set::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+/* Remove button - FIXED POSITION */
+.remove-btn {
+  background: linear-gradient(to right, #F44336, #C62828);
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.remove-btn:hover {
+  background: linear-gradient(to right, #e53935, #B71C1C);
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(244, 67, 54, 0.3);
+}
+
+/* Add/Change button */
+.add-btn {
+  background: linear-gradient(to right, #4CAF50, #2E7D32);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-width: 80px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  margin-left: 10px;
+}
+
+.add-btn:hover {
+  background: linear-gradient(to right, #45a049, #1B5E20);
+  transform: scale(1.05);
+  box-shadow: 0 3px 8px rgba(76, 175, 80, 0.3);
+}
+
+/* Save Status Bar */
+.save-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 15px 25px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #4CAF50;
+}
+
+.save-status-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.unsaved-changes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f39c12;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 8px 15px;
+  background: rgba(243, 156, 18, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(243, 156, 18, 0.2);
+}
+
+.unsaved-dot {
+  color: #e74c3c;
+  font-size: 1.2rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.last-saved {
+  color: #27ae60;
+  font-size: 0.95rem;
+  font-style: italic;
+  padding: 8px 15px;
+  background: rgba(39, 174, 96, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(39, 174, 96, 0.2);
+}
+
+/* Save Actions Container - FIXED */
+.save-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Reset Button */
+.reset-btn {
+  padding: 10px 20px;
+  background: linear-gradient(to right, #e74c3c, #c0392b);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  min-width: 80px;
+  white-space: nowrap;
+}
+
+.reset-btn:hover:not(:disabled) {
+  background: linear-gradient(to right, #c0392b, #a93226);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+}
+
+.reset-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Save Button */
+.save-btn {
+  padding: 10px 25px;
+  font-size: 1rem;
+  background: linear-gradient(to right, #2ecc71, #27ae60);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
+  transition: all 0.3s ease;
+  min-width: 120px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: linear-gradient(to right, #27ae60, #219653);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(46, 204, 113, 0.4);
+}
+
+.save-btn:disabled {
+  background: linear-gradient(to right, #95a5a6, #7f8c8d);
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Save button at bottom (keep your existing one) */
+.save-bottom-btn {
+  display: block;
+  margin: 30px auto 0;
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  background: linear-gradient(to right, #2196F3, #1976D2);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+  transition: all 0.2s ease;
+}
+
+.save-bottom-btn:hover {
+  background: linear-gradient(to right, #1E88E5, #1565C0);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
+}
+
+.save-bottom-btn:active {
+  transform: translateY(0);
+}
+
+/* Spinner for saving state */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .meal-planner {
+    padding: 10px;
+  }
+  
+  .video-banner {
+    height: 180px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .video-overlay h1 {
+    font-size: 2.2rem;
+  }
+  
+  .meal-content {
+    padding: 20px;
+    border-radius: 15px;
+  }
+  
+  .meal-content h2 {
+    font-size: 2rem;
+  }
+  
+  .meal-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .day-card {
+    padding: 15px;
+  }
+  
+  .meal-row {
+    flex-wrap: wrap;
+    min-height: auto;
+    gap: 10px;
+  }
+  
+  .meal-row > span:first-child {
+    width: 100%;
+    min-width: 100%;
+    margin-bottom: 5px;
+  }
+  
+  .meal-details {
+    width: 100%;
+    margin: 5px 0;
+    max-width: 100%;
+  }
+  
+  .not-set {
+    width: 100%;
+    margin: 5px 0;
+  }
+  
+  .remove-btn {
+    margin-left: auto;
+    margin-right: 10px;
+    order: 1;
+  }
+  
+  .add-btn {
+    order: 2;
+  }
+  
+  /* Save status bar mobile */
+  .save-status-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+    padding: 20px;
+  }
+  
+  .save-status-left {
+    justify-content: center;
+    text-align: center;
+    flex-wrap: wrap;
+  }
+  
+  .save-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .reset-btn,
+  .save-btn {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  /* For very small screens */
+  @media (max-width: 480px) {
+    .video-banner {
+      height: 150px;
+    }
+    
+    .video-overlay h1 {
+      font-size: 1.8rem;
+    }
+    
+    .meal-details {
+      flex-wrap: wrap;
+    }
+    
+    .meal-details img {
+      width: 40px;
+      height: 40px;
+    }
+    
+    .add-btn,
+    .remove-btn {
+      font-size: 0.8rem;
+      padding: 6px 12px;
+    }
+    
+    .remove-btn {
+      width: 25px;
+      height: 25px;
+    }
+    
+    .save-status-bar {
+      padding: 15px;
+    }
+    
+    .unsaved-changes,
+    .last-saved {
+      font-size: 0.9rem;
+      padding: 6px 12px;
+    }
+    
+    .reset-btn,
+    .save-btn {
+      padding: 8px 15px;
+      font-size: 0.9rem;
+    }
+    
+    .save-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+    
+    .reset-btn,
+    .save-btn {
+      width: 100%;
+    }
+  }
+}
+
+/* Animation for meal assignment */
+@keyframes mealAdded {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.meal-details {
+  animation: mealAdded 0.3s ease-out;
+}
+
+/* Video play button style */
+.video-controls {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  z-index: 3;
+  display: flex;
+  gap: 10px;
+}
+
+.video-control-btn {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.video-control-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+/* Video loading state */
+.video-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 1.2rem;
+  z-index: 2;
+}
+
+/* Make sure buttons are always visible */
+button {
+  z-index: 1;
+  position: relative;
+}
+
+/* Ensure text is never hidden */
+.meal-details span,
+.not-set {
+  display: inline-block;
+  visibility: visible !important;
+  opacity: 1 !important;
+}

@@ -1,0 +1,453 @@
+/* General Page Styling */
+body {
+  background-color: #f3f4f6;
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.recipe-finder-container {
+  padding: 1.5rem;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Search Bar */
+.search-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem 0 0 0.5rem;
+  width: 16rem; /* 64 * 4px = 256px */
+}
+
+.search-button {
+  background-color: #16a34a; /* green-600 */
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-button:hover {
+  background-color: #15803d; /* green-700 */
+}
+
+/* Error Message */
+.error-message {
+  text-align: center;
+  color: #ef4444; /* red-500 */
+}
+
+/* Recipes Grid */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Default: 1 column */
+  gap: 1.5rem;
+}
+
+/* Responsive Grid */
+@media (min-width: 640px) {
+  .recipes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .recipes-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Recipe Card */
+.recipe-card {
+  border: 2px solid #a3a3a3;
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+
+.recipe-image {
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+  width: 100%;
+  height: 12rem; /* 48 * 4px = 192px */
+  object-fit: cover;
+}
+
+.recipe-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.recipe-info {
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.recipe-video {
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ingredients-button {
+  margin-top: auto;
+  background-color: #2563eb; /* blue-600 */
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s;
+}
+
+.ingredients-button:hover {
+  background-color: #1d4ed8; /* blue-700 */
+}
+
+/* Popup Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  width: 24rem;
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: #dc2626; /* red-600 */
+  font-weight: bold;
+  font-size: 1.25rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.modal-heading {
+  font-weight: 600;
+}
+
+.modal-list {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+/* Veg/Non-Veg symbol */
+/* must for absolute badge */
+.recipe-card {
+  position: relative;
+}
+
+/* ===== Veg Icon ===== */
+.veg-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+
+  width: 24px;
+  height: 24px;
+
+  border: 2px solid #0f8b3d;
+  background: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 3px;
+  z-index: 999;
+}
+
+.veg-icon .circle {
+  width: 12px;
+  height: 12px;
+  background: #0f8b3d;
+  border-radius: 50%;
+}
+
+/* ===== Non-Veg Icon ===== */
+.nonveg-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+
+  width: 24px;
+  height: 24px;
+
+  border: 2px solid #d11a2a;
+  background: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 3px;
+  z-index: 999;
+}
+
+.nonveg-icon .circle {
+  width: 12px;
+  height: 12px;
+  background: #d11a2a;
+  border-radius: 50%;
+}
+
+
+/* Ensure cards allow absolute elements */
+/* .recipe-card {
+  position: relative;
+  padding: 10px;
+} */
+.no-video {
+  width: 100%;
+  height: 180px;
+  background: #f5f5f5;
+  border: 1px dashed #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #555;
+}
+.reaction-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 0;
+}
+
+.like-btn, .unlike-btn, .heart-btn {
+  border: none;
+  background: #f5f5f5;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.like-btn:hover {
+  background: #d4f5d4;
+}
+.unlike-btn:hover {
+  background: #f5d4d4;
+}
+.heart-btn {
+  font-size: 18px;
+}
+.heart-btn.active {
+  color: red;
+}
+/* ================= Video Button ================= */
+.watch-video-btn {
+  background: #ff0000;
+  color: #fff;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.2s ease;
+}
+
+.watch-video-btn:hover {
+  background: #cc0000;
+}
+
+/* ================= Video Wrapper ================= */
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  height: 0;
+  margin-top: 10px;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 8px;
+}
+/* ================= MAIN CONTAINER ================= */
+
+.main-container {
+  width: 315%;
+  height: calc(100vh - 100px); /* Adjust based on your header height */
+  overflow-y: auto; /* Vertical scroll for the whole container */
+  overflow-x: hidden;
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: #f8f9fa;
+}
+
+/* ================= CATEGORY SECTION ================= */
+
+.category-section {
+  margin-bottom: 35px;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.category-section:last-child {
+  margin-bottom: 0;
+}
+
+.category-section h2 {
+  font-size: 24px;
+  margin: 0 0 15px 0;
+  color: #333;
+  font-weight: 600;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* ================= CATEGORY ROW (HORIZONTAL SCROLLING) ================= */
+
+.category-row {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding-bottom: 15px;
+  padding-right: 5px;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.category-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* Optional: Show thin scrollbar on hover */
+.category-row:hover::-webkit-scrollbar {
+  display: block;
+  height: 6px;
+}
+
+.category-row:hover::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+/* ================= RESPONSIVE BREAKPOINTS ================= */
+
+/* Large screens (desktops) */
+@media (min-width: 1200px) {
+  .main-container {
+    height: calc(100vh - 120px);
+    padding: 25px;
+  }
+}
+
+/* Medium screens (tablets landscape, small laptops) */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .main-container {
+    height: calc(100vh - 100px);
+    width: 120%;
+  }
+}
+
+/* Small screens (tablets portrait) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .main-container {
+    height: calc(100vh - 90px);
+    padding: 15px;
+    width: 100%;
+  }
+  
+  .category-section {
+    padding: 15px;
+    margin-bottom: 25px;
+  }
+  
+  .category-row {
+    gap: 15px;
+  }
+  
+  .recipe-card {
+    width: 250px;
+    min-width: 250px;
+    padding: 12px;
+  }
+}
+
+/* Mobile screens */
+@media (max-width: 767px) {
+  .main-container {
+    height: calc(100vh - 80px);
+    padding: 10px;
+    width: 100%;
+  }
+  
+  .category-section {
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+  }
+  
+  .category-section h2 {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+  
+  .category-row {
+    gap: 12px;
+    padding-bottom: 10px;
+  }
+}
+
+/* Very small mobile devices */
+@media (max-width: 375px) {
+  .category-section h2 {
+    font-size: 18px;
+  }
+}
+
