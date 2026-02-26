@@ -78,20 +78,128 @@ const getMealName = (meal) =>
   meal?.strMeal || meal?.title || meal?.name || "Planned Recipe";
 
 const buildReminderHtml = ({ mealName, mealType, weekday, timeLabel }) => `
-  <div style="font-family:Segoe UI,Tahoma,sans-serif;background:#f8fafc;padding:20px;">
-    <div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:24px;">
-      <h2 style="margin:0 0 12px;color:#111827;">It's Time To Cook</h2>
-      <p style="margin:0 0 10px;color:#374151;">
-        Reminder for your <b>${mealType}</b> on <b>${weekday}</b> at <b>${timeLabel}</b>.
-      </p>
-      <p style="margin:0 0 16px;color:#111827;">
-        Today's recipe: <b>${mealName}</b>
-      </p>
-      <p style="margin:0;color:#6b7280;font-size:13px;">
-        Sent automatically from your Recipe Finder Meal Planner.
-      </p>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meal Reminder</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f4f7fb;
+        font-family: Segoe UI, Tahoma, Arial, sans-serif;
+      }
+      .wrapper {
+        width: 100%;
+        padding: 24px 12px;
+      }
+      .card {
+        max-width: 620px;
+        margin: 0 auto;
+        border-radius: 18px;
+        overflow: hidden;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 28px rgba(17, 24, 39, 0.08);
+      }
+      .header {
+        padding: 28px 24px;
+        background: linear-gradient(135deg, #f97316, #fb923c);
+        color: #ffffff;
+      }
+      .brand {
+        font-size: 13px;
+        letter-spacing: 0.3px;
+        opacity: 0.95;
+      }
+      .title {
+        margin: 8px 0 0;
+        font-size: 28px;
+        line-height: 1.2;
+        font-weight: 700;
+      }
+      .content {
+        padding: 24px;
+      }
+      .recipe-box {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 14px;
+        padding: 16px;
+        margin: 14px 0 16px;
+      }
+      .recipe-name {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.3;
+        font-weight: 700;
+        color: #9a3412;
+      }
+      .meta {
+        margin: 6px 0 0;
+        color: #7c2d12;
+        font-size: 14px;
+      }
+      .note {
+        margin: 16px 0 0;
+        color: #4b5563;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      .footer {
+        padding: 16px 24px 22px;
+        border-top: 1px solid #e5e7eb;
+        color: #6b7280;
+        font-size: 12px;
+        text-align: center;
+      }
+      @media only screen and (max-width: 600px) {
+        .wrapper {
+          padding: 10px;
+        }
+        .header {
+          padding: 22px 16px;
+        }
+        .title {
+          font-size: 22px;
+        }
+        .content {
+          padding: 16px;
+        }
+        .recipe-name {
+          font-size: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="card">
+        <div class="header">
+          <div class="brand">Recipe Finder Meal Planner</div>
+          <h1 class="title">It's Time To Cook</h1>
+        </div>
+        <div class="content">
+          <p style="margin:0;color:#374151;font-size:15px;line-height:1.6;">
+            Friendly reminder for your <b>${mealType}</b> on <b>${weekday}</b>.
+          </p>
+          <div class="recipe-box">
+            <p class="recipe-name">${mealName}</p>
+            <p class="meta">Reminder time: ${timeLabel}</p>
+          </div>
+          <p class="note">
+            Open Recipe Finder and start preparing your meal now so everything is ready on time.
+          </p>
+        </div>
+        <div class="footer">
+          Sent automatically from your planner settings. You received this because reminders are enabled.
+        </div>
+      </div>
     </div>
-  </div>
+  </body>
+</html>
 `;
 
 export const checkAndSendMealPlannerReminders = async () => {
