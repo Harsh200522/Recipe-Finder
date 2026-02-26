@@ -7,6 +7,7 @@ const DEFAULT_REMINDER_TIMES = {
   Lunch: "13:00",
   Dinner: "20:00",
 };
+const REMINDER_LEAD_MINUTES = 30;
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -38,6 +39,20 @@ const getNowForTimeZone = (timeZone = "UTC") => {
   }).format(now);
 
   return { weekday, hhmm, dateKey };
+};
+
+const toReminderTime = (mealTime, leadMinutes = REMINDER_LEAD_MINUTES) => {
+  const match = String(mealTime || "").match(/^(\d{2}):(\d{2})$/);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+
+  const total = hours * 60 + minutes - leadMinutes;
+  const normalized = ((total % 1440) + 1440) % 1440;
+  const hh = String(Math.floor(normalized / 60)).padStart(2, "0");
+  const mm = String(normalized % 60).padStart(2, "0");
+  return `${hh}:${mm}`;
 };
 
 const getUserEmail = async (uid, plannerDocData) => {
@@ -98,8 +113,9 @@ export const checkAndSendMealPlannerReminders = async () => {
 
     for (const mealType of Object.keys(DEFAULT_REMINDER_TIMES)) {
       const plannedMeal = dayMeals?.[mealType];
-      const targetTime = reminderTimes?.[mealType];
-      if (!plannedMeal || !targetTime || targetTime !== hhmm) continue;
+      const mealTime = reminderTimes?.[mealType];
+      const reminderTime = toReminderTime(mealTime);
+      if (!plannedMeal || !mealTime || !reminderTime || reminderTime !== hhmm) continue;
 
       const logId = `${uid}_${dateKey}_${mealType}`;
       const logRef = doc(db, "mealReminderLogs", logId);
@@ -114,12 +130,12 @@ export const checkAndSendMealPlannerReminders = async () => {
         from: `"Recipe Finder" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: `🍳 Time to cook: ${mealName}`,
-        text: `Reminder: It's time for ${mealType} (${weekday} ${targetTime}). Recipe: ${mealName}`,
+        text: `Reminder: ${mealType} for ${weekday} is at ${mealTime}. This reminder is sent at ${reminderTime}. Recipe: ${mealName}`,
         html: buildReminderHtml({
           mealName,
           mealType,
           weekday,
-          timeLabel: targetTime,
+          timeLabel: `${reminderTime} (for meal at ${mealTime})`,
         }),
       });
 
@@ -153,4 +169,3 @@ export const initMealPlannerReminderService = () => {
   setTimeout(run, 10000);
   setInterval(run, 60 * 1000);
 };
-
