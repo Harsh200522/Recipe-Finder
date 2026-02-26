@@ -3,11 +3,5 @@
     "api/*.js": {
       "runtime": "nodejs18.x"
     }
-  },
-  "crons": [
-    {
-      "path": "/api/run-meal-reminders",
-      "schedule": "0 0 * * *"
-    }
-  ]
+  }
 }
