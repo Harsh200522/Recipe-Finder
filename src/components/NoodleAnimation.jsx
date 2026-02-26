@@ -4,22 +4,22 @@ import "../style/noodleAnimation.css";
 export default function NoodleAnimation() {
   return (
     <div>
-    <div class="frame">
-      <div class="scene1">
-        <div class="boy">
-          <div class="boy__head">
-            <div class="boy__hair"></div>
-            <div class="boy__eyes"></div>
-            <div class="boy__mouth"></div>
-            <div class="boy__cheeks"></div>
+    <div className="frame">
+      <div className="scene1">
+        <div className="boy">
+          <div className="boy__head">
+            <div className="boy__hair"></div>
+            <div className="boy__eyes"></div>
+            <div className="boy__mouth"></div>
+            <div className="boy__cheeks"></div>
           </div>
-          <div class="noodle"></div>
-          <div class="boy__leftArm">
-            <div class="chopsticks"></div>
+          <div className="noodle"></div>
+          <div className="boy__leftArm">
+            <div className="chopsticks"></div>
           </div>
         </div>
-        <div class="plate"></div>
-        <div class="rightArm"></div>
+        <div className="plate"></div>
+        <div className="rightArm"></div>
       </div>
      
     </div>

@@ -1,5 +1,7 @@
 import React from "react";
 import "../style/about.css";
+import { MdRestaurantMenu } from "react-icons/md";
+
 
 export default function About() {
   return (
@@ -7,7 +9,11 @@ export default function About() {
       <div className="about-wrapper">
 
         {/* Header */}
-        <h1 className="about-title">About Recipe Finder 🍽️</h1>
+        <h1 className="about-title">
+          <MdRestaurantMenu style={{ marginRight: "10px" }} />
+          About Recipe Finder
+        </h1>
+
         <p className="about-subtitle">
           Discover. Cook. Enjoy. Share.
         </p>

@@ -1,13 +1,10 @@
-// Import the functions you need from the SDKs you need
+// backend/firebase.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
+// Firebase web config (from your working code)
 const firebaseConfig = {
   apiKey: "AIzaSyAz1rJmOJE6LTVXdBBaI-TG1Xy50T_BVQc",
   authDomain: "recipe-finder-37155.firebaseapp.com",

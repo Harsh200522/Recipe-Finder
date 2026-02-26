@@ -1,0 +1,1934 @@
+/* =====================================================
+   DARK MODE ROOT
+===================================================== */
+body.dark-mode {
+  background-color: #0f0f11;
+  color: #e5e7eb;
+}
+
+/* Container Background */
+body.dark-mode .settings-container {
+  background: linear-gradient(135deg, #151518 0%, #1c1c21 100%);
+}
+
+/* Main Card */
+body.dark-mode .settings-card {
+  background: #1a1a1f;
+  border: 1px solid #2a2a30;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Tabs Container */
+body.dark-mode .tabs-container {
+  background: #1a1a1f;
+  border-bottom: 1px solid #2a2a30;
+}
+
+/* =====================================================
+   HEADER
+===================================================== */
+body.dark-mode .settings-header p {
+  color: #9ca3af;
+}
+
+/* =====================================================
+   TAB BUTTONS + HOVER
+===================================================== */
+body.dark-mode .tab-button {
+  color: #9ca3af;
+}
+
+body.dark-mode .tab-button:hover {
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.08);
+}
+
+body.dark-mode .tab-button.active {
+  color: #fb923c;
+  border-bottom-color: #fb923c;
+  background: rgba(251, 146, 60, 0.12);
+}
+
+/* =====================================================
+   AVATAR SECTION
+===================================================== */
+body.dark-mode .avatar-section {
+  background: linear-gradient(135deg, #1e1e23 0%, #25252b 100%);
+}
+
+body.dark-mode .avatar-info h3 {
+  color: #f3f4f6;
+}
+
+body.dark-mode .avatar-info p {
+  color: #9ca3af;
+}
+
+/* =====================================================
+   FORM FIELDS
+===================================================== */
+body.dark-mode .form-label {
+  color: #d1d5db;
+}
+
+body.dark-mode .form-input,
+body.dark-mode .form-select,
+body.dark-mode .form-textarea {
+  background-color: #23232a;
+  border: 2px solid #2f2f36;
+  color: #f3f4f6;
+}
+
+body.dark-mode .form-input::placeholder,
+body.dark-mode .form-textarea::placeholder {
+  color: #6b7280;
+}
+
+/* Hover Effect */
+body.dark-mode .form-input:hover,
+body.dark-mode .form-select:hover,
+body.dark-mode .form-textarea:hover {
+  border-color: #fb923c;
+}
+
+/* Focus Glow */
+body.dark-mode .form-input:focus,
+body.dark-mode .form-select:focus,
+body.dark-mode .form-textarea:focus {
+  border-color: #fb923c;
+  box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.2);
+  background-color: #1f1f24;
+}
+
+/* =====================================================
+   SECTION TITLES
+===================================================== */
+body.dark-mode .section-title {
+  color: #f3f4f6;
+  border-bottom: 2px solid #2a2a30;
+}
+
+body.dark-mode .section-subtitle {
+  color: #d1d5db;
+}
+
+/* =====================================================
+   PILL BUTTONS + HOVER
+===================================================== */
+body.dark-mode .pill-button {
+  background-color: #23232a;
+  border: 1px solid #2f2f36;
+  color: #9ca3af;
+}
+
+body.dark-mode .pill-button:hover {
+  background-color: #2d2d34;
+  border-color: #fb923c;
+  color: #fb923c;
+  transform: translateY(-2px);
+}
+
+body.dark-mode .pill-button.active {
+  background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.4);
+}
+
+/* =====================================================
+   TOGGLE SWITCH
+===================================================== */
+body.dark-mode .toggle-item {
+  background-color: #23232a;
+  border: 1px solid #2f2f36;
+}
+body.dark-mode .toggle-info h4 {
+  color:white;
+}
+body.dark-mode .toggle-item:hover {
+  background-color: #2a2a31;
+  border-color: #fb923c;
+}
+
+body.dark-mode .toggle-label {
+  background-color: #2f2f36;
+}
+
+body.dark-mode .toggle-input:checked + .toggle-label {
+  background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+}
+
+/* =====================================================
+   CHECKBOX
+===================================================== */
+body.dark-mode .checkbox-item:hover {
+  background-color: #2a2a31;
+}
+
+body.dark-mode .checkbox-label {
+  color: #d1d5db;
+}
+
+/* =====================================================
+   BUTTONS + HOVER EFFECT
+===================================================== */
+body.dark-mode .btn-primary {
+  background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+}
+
+body.dark-mode .btn-primary:hover:not(:disabled) {
+  box-shadow: 0 10px 25px rgba(251, 146, 60, 0.5);
+  transform: translateY(-3px);
+}
+
+body.dark-mode .btn-danger {
+  background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
+}
+
+body.dark-mode .btn-danger:hover {
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.5);
+  transform: translateY(-3px);
+}
+
+/* =====================================================
+   SAVE CONTAINER
+===================================================== */
+body.dark-mode .save-container {
+  border-top: 2px solid #2a2a30;
+}
+
+/* =====================================================
+   DANGER ZONE
+===================================================== */
+body.dark-mode .danger-zone {
+  background: linear-gradient(135deg, #2a1a1a 0%, #321b1b 100%);
+  border: 1px solid #4b1d1d;
+}
+
+body.dark-mode .danger-zone h2 {
+  color: #ef4444;
+}
+
+body.dark-mode .danger-text p:first-child {
+  color: #f87171;
+}
+
+body.dark-mode .danger-text p:last-child {
+  color: #9ca3af;
+}
+
+/* =====================================================
+   LOADING OVERLAY
+===================================================== */
+body.dark-mode .loading-overlay {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+body.dark-mode .loading-spinner {
+  border: 3px solid #2a2a30;
+  border-top-color: #fb923c;
+}
+/* =========================================
+   DARK MODE – INPUT FIELDS
+========================================= */
+
+body.dark-mode .form-input,
+body.dark-mode .form-textarea {
+  background-color: #1f1f24;
+  border: 2px solid #2c2c33;
+  color: #f3f4f6;
+  transition: all 0.25s ease;
+}
+
+/* Hover Effect */
+body.dark-mode .form-input:hover,
+body.dark-mode .form-textarea:hover {
+  border-color: #fb923c;
+  background-color: #24242a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Focus Effect */
+body.dark-mode .form-input:focus,
+body.dark-mode .form-textarea:focus {
+  border-color: #fb923c;
+  background-color: #1a1a1f;
+  box-shadow: 
+    0 0 0 4px rgba(251, 146, 60, 0.2),
+    0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+
+/* =========================================
+   DARK MODE – DROPDOWN (SELECT)
+========================================= */
+
+body.dark-mode .form-select {
+  background-color: #1f1f24;
+  border: 2px solid #2c2c33;
+  color: #f3f4f6;
+  transition: all 0.25s ease;
+
+  /* Updated dropdown arrow color */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23fb923c' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* Hover Effect */
+body.dark-mode .form-select:hover {
+  border-color: #fb923c;
+  background-color: #24242a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Focus Effect */
+body.dark-mode .form-select:focus {
+  border-color: #fb923c;
+  background-color: #1a1a1f;
+  box-shadow: 
+    0 0 0 4px rgba(251, 146, 60, 0.2),
+    0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+
+/* =========================================
+   DROPDOWN OPTIONS (Browser Supported)
+========================================= */
+
+body.dark-mode select option {
+  background-color: #1f1f24;
+  color: #f3f4f6;
+}
+
+body.dark-mode select option:hover {
+  background-color: #2a2a31;
+}
+/* =========================================
+   FIX WHITE INPUT ON HOVER / FOCUS (DARK MODE)
+   ========================================= */
+
+body.dark-mode .form-input,
+body.dark-mode .form-textarea,
+body.dark-mode .form-select {
+  background-color: #1f1f24 !important;
+  color: #f3f4f6 !important;
+}
+
+/* Hover */
+body.dark-mode .form-input:hover,
+body.dark-mode .form-textarea:hover,
+body.dark-mode .form-select:hover {
+  background-color: #24242a !important;
+  color: #ffffff !important;
+}
+
+/* Focus */
+body.dark-mode .form-input:focus,
+body.dark-mode .form-textarea:focus,
+body.dark-mode .form-select:focus {
+  background-color: #1a1a1f !important;
+  color: #ffffff !important;
+  border-color: #fb923c !important;
+  box-shadow: 
+    0 0 0 4px rgba(251, 146, 60, 0.2),
+    0 6px 18px rgba(0, 0, 0, 0.5);
+}
+/* =========================================
+   DARK MODE – ALLERGY PILLS (RED)
+========================================= */
+
+/* Default (not selected) */
+body.dark-mode .pill-button.danger {
+  background-color: #1f1f24;
+  border: 2px solid #3a1a1a;
+  color: #fca5a5; /* soft red text */
+  transition: all 0.25s ease;
+}
+
+/* Hover */
+body.dark-mode .pill-button.danger:hover {
+  background-color: #261515;
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+/* FORCE ALLERGY ACTIVE TO PURE RED */
+body.dark-mode .pill-button.danger.active {
+  background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%) !important;
+  border: 1px solid #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.45) !important;
+}
+/* =====================================================
+   DARK MODE ROOT
+===================================================== */
+body.dark-mode {
+  background-color: #0f0f11;
+  color: #e5e7eb;
+  transition: all 0.25s ease;
+}
+
+/* =====================================================
+   RECIPE CONTAINER
+===================================================== */
+body.dark-mode .recipe-finder-container {
+  background-color: #15151b;
+  color: #e5e7eb;
+}
+
+/* =====================================================
+   SEARCH BAR
+===================================================== */
+body.dark-mode .search-container {
+  background-color: #1e1e26;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+body.dark-mode .search-input {
+  background-color: #23232a;
+  border: 2px solid #2c2c33;
+  color: #f3f4f6;
+  border-color: #f3f4f6;
+  border-radius: 6px;
+  padding: 8px;
+  transition: all 0.25s ease;
+}
+
+body.dark-mode .search-input::placeholder {
+  color: #6b7280;
+}
+
+body.dark-mode .search-input:hover,
+body.dark-mode .search-input:focus {
+  background-color: #24242a !important;  /* soft dark gray, lighter than default */
+  border-color: #fb923c !important;     /* orange accent */
+  box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.2), 0 4px 12px rgba(0, 0, 0, 0.3);
+  color: #f3f4f6 !important;            /* text stays light */
+}
+
+
+body.dark-mode .search-button {
+  background: linear-gradient(135deg, #6c63ff 0%, #5850d6 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+body.dark-mode .search-button:hover {
+  background: linear-gradient(135deg, #5850d6 0%, #4a44b0 100%);
+  transform: translateY(-2px);
+}
+
+/* =====================================================
+   RECIPE CARDS
+===================================================== */
+body.dark-mode .recipe-card {
+  background-color: #1a1a23;
+  border: 1px solid #2c2c33;
+  border-radius: 10px;
+  color: #e5e7eb;
+  transition: background-color 0.25s ease, transform 0.2s ease;
+}
+
+body.dark-mode .recipe-card:hover {
+  background-color: #22222b;
+  transform: translateY(-2px);
+}
+
+body.dark-mode .category-row .recipe-card:hover {
+  transform: none;
+}
+
+body.dark-mode .recipe-title {
+  color: #f3f4f6;
+}
+
+body.dark-mode .recipe-info {
+  color: #cbd5e1;
+}
+
+/* =====================================================
+   VEG / NON-VEG ICONS
+===================================================== */
+body.dark-mode .veg-icon .circle {
+  background-color: #4caf50;
+}
+
+body.dark-mode .nonveg-icon .circle {
+  background-color: #ff7043;
+}
+
+/* =====================================================
+   REACTION BUTTONS
+===================================================== */
+body.dark-mode .reaction-buttons button {
+  background-color: transparent;
+  border: none;
+  color: #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+body.dark-mode .like-btn:hover svg {
+  color: #4caf50;
+}
+
+body.dark-mode .unlike-btn:hover svg {
+  color: #f44336;
+}
+
+body.dark-mode .heart-btn.active svg {
+  color: #fb7185;
+}
+
+/* =====================================================
+   WATCH VIDEO & INGREDIENTS BUTTON
+===================================================== */
+body.dark-mode .watch-video-btn,
+body.dark-mode .ingredients-button {
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+body.dark-mode .watch-video-btn{
+  background:linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
+}
+body.dark-mode .watch-video-btn:hover{
+  background-color: #261515;
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+  transform: translateY(-2px);
+}
+
+body.dark-mode .ingredients-button:hover {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.25);
+  transform: translateY(-2px);
+}
+
+/* =====================================================
+   MODAL OVERLAY
+===================================================== */
+body.dark-mode .modal-overlay {
+  background-color: rgba(15, 15, 17, 0.95);
+}
+
+body.dark-mode .modal-content {
+  background-color: #1e1e26;
+  border-radius: 10px;
+  padding: 20px;
+  color: #f3f4f6;
+}
+
+body.dark-mode .modal-title {
+  color: #fff;
+}
+
+body.dark-mode .modal-list li {
+  color: #cbd5e1;
+}
+
+
+/* =====================================================
+   INPUTS & DROPDOWNS
+===================================================== */
+body.dark-mode .form-input,
+body.dark-mode .form-textarea,
+body.dark-mode .form-select {
+  background-color: #1f1f24;
+  border: 2px solid #2c2c33;
+  color: #f3f4f6;
+  transition: all 0.25s ease;
+}
+
+body.dark-mode .form-input:hover,
+body.dark-mode .form-textarea:hover,
+body.dark-mode .form-select:hover {
+  background-color: #24242a;
+  border-color: #fb923c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .form-input:focus,
+body.dark-mode .form-textarea:focus,
+body.dark-mode .form-select:focus {
+  border-color: #fb923c;
+  background-color: #1a1a23;
+  box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.2),
+              0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+/* =====================================================
+   LOADING OVERLAY
+===================================================== */
+body.dark-mode .loading-overlay {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+body.dark-mode .loading-spinner {
+  border: 3px solid #2c2c33;
+  border-top-color: #fb923c;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+body.dark-mode .category-section {
+background-color: #2f2f38; 
+  border: 1px solid #474751;
+}
+body.dark-mode .main-container {
+  background-color: #1a1a23;
+}
+body.dark-mode .recipe-card {
+  border: 1px solid #3a3a44;
+  border-radius: 8px;
+}
+body.dark-mode ::-webkit-scrollbar {
+  width: 8px;
+}
+body.dark-mode ::-webkit-scrollbar-track {
+  background: #1f1f24;
+}
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background-color: #3a3a44;
+  border-radius: 4px;
+}
+body.dark-mode .modal-content {
+  background-color: #1e1e26!important;
+  border-radius: 10px;
+  padding: 20px;
+  color: #f3f4f6 !important; 
+}
+
+body.dark-mode .modal-title,
+body.dark-mode .modal-heading {
+  color: #ffffff !important; 
+}
+
+body.dark-mode .modal-list li {
+  color: #e5e7eb !important; 
+  font-weight: 500;
+}
+body.dark-mode .loader-text{
+  color: #e5e7eb;
+}
+body.dark-mode h2,p{
+  color: #ff6b00;
+}
+/* Dark mode styles for meal planner */
+body.dark-mode .meal-planner {
+  color: #e5e7eb;
+}
+
+body.dark-mode .video-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .video-overlay h1 {
+  color: #ff6b00;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+body.dark-mode .bg-video {
+  opacity: 0.5;
+}
+
+body.dark-mode .loading {
+  color: #4ade80;
+}
+
+body.dark-mode .meal-content {
+  background: rgba(17, 24, 39, 0.95);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .meal-content h2 {
+  color: #4ade80;
+  border-bottom-color: #22c55e;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .day-card {
+  background: linear-gradient(145deg, #1f2937, #111827);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border-left-color: #22c55e;
+}
+
+body.dark-mode .day-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .day-card h3 {
+  color: #4ade80;
+  border-bottom-color: #374151;
+}
+
+body.dark-mode .meal-row {
+  background: rgba(31, 41, 55, 0.8);
+}
+
+body.dark-mode .meal-row:hover {
+  background: rgba(55, 65, 81, 0.5);
+}
+
+body.dark-mode .meal-row > span:first-child {
+  color: #4ade80;
+}
+
+body.dark-mode .meal-details span {
+  color: #d1d5db;
+}
+
+body.dark-mode .not-set {
+  color: #9ca3af;
+}
+
+body.dark-mode .not-set::before {
+  color: #4ade80;
+}
+
+body.dark-mode .remove-btn {
+  background: linear-gradient(to right, #dc2626, #b91c1c);
+}
+
+body.dark-mode .remove-btn:hover {
+  background: linear-gradient(to right, #b91c1c, #991b1b);
+  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.3);
+}
+
+body.dark-mode .add-btn {
+  background: linear-gradient(to right, #22c55e, #15803d);
+}
+
+body.dark-mode .add-btn:hover {
+  background: linear-gradient(to right, #15803d, #166534);
+  box-shadow: 0 3px 8px rgba(34, 197, 94, 0.3);
+}
+
+body.dark-mode .save-status-bar {
+  background: linear-gradient(135deg, #1f2937, #111827);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  border-left-color: #22c55e;
+}
+
+body.dark-mode .unsaved-changes {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.2);
+}
+
+body.dark-mode .unsaved-dot {
+  color: #ef4444;
+}
+
+body.dark-mode .last-saved {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  border-color: rgba(74, 222, 128, 0.2);
+}
+
+body.dark-mode .reset-btn {
+  background: linear-gradient(to right, #dc2626, #b91c1c);
+}
+
+body.dark-mode .reset-btn:hover:not(:disabled) {
+  background: linear-gradient(to right, #b91c1c, #991b1b);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
+body.dark-mode .save-btn {
+  background: linear-gradient(to right, #22c55e, #15803d);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+}
+
+body.dark-mode .save-btn:hover:not(:disabled) {
+  background: linear-gradient(to right, #15803d, #166534);
+  box-shadow: 0 6px 12px rgba(34, 197, 94, 0.4);
+}
+
+body.dark-mode .save-btn:disabled {
+  background: linear-gradient(to right, #4b5563, #374151);
+}
+
+body.dark-mode .save-bottom-btn {
+  background: linear-gradient(to right, #3b82f6, #2563eb);
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+body.dark-mode .save-bottom-btn:hover {
+  background: linear-gradient(to right, #2563eb, #1d4ed8);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+body.dark-mode .video-control-btn {
+  background: rgba(0, 0, 0, 0.7);
+  color: #f3f4f6;
+}
+
+body.dark-mode .video-control-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+body.dark-mode .video-loading {
+  background: rgba(0, 0, 0, 0.6);
+  color: #f3f4f6;
+}
+
+/* Dark mode for Meal Planner popup reaction controls */
+body.dark-mode .meal-alert-actions .reaction-buttons button {
+  background: #2b3442;
+  color: #e5e7eb;
+  border: 1px solid #3a4556;
+}
+
+body.dark-mode .meal-alert-actions .like-btn:hover,
+body.dark-mode .meal-alert-actions .like-btn.active {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.55);
+}
+
+body.dark-mode .meal-alert-actions .unlike-btn:hover,
+body.dark-mode .meal-alert-actions .unlike-btn.active {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+body.dark-mode .meal-alert-actions .heart-btn.active svg {
+  color: #fb7185;
+}
+
+body.dark-mode .meal-alert-actions .watch-video-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Dark mode styles for SweetAlert2 */
+body.dark-mode .swal2-popup {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+body.dark-mode .swal2-title {
+  color: #f3f4f6;
+}
+
+body.dark-mode .swal2-html-container {
+  color: #d1d5db;
+}
+
+body.dark-mode .swal2-input {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+body.dark-mode .swal2-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+body.dark-mode #mealInput:hover,
+body.dark-mode #mealInput:focus {
+  background-color: #24242a !important;
+  border-color: #fb923c !important;
+  box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.2), 0 4px 12px rgba(0, 0, 0, 0.3);
+  color: #f3f4f6 !important;
+}
+
+body.dark-mode .swal2-input::placeholder {
+  color: #9ca3af;
+}
+
+body.dark-mode .swal2-validation-message {
+  background: #374151;
+  color: #fbbf24;
+}
+
+body.dark-mode .swal2-confirm {
+  background: linear-gradient(to right, #22c55e, #15803d) !important;
+}
+
+body.dark-mode .swal2-cancel {
+  background: linear-gradient(to right, #6b7280, #4b5563) !important;
+}
+
+body.dark-mode .swal2-cancel:hover {
+  background: linear-gradient(to right, #4b5563, #374151) !important;
+}
+
+body.dark-mode #suggestions {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  color: #f3f4f6;
+}
+
+body.dark-mode #suggestions div:hover {
+  background: #374151;
+}
+
+body.dark-mode #suggestions img {
+  border: 2px solid #4b5563;
+}
+
+body.dark-mode #suggestions span {
+  color: #e5e7eb;
+}
+
+body.dark-mode #suggestions p {
+  color: #9ca3af;
+}
+
+body.dark-mode .swal2-popup.swal2-icon-warning {
+  background: #1f2937;
+}
+
+body.dark-mode .swal2-popup.swal2-icon-success {
+  background: #1f2937;
+}
+
+body.dark-mode .swal2-popup.swal2-icon-error {
+  background: #1f2937;
+}
+
+body.dark-mode .swal2-timer-progress-bar {
+  background: #4ade80;
+}
+
+body.dark-mode .swal2-timer-progress-bar-container {
+  background: #374151;
+}
+
+body.dark-mode .swal2-close {
+  color: #9ca3af;
+}
+
+body.dark-mode .swal2-close:hover {
+  color: #f3f4f6;
+}
+
+body.dark-mode .swal2-loader {
+  border-color: #22c55e transparent #22c55e transparent;
+}
+
+body.dark-mode .swal2-styled.swal2-confirm:focus {
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+}
+
+body.dark-mode .swal2-styled.swal2-cancel:focus {
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.3);
+}
+
+body.dark-mode .swal2-icon.swal2-success .swal2-success-ring {
+  border-color: #22c55e;
+}
+
+body.dark-mode .swal2-icon.swal2-success [class^='swal2-success-line'] {
+  background-color: #22c55e;
+}
+
+body.dark-mode .swal2-icon.swal2-warning {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+body.dark-mode .swal2-icon.swal2-error {
+  border-color: #ef4444;
+}
+
+body.dark-mode .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+  background-color: #ef4444;
+}
+
+body.dark-mode .swal2-icon.swal2-info {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+body.dark-mode .swal2-icon.swal2-question {
+  border-color: #a855f7;
+  color: #a855f7;
+}
+/* Dark mode styles for Community Recipes */
+body.dark-mode .cookbook-container {
+  color: #e5e7eb;
+}
+
+body.dark-mode .cookbook-header {
+  background: linear-gradient(135deg, #1f2937, #111827);
+  border-bottom-color: #374151;
+}
+
+body.dark-mode .cookbook-title {
+  color: #ff6b00;
+}
+
+body.dark-mode .cookbook-title svg {
+  color: #ff6b00;
+}
+
+body.dark-mode .cookbook-subtitle {
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-add-btn {
+  background: linear-gradient(to right, #22c55e, #15803d);
+  color: white;
+}
+
+body.dark-mode .cookbook-add-btn:hover {
+  background: linear-gradient(to right, #15803d, #166534);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+}
+
+body.dark-mode .cookbook-control-bar {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+body.dark-mode .cookbook-search-field {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+body.dark-mode .cookbook-search-field:hover{
+  background: #374151 !important;
+  border-color: #ff6f00 !important;
+  color: #f3f4f6 !important;
+}
+body.dark-mode .cookbook-search-field:focus{
+  background: #374151 !important;
+  border-color: #ff6f00 !important;
+  color: #f3f4f6 !important;
+}
+
+body.dark-mode .cookbook-search-field::placeholder {
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-search-field:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+body.dark-mode .cookbook-filter-icon {
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-category-dropdown {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+body.dark-mode .cookbook-category-dropdown option {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
+body.dark-mode .cookbook-loader p {
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-spinner {
+  border-color: #4b5563;
+  border-top-color: #22c55e;
+}
+
+body.dark-mode .cookbook-empty {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+body.dark-mode .cookbook-empty-icon {
+  color: #4b5563;
+}
+
+body.dark-mode .cookbook-empty h3 {
+  color: #f3f4f6;
+}
+
+body.dark-mode .cookbook-empty p {
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-primary-btn {
+  background: linear-gradient(to right, #22c55e, #15803d);
+  color: white;
+}
+
+body.dark-mode .cookbook-primary-btn:hover {
+  background: linear-gradient(to right, #15803d, #166534);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+}
+
+body.dark-mode .cookbook-card {
+  background: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .cookbook-card:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+  border-color: #4b5563;
+}
+
+body.dark-mode .cookbook-card-image {
+  background: #111827;
+}
+
+body.dark-mode .cookbook-no-image {
+  background: #374151;
+  color: #6b7280;
+}
+
+body.dark-mode .cookbook-badge .cookbook-difficulty {
+  background: #1f2937;
+  color: #f3f4f6;
+  border-color: #4b5563;
+}
+
+body.dark-mode .cookbook-difficulty.easy {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border-color: #22c55e;
+}
+
+body.dark-mode .cookbook-difficulty.medium {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-color: #f59e0b;
+}
+
+body.dark-mode .cookbook-difficulty.hard {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: #ef4444;
+}
+
+body.dark-mode .cookbook-video-link {
+  background: rgba(0, 0, 0, 0.7);
+  color: #f3f4f6;
+}
+
+body.dark-mode .cookbook-video-link:hover {
+  background: rgba(0, 0, 0, 0.9);
+  color: #4ade80;
+}
+
+body.dark-mode .cookbook-card-title {
+  color: #f3f4f6;
+}
+
+body.dark-mode .cookbook-category-tag {
+  background: #374151;
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-time-tag,
+body.dark-mode .cookbook-serving-tag {
+  background: #374151;
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-icon-btn {
+  background: #374151;
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-edit-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+body.dark-mode .cookbook-delete-btn:hover {
+  background: #ef4444;
+  color: white;
+}
+
+body.dark-mode .cookbook-upload-chip {
+  background: rgba(59, 130, 246, 0.16);
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.28);
+}
+
+body.dark-mode .cookbook-upload-chip:hover {
+  background: rgba(59, 130, 246, 0.24);
+  border-color: rgba(96, 165, 250, 0.45);
+  color: #bfdbfe;
+}
+
+body.dark-mode .cookbook-upload-chip.active {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+body.dark-mode .cookbook-upload-chip.active:hover {
+  background: rgba(16, 185, 129, 0.28);
+  border-color: rgba(52, 211, 153, 0.45);
+}
+
+body.dark-mode .cookbook-like-btn {
+  color: #9ca3af;
+  background: #374151;
+}
+
+body.dark-mode .cookbook-like-btn.liked {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.2);
+}
+
+body.dark-mode .cookbook-like-btn:hover {
+  background: #4b5563;
+}
+
+body.dark-mode .cookbook-unlike-btn {
+  color: #9ca3af;
+  background: #374151;
+}
+
+body.dark-mode .cookbook-unlike-btn.unliked {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+body.dark-mode .cookbook-unlike-btn:hover {
+  background: #4b5563;
+}
+
+body.dark-mode .cookbook-comment-btn {
+  color: #9ca3af;
+  background: #374151;
+}
+
+body.dark-mode .cookbook-comment-btn:hover {
+  background: #4b5563;
+  color: #3b82f6;
+}
+
+body.dark-mode .cookbook-show-ingredients-btn,
+body.dark-mode .cookbook-show-instructions-btn {
+  background: #ff9800;
+  color: white;
+  border-color: #4b5563;
+}
+
+body.dark-mode .cookbook-show-ingredients-btn:hover,
+body.dark-mode .cookbook-show-instructions-btn:hover {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.25);
+  transform: translateY(-2px);
+}
+
+body.dark-mode .cookbook-comments-area {
+  background: #111827;
+  border-color: #374151;
+}
+
+body.dark-mode .cookbook-comment-field {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+body.dark-mode .cookbook-comment-field::placeholder {
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-submit-comment {
+  background: #22c55e;
+  color: white;
+}
+
+body.dark-mode .cookbook-submit-comment:hover {
+  background: #15803d;
+}
+
+body.dark-mode .cookbook-comment-item {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+body.dark-mode .cookbook-comment-author {
+  color: #4ade80;
+}
+
+body.dark-mode .cookbook-comment-message {
+  color: #d1d5db;
+}
+
+body.dark-mode .cookbook-comment-edit {
+  color: #3b82f6;
+}
+
+body.dark-mode .cookbook-comment-edit:hover {
+  color: #2563eb;
+}
+
+body.dark-mode .cookbook-comment-delete {
+  color: #ef4444;
+}
+
+body.dark-mode .cookbook-comment-delete:hover {
+  color: #dc2626;
+}
+
+body.dark-mode .cookbook-pagination {
+  border-color: #374151;
+}
+
+body.dark-mode .cookbook-page-nav {
+  background: #1f2937;
+  color: #d1d5db;
+  border-color: #374151;
+}
+
+body.dark-mode .cookbook-page-nav:hover:not(:disabled) {
+  background: #374151;
+  color: #22c55e;
+  border-color: #22c55e;
+}
+
+body.dark-mode .cookbook-page-nav:disabled {
+  background: #111827;
+  color: #4b5563;
+  border-color: #374151;
+}
+
+body.dark-mode .cookbook-page-btn {
+  background: #1f2937;
+  color: #9ca3af;
+  border-color: #374151;
+}
+
+body.dark-mode .cookbook-page-btn:hover {
+  background: #374151;
+  color: #22c55e;
+  border-color: #22c55e;
+}
+
+body.dark-mode .cookbook-page-active {
+  background: #22c55e !important;
+  color: white !important;
+  border-color: #22c55e !important;
+}
+
+body.dark-mode .cookbook-modal-overlay {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+body.dark-mode .cookbook-modal {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+body.dark-mode .cookbook-modal-header {
+  background: #111827;
+  border-bottom-color: #374151;
+}
+
+body.dark-mode .cookbook-modal-header h2 {
+  color: #f3f4f6;
+}
+
+body.dark-mode .cookbook-modal-close {
+  background: #374151;
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-modal-close:hover {
+  background: #4b5563;
+  color: #ef4444;
+}
+
+body.dark-mode .cookbook-form label {
+  color: #d1d5db;
+}
+
+body.dark-mode .cookbook-field,
+body.dark-mode .cookbook-select,
+body.dark-mode .cookbook-textarea {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+body.dark-mode .cookbook-field:focus,
+body.dark-mode .cookbook-select:focus,
+body.dark-mode .cookbook-textarea:focus {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
+}
+
+body.dark-mode .cookbook-field::placeholder,
+body.dark-mode .cookbook-textarea::placeholder {
+  color: #6b7280;
+}
+
+body.dark-mode .cookbook-field-hint {
+  color: #9ca3af;
+}
+
+body.dark-mode .cookbook-url-preview {
+  background: #111827;
+  border-color: #374151;
+}
+
+body.dark-mode .cookbook-secondary-btn {
+  background: #374151;
+  color: #d1d5db;
+  border-color: #4b5563;
+}
+
+body.dark-mode .cookbook-secondary-btn:hover {
+  background: #4b5563;
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+/* SweetAlert2 dark mode overrides for Community Recipes */
+body.dark-mode .swal2-popup {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+body.dark-mode .swal2-title {
+  color: #f3f4f6;
+}
+
+body.dark-mode .swal2-html-container {
+  color: #d1d5db;
+}
+
+body.dark-mode .swal2-confirm {
+  background: linear-gradient(to right, #22c55e, #15803d) !important;
+}
+
+body.dark-mode .swal2-cancel {
+  background: linear-gradient(to right, #6b7280, #4b5563) !important;
+}
+
+body.dark-mode .swal2-cancel:hover {
+  background: linear-gradient(to right, #4b5563, #374151) !important;
+}
+
+body.dark-mode .swal2-timer-progress-bar {
+  background: #4ade80;
+}
+
+body.dark-mode .swal2-timer-progress-bar-container {
+  background: #374151;
+}
+
+body.dark-mode .swal2-close {
+  color: #9ca3af;
+}
+
+body.dark-mode .swal2-close:hover {
+  color: #f3f4f6;
+}
+body.dark-mode .cookbook-filter-group{
+background: #374151;
+}
+body.dark-mode .cookbook-filter-group:hover,
+body.dark-mode .cookbook-category-dropdown:hover{
+  background: #4b5563;
+  border-color: #ff9800;
+}
+body.dark-mode .cookbook-container{
+  background: #1f2937;
+}
+body.dark-mode .cookbook-primary-btn {
+  background-color: #ff9800 !important; 
+  color: #222;
+}
+
+body.dark-mode .cookbook-primary-btn:hover {
+  background-color: #ff6f00 !important;
+}
+
+body.dark-mode .cookbook-secondary-btn {
+  background-color: #333 !important;
+  color: #fff !important;
+}
+
+body.dark-mode .cookbook-secondary-btn:hover {
+  background-color: #555 !important;
+}
+/* Dark mode styles for About page - Pure Black Theme with Orange Accents */
+body.dark-mode .about-container {
+  background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #111111 100%) !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .about-wrapper {
+  background: rgba(10, 10, 10, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 107, 0, 0.2) !important;
+  box-shadow: 0 20px 50px rgba(255, 107, 0, 0.15) !important;
+}
+
+body.dark-mode .about-title {
+  background: linear-gradient(135deg, #ff8c40, #ff6b00) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  text-shadow: 0 2px 15px rgba(255, 107, 0, 0.3) !important;
+}
+
+body.dark-mode .about-subtitle {
+  color: #cccccc !important;
+}
+
+body.dark-mode .about-hero {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.1), rgba(255, 140, 64, 0.1)) !important;
+  border-left-color: #ff6b00 !important;
+  box-shadow: 0 10px 30px rgba(255, 107, 0, 0.1) !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .about-section h2 {
+  color: #ff8c40 !important;
+}
+
+body.dark-mode .about-section h2::after {
+  background: linear-gradient(to right, transparent, #ff8c40, #ff6b00, transparent) !important;
+}
+
+body.dark-mode .about-section p {
+  color: #e0e0e0 !important;
+}
+
+body.dark-mode .highlight {
+  color: #ff8c40 !important;
+  text-shadow: 0 2px 4px rgba(255, 107, 0, 0.3) !important;
+}
+
+body.dark-mode .developer-card {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.1), rgba(255, 140, 64, 0.1)) !important;
+  border: 1px solid rgba(255, 107, 0, 0.2) !important;
+  box-shadow: 0 15px 35px rgba(255, 107, 0, 0.1) !important;
+}
+
+body.dark-mode .developer-avatar {
+  background: linear-gradient(135deg, #ff8c40, #ff6b00) !important;
+  border: 4px solid rgba(255, 107, 0, 0.3) !important;
+  color: white !important;
+}
+
+body.dark-mode .developer-details h3 {
+  background: linear-gradient(135deg, #ff8c40, #ff6b00) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+body.dark-mode .developer-role {
+  color: #ff8c40 !important;
+}
+
+body.dark-mode .developer-bio {
+  color: #e0e0e0 !important;
+}
+
+body.dark-mode .about-stats {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.05), rgba(255, 140, 64, 0.05)) !important;
+  border: 1px solid rgba(255, 107, 0, 0.15) !important;
+}
+
+body.dark-mode .stat-item {
+  background: #111111 !important;
+  border: 1px solid rgba(255, 107, 0, 0.2) !important;
+}
+
+body.dark-mode .stat-item:hover {
+  background: #1a1a1a !important;
+  box-shadow: 0 10px 25px rgba(255, 107, 0, 0.2) !important;
+}
+
+body.dark-mode .stat-number {
+  background: linear-gradient(135deg, #ff8c40, #ff6b00) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  text-shadow: 0 4px 8px rgba(255, 107, 0, 0.2) !important;
+}
+
+body.dark-mode .stat-label {
+  color: #cccccc !important;
+}
+
+body.dark-mode .about-card {
+  background: #111111 !important;
+  border: 1px solid rgba(255, 107, 0, 0.2) !important;
+  box-shadow: 0 10px 30px rgba(255, 107, 0, 0.05) !important;
+}
+
+body.dark-mode .about-card span {
+  color: #ff8c40 !important;
+}
+
+body.dark-mode .about-card h3 {
+  color: #ffffff !important;
+}
+
+body.dark-mode .about-card p {
+  color: #cccccc !important;
+}
+
+body.dark-mode .about-card:hover {
+  background: #1a1a1a !important;
+  box-shadow: 0 20px 40px rgba(255, 107, 0, 0.2) !important;
+  border-color: rgba(255, 107, 0, 0.3) !important;
+}
+
+body.dark-mode .feature-item {
+  background: #111111 !important;
+  border: 1px solid rgba(255, 107, 0, 0.2) !important;
+}
+
+body.dark-mode .feature-item:hover {
+  background: #1a1a1a !important;
+  box-shadow: 0 15px 35px rgba(255, 107, 0, 0.15) !important;
+}
+
+body.dark-mode .feature-item h3 {
+  color: #ff8c40 !important;
+}
+
+body.dark-mode .feature-item p {
+  color: #cccccc !important;
+}
+
+body.dark-mode .journey-section h2 {
+  color: #ff8c40 !important;
+}
+
+body.dark-mode .timeline-item {
+  background: #111111 !important;
+  border: 1px solid rgba(255, 107, 0, 0.2) !important;
+}
+
+body.dark-mode .timeline-item:hover {
+  background: #1a1a1a !important;
+  box-shadow: 0 15px 35px rgba(255, 107, 0, 0.15) !important;
+}
+
+body.dark-mode .timeline-date {
+  background: linear-gradient(135deg, #ff8c40, #ff6b00) !important;
+  color: white !important;
+}
+
+body.dark-mode .timeline-item h4 {
+  color: #ffffff !important;
+}
+
+body.dark-mode .timeline-item p {
+  color: #cccccc !important;
+}
+
+body.dark-mode .tech-stack h2 {
+  color: #ff8c40 !important;
+}
+
+body.dark-mode .tech-icon {
+  background: #111111 !important;
+  border: 2px solid rgba(255, 107, 0, 0.2) !important;
+  color: #ff8c40 !important;
+}
+
+body.dark-mode .tech-icon:hover {
+  background: #1a1a1a !important;
+  box-shadow: 0 10px 25px rgba(255, 107, 0, 0.2) !important;
+  border-color: #ff8c40 !important;
+}
+
+body.dark-mode .cta-section {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.1), rgba(255, 140, 64, 0.1)) !important;
+  border: 1px solid rgba(255, 107, 0, 0.2) !important;
+  box-shadow: 0 20px 50px rgba(255, 107, 0, 0.1) !important;
+}
+
+body.dark-mode .cta-section h2 {
+  background: linear-gradient(135deg, #ff8c40, #ff6b00) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+body.dark-mode .cta-section p {
+  color: #e0e0e0 !important;
+}
+
+body.dark-mode .cta-button.primary {
+  background: linear-gradient(135deg, #ff8c40 0%, #ff6b00 100%) !important;
+  color: white !important;
+  box-shadow: 0 10px 25px rgba(255, 107, 0, 0.3) !important;
+}
+
+body.dark-mode .cta-button.primary:hover {
+  box-shadow: 0 15px 35px rgba(255, 107, 0, 0.4) !important;
+}
+
+body.dark-mode .cta-button.secondary {
+  background: transparent !important;
+  color: #ff8c40 !important;
+  border: 2px solid rgba(255, 107, 0, 0.3) !important;
+}
+
+body.dark-mode .cta-button.secondary:hover {
+  background: rgba(255, 107, 0, 0.1) !important;
+  border-color: #ff8c40 !important;
+}
+
+body.dark-mode .about-footer {
+  border-top: 1px solid rgba(255, 107, 0, 0.2) !important;
+  color: #cccccc !important;
+}
+
+body.dark-mode .about-footer strong {
+  color: #ff8c40 !important;
+}
+
+body.dark-mode .footer-links a {
+  color: #cccccc !important;
+}
+
+body.dark-mode .footer-links a:hover {
+  background: rgba(255, 107, 0, 0.1) !important;
+  color: #ff8c40 !important;
+}
+
+/* Input focus states matching your example */
+body.dark-mode .cookbook-search-field:focus {
+  background: #374151 !important;
+  border-color: #ff8c40 !important;
+  color: #f3f4f6 !important;
+}
+
+body.dark-mode .cookbook-search-field::placeholder {
+  color: #9ca3af !important;
+}
+/* ==========================================
+   SWEETALERT DARK MODE – CHEF PROFILE
+========================================== */
+
+body.dark-mode .swal2-popup {
+  background: #1e1e24 !important;
+  color: #e5e7eb !important;
+  border-radius: 18px;
+  border: 1px solid #2d2d35;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .swal2-title {
+  color: #ffffff !important;
+}
+
+body.dark-mode .swal2-html-container {
+  color: #cbd5e1 !important;
+}
+
+/* Avatar Styling */
+body.dark-mode .swal2-popup img {
+  border: 3px solid #fb923c;
+  box-shadow: 0 0 20px rgba(251, 146, 60, 0.4);
+  transition: 0.3s ease;
+}
+
+body.dark-mode .swal2-popup img:hover {
+  transform: scale(1.05);
+}
+
+/* Divider */
+body.dark-mode .swal2-popup hr {
+  border-color: #333340;
+}
+
+/* Headings */
+body.dark-mode .swal2-popup h2 {
+  color: #ffffff;
+  margin-bottom: 5px;
+}
+
+body.dark-mode .swal2-popup h4 {
+  color: #fb923c;
+  margin-top: 10px;
+}
+
+/* Labels (bold text) */
+body.dark-mode .swal2-popup b {
+  color: #facc15;
+}
+
+/* Close Button */
+body.dark-mode .swal2-confirm {
+  background: #fb923c !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+  padding: 8px 18px !important;
+  font-weight: 600;
+  transition: 0.3s ease;
+}
+
+body.dark-mode .swal2-confirm:hover {
+  background: #f97316 !important;
+  transform: translateY(-2px);
+}
+
+/* Popup Animation Smoothness */
+body.dark-mode .swal2-show {
+  animation: fadeInDark 0.25s ease;
+}
+
+@keyframes fadeInDark {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+/* Dark mode for comment field */
+body.dark-mode .cookbook-comment-field {
+  background: #2a2a32 !important;
+  border: 2px solid #3a3a44 !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .cookbook-comment-field:focus {
+  background: #33333d !important;
+  border-color: #ff9c42 !important;
+  box-shadow: 0 0 0 3px rgba(255, 156, 66, 0.25) !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .cookbook-comment-field::placeholder {
+  color: #888 !important;
+  opacity: 0.7;
+}
+
+body.dark-mode .cookbook-comment-field:hover {
+  background: #30303a !important;
+  border-color: #4a4a54 !important;
+}
+
+/* Ensure the form container looks good in dark mode */
+body.dark-mode .cookbook-comment-form {
+  background: transparent;
+}
+
+/* Dark mode for the submit button to match dark theme */
+body.dark-mode .cookbook-submit-comment {
+  background: linear-gradient(135deg, #ff9c42, #ff7a18);
+  color: #fff;
+}
+
+body.dark-mode .cookbook-submit-comment:hover {
+  background: linear-gradient(135deg, #ffb06b, #ff8c3a);
+  box-shadow: 0 5px 15px rgba(255, 156, 66, 0.4);
+}
+
+/* If you want the entire comments area to have consistent dark theme */
+body.dark-mode .cookbook-comments-area {
+  background: #1e1e24;
+  border-color: #2c2c34;
+}
+
+/* Dark mode for the "No comments yet" text */
+body.dark-mode .cookbook-comment-list p {
+  color: #aaa !important;
+}
+/* Dark mode support if needed */
+body.dark-mode .comment-btn {
+  background: #2a2a32;
+  color: #fff;
+}
+
+body.dark-mode .comment-btn:hover {
+  background: #1e3a5f;
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.5);
+}
+/* Dark Mode */
+body.dark-mode .cookbook-comments-area {
+  background: #1e1e24;
+  border-color: #2c2c34;
+}
+
+body.dark-mode .cookbook-comment-item {
+  background: #2a2a32 !important;
+  border-color: #3a3a44 !important;
+}
+
+body.dark-mode .cookbook-comment-item:hover {
+  background: linear-gradient(135deg, #363640, #40404a) !important;
+  border-color: #ff9c42 !important;
+  box-shadow: 0 8px 20px rgba(255, 156, 66, 0.3) !important;
+}
+
+body.dark-mode .cookbook-comment-item:active {
+  background: linear-gradient(135deg, #40404a, #4a4a54) !important;
+}
+
+body.dark-mode .cookbook-comment-message {
+  color: #ddd;
+}
+
+body.dark-mode .cookbook-comment-item:hover .cookbook-comment-message {
+  color: #fff !important;
+}
+
+body.dark-mode .cookbook-comment-author {
+  color: #ff9c42;
+}
+
+body.dark-mode .cookbook-comment-item:hover .cookbook-comment-author {
+  color: #ffb570 !important;
+}
+
+body.dark-mode .cookbook-comment-edit {
+  color: #5a9eff;
+  background: rgba(90,158,255,0.1);
+}
+
+body.dark-mode .cookbook-comment-delete {
+  color: #ff6b7a;
+  background: rgba(255,107,122,0.1);
+}
+
+/* SweetAlert comment edit input (dark mode) */
+body.dark-mode .swal2-input,
+body.dark-mode .swal2-textarea {
+  background: #2a2a32 !important;
+  border: 2px solid #3a3a44 !important;
+  color: #f3f4f6 !important;
+}
+
+body.dark-mode .swal2-input::placeholder,
+body.dark-mode .swal2-textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+body.dark-mode .swal2-input:focus,
+body.dark-mode .swal2-textarea:focus {
+  border-color: #ff9c42 !important;
+  box-shadow: 0 0 0 3px rgba(255, 156, 66, 0.25) !important;
+  background: #33333d !important;
+  color: #ffffff !important;
+}
