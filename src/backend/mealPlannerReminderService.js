@@ -202,61 +202,194 @@ const buildReminderHtml = ({ mealName, mealType, weekday, timeLabel }) => `
 </html>
 `;
 
-export const checkAndSendMealPlannerReminders = async () => {
+export const checkAndSendMealPlannerReminders = async (options = {}) => {
+  const { debug = false, dryRun = false, force = false } = options;
+  const report = {
+    runAt: new Date().toISOString(),
+    options: { debug, dryRun, force, leadMinutes: REMINDER_LEAD_MINUTES },
+    users: [],
+    summary: {
+      usersChecked: 0,
+      matches: 0,
+      sent: 0,
+      skipped: 0,
+      errors: 0,
+    },
+  };
+
   const plannerSnap = await getDocs(collection(db, "MealPlanner"));
-  if (plannerSnap.empty) return;
+  if (plannerSnap.empty) return report;
 
   for (const plannerDoc of plannerSnap.docs) {
     const uid = plannerDoc.id;
     const data = plannerDoc.data() || {};
     const planner = data.planner || {};
     const reminderEnabled = data.reminderEnabled !== false;
-    if (!reminderEnabled) continue;
+    report.summary.usersChecked += 1;
 
     const timeZone = data.timeZone || "UTC";
     const reminderTimes = { ...DEFAULT_REMINDER_TIMES, ...(data.reminderTimes || {}) };
     const { weekday, hhmm, dateKey } = getNowForTimeZone(timeZone);
     const dayMeals = planner?.[weekday];
-    if (!dayMeals || typeof dayMeals !== "object") continue;
+    const userEntry = {
+      uid,
+      ownerEmail: data.ownerEmail || null,
+      timeZone,
+      weekday,
+      nowHHmm: hhmm,
+      reminderEnabled,
+      checks: [],
+    };
+
+    if (!reminderEnabled) {
+      if (debug) {
+        userEntry.checks.push({
+          status: "skipped",
+          reason: "reminder_disabled",
+        });
+        report.users.push(userEntry);
+      }
+      report.summary.skipped += 1;
+      continue;
+    }
+
+    if (!dayMeals || typeof dayMeals !== "object") {
+      if (debug) {
+        userEntry.checks.push({
+          status: "skipped",
+          reason: "no_day_plan",
+        });
+        report.users.push(userEntry);
+      }
+      report.summary.skipped += 1;
+      continue;
+    }
 
     for (const mealType of Object.keys(DEFAULT_REMINDER_TIMES)) {
       const plannedMeal = dayMeals?.[mealType];
       const mealTime = reminderTimes?.[mealType];
       const reminderTime = toReminderTime(mealTime);
-      if (!plannedMeal || !mealTime || !reminderTime || reminderTime !== hhmm) continue;
+      const checkEntry = {
+        mealType,
+        mealTime: mealTime || null,
+        reminderTime: reminderTime || null,
+        nowHHmm: hhmm,
+      };
+
+      if (!plannedMeal) {
+        if (debug) {
+          checkEntry.status = "skipped";
+          checkEntry.reason = "meal_not_planned";
+          userEntry.checks.push(checkEntry);
+        }
+        report.summary.skipped += 1;
+        continue;
+      }
+
+      if (!mealTime || !reminderTime) {
+        if (debug) {
+          checkEntry.status = "skipped";
+          checkEntry.reason = "invalid_meal_time";
+          userEntry.checks.push(checkEntry);
+        }
+        report.summary.skipped += 1;
+        continue;
+      }
+
+      if (!force && reminderTime !== hhmm) {
+        if (debug) {
+          checkEntry.status = "skipped";
+          checkEntry.reason = "time_not_matched";
+          userEntry.checks.push(checkEntry);
+        }
+        report.summary.skipped += 1;
+        continue;
+      }
+
+      report.summary.matches += 1;
 
       const logId = `${uid}_${dateKey}_${mealType}`;
       const logRef = doc(db, "mealReminderLogs", logId);
       const logSnap = await getDoc(logRef);
-      if (logSnap.exists()) continue;
+      if (!force && logSnap.exists()) {
+        if (debug) {
+          checkEntry.status = "skipped";
+          checkEntry.reason = "already_sent_today";
+          userEntry.checks.push(checkEntry);
+        }
+        report.summary.skipped += 1;
+        continue;
+      }
 
       const toEmail = await getUserEmail(uid, data);
-      if (!toEmail) continue;
+      if (!toEmail) {
+        if (debug) {
+          checkEntry.status = "skipped";
+          checkEntry.reason = "missing_owner_email";
+          userEntry.checks.push(checkEntry);
+        }
+        report.summary.skipped += 1;
+        continue;
+      }
 
       const mealName = getMealName(plannedMeal);
-      await transporter.sendMail({
-        from: `"Recipe Finder" <${process.env.EMAIL_USER}>`,
-        to: toEmail,
-        subject: `🍳 Time to cook: ${mealName}`,
-        text: `Reminder: ${mealType} for ${weekday} is at ${mealTime}. This reminder is sent at ${reminderTime}. Recipe: ${mealName}`,
-        html: buildReminderHtml({
-          mealName,
-          mealType,
-          weekday,
-          timeLabel: `${reminderTime} (for meal at ${mealTime})`,
-        }),
-      });
+      checkEntry.toEmail = toEmail;
+      checkEntry.mealName = mealName;
 
-      await setDoc(logRef, {
-        uid,
-        dateKey,
-        mealType,
-        mealName,
-        timeZone,
-        sentAt: new Date(),
-      });
+      if (dryRun) {
+        if (debug) {
+          checkEntry.status = "dry_run";
+          checkEntry.reason = "would_send";
+          userEntry.checks.push(checkEntry);
+        }
+        continue;
+      }
+
+      try {
+        await transporter.sendMail({
+          from: `"Recipe Finder" <${process.env.EMAIL_USER}>`,
+          to: toEmail,
+          subject: `🍳 Time to cook: ${mealName}`,
+          text: `Reminder: ${mealType} for ${weekday} is at ${mealTime}. This reminder is sent at ${reminderTime}. Recipe: ${mealName}`,
+          html: buildReminderHtml({
+            mealName,
+            mealType,
+            weekday,
+            timeLabel: `${reminderTime} (for meal at ${mealTime})`,
+          }),
+        });
+
+        await setDoc(logRef, {
+          uid,
+          dateKey,
+          mealType,
+          mealName,
+          timeZone,
+          sentAt: new Date(),
+        });
+
+        report.summary.sent += 1;
+        if (debug) {
+          checkEntry.status = "sent";
+          userEntry.checks.push(checkEntry);
+        }
+      } catch (error) {
+        report.summary.errors += 1;
+        if (debug) {
+          checkEntry.status = "error";
+          checkEntry.reason = "send_failed";
+          checkEntry.error = error?.message || "unknown_error";
+          userEntry.checks.push(checkEntry);
+        }
+      }
+    }
+
+    if (debug) {
+      report.users.push(userEntry);
     }
   }
+
+  return report;
 };
 
 export const initMealPlannerReminderService = () => {
