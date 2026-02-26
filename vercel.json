@@ -7,7 +7,7 @@
   "crons": [
     {
       "path": "/api/run-meal-reminders",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
