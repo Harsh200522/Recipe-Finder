@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "crons": [
     {
       "path": "/api/run-meal-reminders",
@@ -6,4 +11,3 @@
     }
   ]
 }
-
