@@ -1,8 +1,17 @@
 // src/components/MealPlanner.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { db, auth } from "../config/firbase";
-import { collection, deleteDoc, doc, getDoc, getDocs, query as firestoreQuery, setDoc, where } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query as firestoreQuery,
+  setDoc,
+  where,
+} from "firebase/firestore";
 import Swal from "sweetalert2";
 import "../style/mealplanner.css";
 import videoSrc from "../video/Cartoon.mp4";
@@ -31,6 +40,7 @@ const days = [
 ];
 
 const meals = ["Breakfast", "Lunch", "Dinner"];
+
 const defaultReminderTimes = {
   Breakfast: "08:00",
   Lunch: "13:00",
@@ -72,7 +82,6 @@ const normalizeIngredientList = (value) => {
     return value.map((v) => String(v).trim()).filter(Boolean);
   }
   if (!value) return [];
-
   return String(value)
     .split(/\r?\n|,|;|•|\\n/)
     .map((item) =>
@@ -105,7 +114,8 @@ const fetchPublishedCommunityMeals = async (searchText) => {
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
     .filter((recipe) => {
-      const haystack = `${recipe.title || ""} ${recipe.ingredients || ""} ${recipe.category || ""}`.toLowerCase();
+      const haystack =
+        `${recipe.title || ""} ${recipe.ingredients || ""} ${recipe.category || ""}`.toLowerCase();
       return terms.every((term) => haystack.includes(term));
     })
     .slice(0, 6)
@@ -124,8 +134,9 @@ const fetchPublishedCommunityMeals = async (searchText) => {
 };
 
 const fetchApiMeals = async (searchText) => {
+  // ✅ FIX #1: Encode the search text to prevent broken URLs with special characters
   const res = await fetch(
-    `https://www.themealdb.com/api/json/v1/1/search.php?s=${searchText}`
+    `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchText)}`
   );
   const data = await res.json();
   return (data.meals || []).slice(0, 6).map((m) => ({
@@ -152,6 +163,7 @@ export default function MealPlanner() {
 
   const initialPlannerRef = useRef(null);
 
+  /* ---------- ID helpers ---------- */
   const getCommunityRecipeId = (meal) => {
     if (!meal?.idMeal) return null;
     const id = String(meal.idMeal);
@@ -222,8 +234,9 @@ export default function MealPlanner() {
     }
 
     if (meal.idMeal) {
+      // ✅ FIX #2: Encode meal ID in lookup URL
       const res = await fetch(
-        `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${meal.idMeal}`
+        `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${encodeURIComponent(meal.idMeal)}`
       );
       const data = await res.json();
       const found = data?.meals?.[0];
@@ -252,10 +265,7 @@ export default function MealPlanner() {
       if (details !== meal && day && mealType) {
         setPlanner((prev) => ({
           ...prev,
-          [day]: {
-            ...prev[day],
-            [mealType]: details,
-          },
+          [day]: { ...prev[day], [mealType]: details },
         }));
       }
     } catch {
@@ -311,36 +321,45 @@ export default function MealPlanner() {
 
         const loadActionState = async () => {
           const reactionId = getReactionDocId(details);
-          const defaultState = { likes: 0, unlikes: 0, userReaction: "none", favorite: false };
-
+          const defaultState = { likes: 0, unlikes: 0, userReaction: "none", favorite: false, favoriteDocId: null };
           if (!reactionId) return defaultState;
 
-          const reactionSnap = await getDoc(doc(db, "recipeReactions", reactionId));
-          const reactionData = reactionSnap.exists() ? reactionSnap.data() : {};
-          const likes = Number.isFinite(reactionData.likeCount) ? reactionData.likeCount : 0;
-          const unlikes = Number.isFinite(reactionData.unlikeCount) ? reactionData.unlikeCount : 0;
+          // ✅ FIX #3: Wrap Firestore reads in try/catch so UI doesn't crash if read fails
+          try {
+            const reactionSnap = await getDoc(doc(db, "recipeReactions", reactionId));
+            const reactionData = reactionSnap.exists() ? reactionSnap.data() : {};
+            const likes = Number.isFinite(reactionData.likeCount) ? reactionData.likeCount : 0;
+            const unlikes = Number.isFinite(reactionData.unlikeCount) ? reactionData.unlikeCount : 0;
 
-          const likedBy = Array.isArray(reactionData.likedBy) ? reactionData.likedBy : [];
-          const unlikedBy = Array.isArray(reactionData.unlikedBy) ? reactionData.unlikedBy : [];
-          const userReaction = user?.uid
-            ? (likedBy.includes(user.uid) ? "like" : unlikedBy.includes(user.uid) ? "unlike" : "none")
-            : "none";
+            const likedBy = Array.isArray(reactionData.likedBy) ? reactionData.likedBy : [];
+            const unlikedBy = Array.isArray(reactionData.unlikedBy) ? reactionData.unlikedBy : [];
+            const userReaction = user?.uid
+              ? likedBy.includes(user.uid)
+                ? "like"
+                : unlikedBy.includes(user.uid)
+                ? "unlike"
+                : "none"
+              : "none";
 
-          let favorite = false;
-          let favoriteDocId = null;
-          if (user?.uid) {
-            const candidateIds = getFavoriteDocIds(details);
-            for (const favId of candidateIds) {
-              const favSnap = await getDoc(doc(db, "users", user.uid, "favorites", favId));
-              if (favSnap.exists()) {
-                favorite = true;
-                favoriteDocId = favId;
-                break;
+            let favorite = false;
+            let favoriteDocId = null;
+            if (user?.uid) {
+              const candidateIds = getFavoriteDocIds(details);
+              for (const favId of candidateIds) {
+                const favSnap = await getDoc(doc(db, "users", user.uid, "favorites", favId));
+                if (favSnap.exists()) {
+                  favorite = true;
+                  favoriteDocId = favId;
+                  break;
+                }
               }
             }
-          }
 
-          return { likes, unlikes, userReaction, favorite, favoriteDocId };
+            return { likes, unlikes, userReaction, favorite, favoriteDocId };
+          } catch (err) {
+            console.error("Failed to load reaction state:", err);
+            return defaultState;
+          }
         };
 
         const renderActionState = (state) => {
@@ -356,8 +375,10 @@ export default function MealPlanner() {
             favBtn.innerHTML = state.favorite ? heartFilledIcon : heartOutlineIcon;
             favBtn.classList.toggle("active", state.favorite);
           }
-          if (videoBtn) videoBtn.style.opacity = details.strYoutube ? "1" : "0.5";
-          if (videoBtn) videoBtn.style.cursor = details.strYoutube ? "pointer" : "not-allowed";
+          if (videoBtn) {
+            videoBtn.style.opacity = details.strYoutube ? "1" : "0.5";
+            videoBtn.style.cursor = details.strYoutube ? "pointer" : "not-allowed";
+          }
         };
 
         const runTapAnimation = (btn) => {
@@ -385,12 +406,7 @@ export default function MealPlanner() {
           if (state.userReaction === "like") {
             state = { ...state, userReaction: "none", likes: Math.max(0, state.likes - 1) };
           } else if (state.userReaction === "unlike") {
-            state = {
-              ...state,
-              userReaction: "like",
-              unlikes: Math.max(0, state.unlikes - 1),
-              likes: state.likes + 1,
-            };
+            state = { ...state, userReaction: "like", unlikes: Math.max(0, state.unlikes - 1), likes: state.likes + 1 };
           } else {
             state = { ...state, userReaction: "like", likes: state.likes + 1 };
           }
@@ -417,12 +433,7 @@ export default function MealPlanner() {
           if (state.userReaction === "unlike") {
             state = { ...state, userReaction: "none", unlikes: Math.max(0, state.unlikes - 1) };
           } else if (state.userReaction === "like") {
-            state = {
-              ...state,
-              userReaction: "unlike",
-              likes: Math.max(0, state.likes - 1),
-              unlikes: state.unlikes + 1,
-            };
+            state = { ...state, userReaction: "unlike", likes: Math.max(0, state.likes - 1), unlikes: state.unlikes + 1 };
           } else {
             state = { ...state, userReaction: "unlike", unlikes: state.unlikes + 1 };
           }
@@ -444,12 +455,13 @@ export default function MealPlanner() {
           runTapAnimation(favBtn);
           const prevState = { ...state };
           const nextFavorite = !state.favorite;
-          const nextFavoriteDocId = nextFavorite
-            ? getPreferredFavoriteDocId(details)
-            : null;
+          const nextFavoriteDocId = nextFavorite ? getPreferredFavoriteDocId(details) : null;
           state = { ...state, favorite: nextFavorite, favoriteDocId: nextFavoriteDocId };
           renderActionState(state);
-          const favId = nextFavorite ? nextFavoriteDocId : (prevState.favoriteDocId || getPreferredFavoriteDocId(details));
+
+          const favId = nextFavorite
+            ? nextFavoriteDocId
+            : prevState.favoriteDocId || getPreferredFavoriteDocId(details);
           const favRef = doc(db, "users", user.uid, "favorites", favId);
 
           try {
@@ -471,7 +483,6 @@ export default function MealPlanner() {
             Swal.fire("Invalid Video", "Unable to load this video.", "warning");
             return;
           }
-
           Swal.fire({
             title: escapeHtml(details.strMeal || "Recipe Video"),
             html: `
@@ -493,19 +504,15 @@ export default function MealPlanner() {
   };
 
   /* =========================================================
-     🚀 BLOCK REACT ROUTER NAVIGATION (REAL BLOCKER)
-     ========================================================= */
+     BLOCK REACT ROUTER NAVIGATION
+  ========================================================= */
   useEffect(() => {
     const handleRouteBlock = (e) => {
       if (!hasUnsavedChanges) return;
-
       const link = e.target.closest("a");
-
-      // only block internal router links
       if (link && link.getAttribute("href")) {
         e.preventDefault();
         e.stopPropagation();
-
         Swal.fire({
           icon: "warning",
           title: "Unsaved Changes ⚠️",
@@ -514,38 +521,26 @@ export default function MealPlanner() {
         });
       }
     };
-
-    // IMPORTANT: capture phase = true (blocks BEFORE router)
     document.addEventListener("click", handleRouteBlock, true);
-
-    return () => {
-      document.removeEventListener("click", handleRouteBlock, true);
-    };
+    return () => document.removeEventListener("click", handleRouteBlock, true);
   }, [hasUnsavedChanges]);
 
   /* =========================================================
-     🚀 BLOCK REFRESH / CLOSE TAB
-     ========================================================= */
+     BLOCK REFRESH / CLOSE TAB
+  ========================================================= */
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (!hasUnsavedChanges) return;
-
       e.preventDefault();
       e.returnValue = "";
     };
-
     window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  /* ---------- Listen auth safely ---------- */
+  /* ---------- Listen auth ---------- */
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((u) => {
-      setUser(u);
-    });
+    const unsubscribe = auth.onAuthStateChanged((u) => setUser(u));
     return () => unsubscribe();
   }, []);
 
@@ -562,7 +557,8 @@ export default function MealPlanner() {
         const snap = await getDoc(docRef);
 
         if (snap.exists()) {
-          const fetchedPlanner = snap.data().planner;
+          // ✅ FIX #4: Guard against missing planner key in Firestore doc
+          const fetchedPlanner = snap.data().planner || createEmptyPlanner();
           setPlanner(fetchedPlanner);
           initialPlannerRef.current = JSON.parse(JSON.stringify(fetchedPlanner));
         } else {
@@ -571,7 +567,7 @@ export default function MealPlanner() {
           initialPlannerRef.current = JSON.parse(JSON.stringify(emptyPlanner));
         }
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch planner:", err);
         Swal.fire("Error", "Failed to load planner", "error");
       }
 
@@ -584,10 +580,8 @@ export default function MealPlanner() {
   /* ---------- Check for unsaved changes ---------- */
   useEffect(() => {
     if (!initialPlannerRef.current) return;
-
     const currentPlannerStr = JSON.stringify(planner);
     const initialPlannerStr = JSON.stringify(initialPlannerRef.current);
-
     setHasUnsavedChanges(currentPlannerStr !== initialPlannerStr);
   }, [planner]);
 
@@ -606,6 +600,7 @@ export default function MealPlanner() {
       const existingSnap = await getDoc(plannerRef);
       const existingData = existingSnap.exists() ? existingSnap.data() : {};
 
+      // ✅ FIX #5: Always save ownerEmail from user.email so reminder service can find it
       await setDoc(plannerRef, {
         planner,
         uid: user.uid,
@@ -620,7 +615,8 @@ export default function MealPlanner() {
             ? existingData.reminderEnabled
             : true,
         reminderTimes:
-          existingData.reminderTimes && typeof existingData.reminderTimes === "object"
+          existingData.reminderTimes &&
+          typeof existingData.reminderTimes === "object"
             ? existingData.reminderTimes
             : defaultReminderTimes,
         timeZone: existingData.timeZone || userTimeZone,
@@ -638,7 +634,9 @@ export default function MealPlanner() {
         timer: 2000,
         showConfirmButton: false,
       });
-    } catch {
+    } catch (err) {
+      // ✅ FIX #6: Log the actual error so you can debug save failures
+      console.error("Save failed:", err);
       Swal.fire("Error", "Failed to save planner", "error");
     } finally {
       setIsSaving(false);
@@ -646,121 +644,115 @@ export default function MealPlanner() {
   };
 
   /* ---------- Add / Change meal ---------- */
- const assignMeal = async (day, meal) => {
-  let selectedMeal = null;
+  const assignMeal = async (day, meal) => {
+    let selectedMeal = null;
 
-  await Swal.fire({
-    title: `🍴 ${day} - ${meal}`,
-    html: `
-      <input id="mealInput" class="swal2-input" placeholder="Search meal...">
-      <div id="suggestions" style="
-        max-height:200px;
-        overflow-y:auto;
-        text-align:left;
-        margin-top:10px;
-      "></div>
-    `,
-    showCancelButton: true,
-    confirmButtonText: "Add",
-    didOpen: () => {
-      const input = document.getElementById("mealInput");
-      const suggestionsDiv = document.getElementById("suggestions");
+    await Swal.fire({
+      title: `🍴 ${day} - ${meal}`,
+      html: `
+        <input id="mealInput" class="swal2-input" placeholder="Search meal...">
+        <div id="suggestions" style="max-height:200px;overflow-y:auto;text-align:left;margin-top:10px;"></div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Add",
+      didOpen: () => {
+        const input = document.getElementById("mealInput");
+        const suggestionsDiv = document.getElementById("suggestions");
+        let debounceTimer;
 
-      let debounceTimer;
+        // ✅ FIX #7: Auto-focus the search input so user can type immediately
+        setTimeout(() => input?.focus(), 100);
 
-      input.addEventListener("input", () => {
-        const query = input.value.trim();
+        input.addEventListener("input", () => {
+          const query = input.value.trim();
+          clearTimeout(debounceTimer);
 
-        clearTimeout(debounceTimer);
-
-        // small debounce (better UX)
-        debounceTimer = setTimeout(async () => {
-          if (!query) {
-            suggestionsDiv.innerHTML = "";
-            return;
-          }
-
-          try {
-            const [communityMeals, apiMeals] = await Promise.all([
-              fetchPublishedCommunityMeals(query).catch(() => []),
-              fetchApiMeals(query).catch(() => []),
-            ]);
-
-            const seenNames = new Set();
-            const mergedMeals = [...communityMeals, ...apiMeals].filter((m) => {
-              const key = (m.strMeal || "").toLowerCase();
-              if (!key || seenNames.has(key)) return false;
-              seenNames.add(key);
-              return true;
-            });
-
-            if (!mergedMeals.length) {
-              suggestionsDiv.innerHTML = "<p>No results</p>";
+          debounceTimer = setTimeout(async () => {
+            if (!query) {
+              suggestionsDiv.innerHTML = "";
               return;
             }
 
-            suggestionsDiv.innerHTML = "";
+            // ✅ FIX #8: Show a loading indicator while fetching
+            suggestionsDiv.innerHTML = `<p style="color:#888;padding:6px;">Searching...</p>`;
 
-            mergedMeals.forEach((m) => {
-              const item = document.createElement("div");
-              const thumb = m.strMealThumb
-                ? `<img src="${m.strMealThumb}" width="40" height="40" style="border-radius:6px"/>`
-                : `<div style="width:40px;height:40px;border-radius:6px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:11px;color:#666;">N/A</div>`;
-              const sourceBadge = m.source === "community"
-                ? `<span style="margin-left:6px;padding:2px 6px;border-radius:10px;background:#16a34a;color:#fff;font-size:10px;">Chef: ${m.chefName || "Unknown Chef"}</span>`
-                : "";
+            try {
+              const [communityMeals, apiMeals] = await Promise.all([
+                fetchPublishedCommunityMeals(query).catch(() => []),
+                fetchApiMeals(query).catch(() => []),
+              ]);
 
-              item.style.cssText = `
-                display:flex;
-                align-items:center;
-                gap:10px;
-                padding:6px;
-                cursor:pointer;
-                border-radius:6px;
-              `;
+              const seenNames = new Set();
+              const mergedMeals = [...communityMeals, ...apiMeals].filter((m) => {
+                const key = (m.strMeal || "").toLowerCase();
+                if (!key || seenNames.has(key)) return false;
+                seenNames.add(key);
+                return true;
+              });
 
-              item.innerHTML = `
-                ${thumb}
-                <span>${m.strMeal}${sourceBadge}</span>
-              `;
+              if (!mergedMeals.length) {
+                suggestionsDiv.innerHTML = "<p style='color:#888;padding:6px;'>No results found</p>";
+                return;
+              }
 
-              item.onclick = () => {
-                selectedMeal = { ...m };
+              suggestionsDiv.innerHTML = "";
 
-                input.value = m.strMeal;
-                suggestionsDiv.innerHTML = "";
-              };
+              mergedMeals.forEach((m) => {
+                const item = document.createElement("div");
+                const thumb = m.strMealThumb
+                  ? `<img src="${m.strMealThumb}" width="40" height="40" style="border-radius:6px;object-fit:cover;flex-shrink:0;"/>`
+                  : `<div style="width:40px;height:40px;border-radius:6px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:11px;color:#666;flex-shrink:0;">N/A</div>`;
+                const sourceBadge =
+                  m.source === "community"
+                    ? `<span style="margin-left:6px;padding:2px 6px;border-radius:10px;background:#16a34a;color:#fff;font-size:10px;">Chef: ${escapeHtml(m.chefName || "Unknown Chef")}</span>`
+                    : "";
 
-              suggestionsDiv.appendChild(item);
-            });
-          } catch {
-            suggestionsDiv.innerHTML = "Error loading results";
-          }
-        }, 300);
-      });
-    },
-    preConfirm: () => {
-      if (!selectedMeal) {
-        Swal.showValidationMessage("Please select a meal from suggestions");
-      }
-      return selectedMeal;
-    },
-  }).then((result) => {
-    if (!result.isConfirmed) return;
+                item.style.cssText = `
+                  display:flex;
+                  align-items:center;
+                  gap:10px;
+                  padding:6px;
+                  cursor:pointer;
+                  border-radius:6px;
+                  transition:background 0.15s;
+                `;
 
-    const m = result.value;
+                // ✅ FIX #9: Add hover effect on suggestion items
+                item.onmouseenter = () => (item.style.background = "#f3f4f6");
+                item.onmouseleave = () => (item.style.background = "transparent");
 
-    setPlanner((prev) => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        [meal]: m,
+                item.innerHTML = `${thumb}<span>${escapeHtml(m.strMeal)}${sourceBadge}</span>`;
+
+                item.onclick = () => {
+                  selectedMeal = { ...m };
+                  input.value = m.strMeal;
+                  suggestionsDiv.innerHTML = "";
+                };
+
+                suggestionsDiv.appendChild(item);
+              });
+            } catch {
+              suggestionsDiv.innerHTML = "<p style='color:red;padding:6px;'>Error loading results</p>";
+            }
+          }, 300);
+        });
       },
-    }));
-
-    Swal.fire("Added ✅", `${m.strMeal} added successfully`, "success");
-  });
-};
+      preConfirm: () => {
+        if (!selectedMeal) {
+          Swal.showValidationMessage("Please select a meal from the suggestions");
+        }
+        return selectedMeal;
+      },
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      const m = result.value;
+      setPlanner((prev) => ({
+        ...prev,
+        [day]: { ...prev[day], [meal]: m },
+      }));
+      Swal.fire("Added ✅", `${m.strMeal} added successfully`, "success");
+    });
+  };
 
   /* ---------- Remove meal ---------- */
   const removeMeal = (day, meal) => {
@@ -770,13 +762,9 @@ export default function MealPlanner() {
       showCancelButton: true,
     }).then((res) => {
       if (!res.isConfirmed) return;
-
       setPlanner((prev) => ({
         ...prev,
-        [day]: {
-          ...prev[day],
-          [meal]: null,
-        },
+        [day]: { ...prev[day], [meal]: null },
       }));
     });
   };
@@ -799,7 +787,21 @@ export default function MealPlanner() {
 
   /* ---------- Loading ---------- */
   if (loading) {
-    return <div className="loading">Loading planner...</div>;
+    return (
+      // ✅ FIX #10: Better loading UI with spinner feel
+      <div className="loading" style={{ textAlign: "center", padding: "60px", fontSize: "18px", color: "#f97316" }}>
+        🍽️ Loading your planner...
+      </div>
+    );
+  }
+
+  // ✅ FIX #11: Show login prompt if user is not logged in
+  if (!user) {
+    return (
+      <div style={{ textAlign: "center", padding: "60px", fontSize: "18px", color: "#555" }}>
+        <p>🔐 Please log in to view your meal planner.</p>
+      </div>
+    );
   }
 
   return (
@@ -808,17 +810,15 @@ export default function MealPlanner() {
         <video autoPlay loop muted playsInline className="top-video">
           <source src={videoSrc} type="video/mp4" />
         </video>
-
         <div className="video-overlay">
           <h1 className="planner-title">
             <FaUtensils className="planner-icon" />
-              Weekly Meal Planner
+            Weekly Meal Planner
           </h1>
         </div>
       </div>
 
       <div className="meal-content">
-
         <div className="save-status-bar">
           <div className="save-status-left">
             {hasUnsavedChanges && (
@@ -827,7 +827,6 @@ export default function MealPlanner() {
                 Unsaved Changes
               </div>
             )}
-
             {lastSavedTime && !hasUnsavedChanges && (
               <div className="last-saved">
                 Last saved:{" "}
@@ -845,7 +844,6 @@ export default function MealPlanner() {
                 Reset
               </button>
             )}
-
             <button
               onClick={savePlanner}
               className="save-btn"
@@ -860,27 +858,26 @@ export default function MealPlanner() {
           {days.map((day) => (
             <div key={day} className="day-card">
               <h3>{day}</h3>
-
               {meals.map((meal) => (
                 <div key={meal} className="meal-row">
                   <span className="meal-label">{meal}</span>
 
                   {planner[day]?.[meal] ? (
                     <div className="meal-details">
+                      {/* ✅ FIX #12: Fallback image if thumbnail fails to load */}
                       <img
                         src={planner[day][meal].strMealThumb}
                         alt={planner[day][meal].strMeal}
                         onClick={() => openMealInfo(planner[day][meal], day, meal)}
                         style={{ cursor: "pointer" }}
                         title="Click to view details"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/50x50?text=🍽️";
+                        }}
                       />
-                      <span className="meal-name">
-                        {planner[day][meal].strMeal}
-                      </span>
-                      <button
-                        className="remove-btn"
-                        onClick={() => removeMeal(day, meal)}
-                      >
+                      <span className="meal-name">{planner[day][meal].strMeal}</span>
+                      <button className="remove-btn" onClick={() => removeMeal(day, meal)}>
                         ✕
                       </button>
                     </div>
@@ -888,10 +885,7 @@ export default function MealPlanner() {
                     <span className="not-set">Not set</span>
                   )}
 
-                  <button
-                    className="add-btn"
-                    onClick={() => assignMeal(day, meal)}
-                  >
+                  <button className="add-btn" onClick={() => assignMeal(day, meal)}>
                     {planner[day]?.[meal] ? "Change" : "Add"}
                   </button>
                 </div>

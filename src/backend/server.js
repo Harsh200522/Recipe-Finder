@@ -4,12 +4,19 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from './firebase.js';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import path from "path";
+import { fileURLToPath } from "url";
 import {
     checkAndSendMealPlannerReminders,
     initMealPlannerReminderService,
 } from "./mealPlannerReminderService.js";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({
+  path: path.resolve(__dirname, "..", "..", ".env"),
+  quiet: true,
+});
 
 const app = express();
 
