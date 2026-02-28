@@ -4,7 +4,6 @@ import nodemailer from "nodemailer";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { db } from "../config/firbase.js";
 
-// ✅ Simple dotenv — Vercel injects env vars automatically, this is just for local dev
 dotenv.config();
 
 /* ==============================
@@ -23,11 +22,10 @@ const REMINDER_LEAD_MINUTES = 30;
    EMAIL TRANSPORTER
 ============================== */
 
-// ✅ Create transporter fresh each call — important for serverless (no persistent state)
 const createTransporter = () => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     throw new Error(
-      "EMAIL_USER or EMAIL_PASS is missing. Please set them in Vercel environment variables."
+      "EMAIL_USER or EMAIL_PASS is missing. Please set them in environment variables."
     );
   }
 
@@ -177,7 +175,6 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
     },
   };
 
-  // ✅ Create transporter once per invocation (serverless-safe)
   let transporter;
   try {
     transporter = createTransporter();
@@ -189,7 +186,6 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
     return report;
   }
 
-  // ✅ Fetch all MealPlanner documents
   let plannerSnap;
   try {
     plannerSnap = await getDocs(collection(db, "MealPlanner"));
@@ -330,4 +326,29 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 
   console.log("📊 Run complete:", report.summary);
   return report;
+};
+
+/* ==============================
+   AUTO RUNNER (for Railway / Express server)
+============================== */
+
+// ✅ Called from server.js — runs reminder check every 60 seconds continuously
+export const initMealPlannerReminderService = () => {
+  let isRunning = false;
+
+  const run = async () => {
+    if (isRunning) return;
+    isRunning = true;
+    try {
+      await checkAndSendMealPlannerReminders();
+    } catch (error) {
+      console.error("❌ Reminder error:", error);
+    } finally {
+      isRunning = false;
+    }
+  };
+
+  setTimeout(run, 10000);
+  setInterval(run, 60 * 1000);
+  console.log("🚀 Reminder service started. Checking every 60 seconds.");
 };
