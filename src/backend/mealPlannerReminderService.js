@@ -1,6 +1,6 @@
 // src/services/reminderService.js
 import dotenv from "dotenv";
-import nodemailer from "nodemailer";
+import * as SibApiV3Sdk from "@getbrevo/brevo";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { db } from "../config/firbase.js";
 
@@ -19,23 +19,20 @@ const DEFAULT_REMINDER_TIMES = {
 const REMINDER_LEAD_MINUTES = 30;
 
 /* ==============================
-   EMAIL TRANSPORTER
+   BREVO EMAIL CLIENT
 ============================== */
 
-const createTransporter = () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error(
-      "EMAIL_USER or EMAIL_PASS is missing. Please set them in environment variables."
-    );
+const createBrevoClient = () => {
+  if (!process.env.BREVO_API_KEY) {
+    throw new Error("BREVO_API_KEY is missing. Please set it in environment variables.");
+  }
+  if (!process.env.EMAIL_FROM) {
+    throw new Error("EMAIL_FROM is missing. Please set it in environment variables.");
   }
 
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+  apiInstance.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
+  return apiInstance;
 };
 
 /* ==============================
@@ -117,15 +114,6 @@ const getUserEmail = async (uid, plannerDocData) => {
 const getMealName = (meal) =>
   meal?.strMeal || meal?.title || meal?.name || "Planned Recipe";
 
-const summarizeMailError = (error) => ({
-  name: error?.name,
-  message: error?.message,
-  code: error?.code,
-  responseCode: error?.responseCode,
-  command: error?.command,
-  response: error?.response,
-});
-
 /* ==============================
    EMAIL TEMPLATE
 ============================== */
@@ -175,13 +163,12 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
     },
   };
 
-  let transporter;
+  let brevoClient;
   try {
-    transporter = createTransporter();
-    await transporter.verify();
-    console.log("✅ Email server ready");
+    brevoClient = createBrevoClient();
+    console.log("✅ Brevo email client ready");
   } catch (err) {
-    console.error("❌ Email transporter failed:", err.message);
+    console.error("❌ Brevo client failed:", err.message);
     report.summary.errors++;
     return report;
   }
@@ -284,20 +271,25 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
           console.log("📤 Sending:", { uid, to: toEmail, mealType, mealTime, reminderTime, timeZone });
         }
 
-        const info = await transporter.sendMail({
-          from: `"Recipe Finder" <${process.env.EMAIL_USER}>`,
-          to: toEmail,
+        // ✅ Brevo send email
+        const sendSmtpEmail = {
+          sender: {
+            email: process.env.EMAIL_FROM,
+            name: "Recipe Finder",
+          },
+          to: [{ email: toEmail }],
           subject: `🍳 Time to cook: ${mealName}`,
-          text: `Reminder: ${mealType} (${mealName}) at ${mealTime}.`,
-          html: buildReminderHtml({
+          textContent: `Reminder: ${mealType} (${mealName}) at ${mealTime}.`,
+          htmlContent: buildReminderHtml({
             mealName,
             mealType,
             weekday,
             timeLabel: `${reminderTime} (meal at ${mealTime})`,
           }),
-        });
+        };
 
-        console.log(`✅ Email sent to ${toEmail} | ${mealType} | ${info.messageId}`);
+        const info = await brevoClient.sendTransacEmail(sendSmtpEmail);
+        console.log(`✅ Email sent to ${toEmail} | ${mealType} | messageId: ${info?.messageId || "N/A"}`);
 
         await setDoc(logRef, {
           uid,
@@ -315,7 +307,7 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
           uid,
           to: toEmail,
           mealType,
-          error: summarizeMailError(error),
+          error: error?.message,
         });
         report.summary.errors++;
       }
@@ -329,10 +321,9 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 };
 
 /* ==============================
-   AUTO RUNNER (for Railway / Express server)
+   AUTO RUNNER
 ============================== */
 
-// ✅ Called from server.js — runs reminder check every 60 seconds continuously
 export const initMealPlannerReminderService = () => {
   let isRunning = false;
 
