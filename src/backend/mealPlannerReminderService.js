@@ -1,6 +1,7 @@
 // src/services/reminderService.js
+
 import dotenv from "dotenv";
-import * as SibApiV3Sdk from "@getbrevo/brevo";
+import Brevo from "@getbrevo/brevo"; // ✅ FIXED IMPORT
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { db } from "../config/firbase.js";
 
@@ -19,19 +20,25 @@ const DEFAULT_REMINDER_TIMES = {
 const REMINDER_LEAD_MINUTES = 30;
 
 /* ==============================
-   BREVO EMAIL CLIENT
+   BREVO EMAIL CLIENT (FIXED)
 ============================== */
 
 const createBrevoClient = () => {
   if (!process.env.BREVO_API_KEY) {
     throw new Error("BREVO_API_KEY is missing. Please set it in environment variables.");
   }
+
   if (!process.env.EMAIL_FROM) {
     throw new Error("EMAIL_FROM is missing. Please set it in environment variables.");
   }
 
-  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-  apiInstance.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
+  // ✅ Correct way for new Brevo SDK
+  const defaultClient = Brevo.ApiClient.instance;
+  const apiKey = defaultClient.authentications["api-key"];
+  apiKey.apiKey = process.env.BREVO_API_KEY;
+
+  const apiInstance = new Brevo.TransactionalEmailsApi();
+
   return apiInstance;
 };
 
@@ -203,16 +210,7 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
     const { weekday, hhmm, dateKey } = getNowForTimeZone(timeZone);
     const dayMeals = planner?.[weekday];
 
-    const userEntry = { uid, timeZone, weekday, nowHHmm: hhmm, reminderEnabled };
-
-    if (!reminderEnabled) {
-      if (debug) console.log(`⏭️ Reminders disabled for uid: ${uid}`);
-      report.summary.skipped++;
-      continue;
-    }
-
-    if (!dayMeals) {
-      if (debug) console.log(`⏭️ No meals planned for ${weekday} — uid: ${uid}`);
+    if (!reminderEnabled || !dayMeals) {
       report.summary.skipped++;
       continue;
     }
@@ -237,41 +235,23 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
       const logId = `${uid}_${dateKey}_${mealType}`;
       const logRef = doc(db, "mealReminderLogs", logId);
 
-      let logSnap;
-      try {
-        logSnap = await getDoc(logRef);
-      } catch (error) {
-        console.error(`❌ Failed to check log for ${logId}:`, error.message);
-        report.summary.errors++;
-        continue;
-      }
-
+      const logSnap = await getDoc(logRef);
       if (!force && logSnap.exists()) {
-        if (debug) console.log(`⏭️ Already sent: ${logId}`);
         report.summary.skipped++;
         continue;
       }
 
       const toEmail = await getUserEmail(uid, data);
       if (!toEmail) {
-        console.warn(`⚠️ No email for uid: ${uid} — skipping ${mealType}`);
         report.summary.skipped++;
         continue;
       }
 
       const mealName = getMealName(plannedMeal);
 
-      if (dryRun) {
-        console.log(`🧪 DryRun: would send to ${toEmail} | ${mealType} | ${mealName}`);
-        continue;
-      }
+      if (dryRun) continue;
 
       try {
-        if (debug) {
-          console.log("📤 Sending:", { uid, to: toEmail, mealType, mealTime, reminderTime, timeZone });
-        }
-
-        // ✅ Brevo send email
         const sendSmtpEmail = {
           sender: {
             email: process.env.EMAIL_FROM,
@@ -289,7 +269,12 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
         };
 
         const info = await brevoClient.sendTransacEmail(sendSmtpEmail);
-        console.log(`✅ Email sent to ${toEmail} | ${mealType} | messageId: ${info?.messageId || "N/A"}`);
+
+        console.log(
+          `✅ Email sent to ${toEmail} | ${mealType} | messageId: ${
+            info?.body?.messageId || "N/A"
+          }`
+        );
 
         await setDoc(logRef, {
           uid,
@@ -303,17 +288,10 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 
         report.summary.sent++;
       } catch (error) {
-        console.error("❌ Send failed:", {
-          uid,
-          to: toEmail,
-          mealType,
-          error: error?.message,
-        });
+        console.error("❌ Send failed:", error?.message);
         report.summary.errors++;
       }
     }
-
-    if (debug) report.users.push(userEntry);
   }
 
   console.log("📊 Run complete:", report.summary);
@@ -341,5 +319,6 @@ export const initMealPlannerReminderService = () => {
 
   setTimeout(run, 10000);
   setInterval(run, 60 * 1000);
+
   console.log("🚀 Reminder service started. Checking every 60 seconds.");
 };
