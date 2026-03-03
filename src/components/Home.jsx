@@ -11,6 +11,7 @@ import {
   FaRegThumbsDown,
   FaHeart,
   FaRegHeart,
+  FaShoppingCart,
 } from "react-icons/fa";
 
 // ✅ Firebase
@@ -33,6 +34,7 @@ import {
   handleUnlike as applyUnlikeReaction,
   subscribeRecipeReactions,
 } from "../services/recipeReactions";
+import { openAmazonIndiaIngredientsSearch } from "../utils/amazonAffiliate";
 
 
 
@@ -1356,6 +1358,15 @@ export default function RecipeFinder() {
                       : <FaRegHeart style={{ fontSize: "20px" }} />}
                   </button>
 
+                  <button
+                    className="cart-btn"
+                    onClick={() => openAmazonIndiaIngredientsSearch(meal.strMeal || meal.strDrink)}
+                    title="Order Ingredients"
+                    aria-label="Order Ingredients"
+                  >
+                    <FaShoppingCart style={{ fontSize: "18px" }} />
+                  </button>
+
                   {meal.isChefRecipe && (
                     <button
                       className="comment-btn"
@@ -1541,6 +1552,15 @@ export default function RecipeFinder() {
                                   ? <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
                                   : <FaRegHeart style={{ fontSize: "20px" }} />}
                               </button>
+
+                              <button
+                                className="cart-btn"
+                                onClick={() => openAmazonIndiaIngredientsSearch(meal.strMeal || meal.strDrink)}
+                                title="Order Ingredients"
+                                aria-label="Order Ingredients"
+                              >
+                                <FaShoppingCart style={{ fontSize: "18px" }} />
+                              </button>
                             </div>
 
                             <button
@@ -1631,6 +1651,15 @@ export default function RecipeFinder() {
                                 {favorite
                                   ? <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
                                   : <FaRegHeart style={{ fontSize: "20px" }} />}
+                              </button>
+
+                              <button
+                                className="cart-btn"
+                                onClick={() => openAmazonIndiaIngredientsSearch(meal.strMeal || meal.strDrink)}
+                                title="Order Ingredients"
+                                aria-label="Order Ingredients"
+                              >
+                                <FaShoppingCart style={{ fontSize: "18px" }} />
                               </button>
                             </div>
 

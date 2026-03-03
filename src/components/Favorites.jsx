@@ -22,6 +22,7 @@ import {
   FaHeart,
   FaRegHeart,
   FaComment,
+  FaShoppingCart,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 
@@ -31,6 +32,7 @@ import {
   handleUnlike as applyUnlikeReaction,
   subscribeRecipeReactions,
 } from "../services/recipeReactions";
+import { openAmazonIndiaIngredientsSearch } from "../utils/amazonAffiliate";
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState([]);
@@ -651,6 +653,15 @@ export default function Favorites() {
                     ) : (
                       <FaRegHeart style={{ fontSize: "20px" }} />
                     )}
+                  </button>
+
+                  <button
+                    className="cart-btn"
+                    onClick={() => openAmazonIndiaIngredientsSearch(meal.title)}
+                    title="Order Ingredients"
+                    aria-label="Order Ingredients"
+                  >
+                    <FaShoppingCart style={{ fontSize: "18px" }} />
                   </button>
 
                   {meal.isChefRecipe && (
