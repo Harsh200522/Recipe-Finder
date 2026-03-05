@@ -25,6 +25,7 @@ import {
   FaShoppingCart,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
+import GoogleAd from "./GoogleAd";
 
 import "../style/favorites.css";
 import {
@@ -38,6 +39,7 @@ export default function Favorites() {
   const [favorites, setFavorites] = useState([]);
   const [recipeStates, setRecipeStates] = useState({});
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [shoppingRecipe, setShoppingRecipe] = useState(null);
   const [videoRecipe, setVideoRecipe] = useState(null);
   const [showComments, setShowComments] = useState({});
   const [commentInputs, setCommentInputs] = useState({});
@@ -373,6 +375,63 @@ export default function Favorites() {
   };
 
   const closeIngredients = () => setSelectedRecipe(null);
+  const getIngredientNames = (meal) => {
+    if (Array.isArray(meal?.ingredients) && meal.ingredients.length > 0) {
+      return meal.ingredients
+        .map((item) => {
+          const text = String(item || "").trim();
+          if (!text) return "";
+          return text.split(" - ")[0].trim();
+        })
+        .filter(Boolean);
+    }
+
+    const names = [];
+    for (let i = 1; i <= 20; i++) {
+      const ing = (meal?.[`strIngredient${i}`] || "").trim();
+      if (ing) names.push(ing);
+    }
+    return names;
+  };
+
+  const openShoppingIngredients = async (meal) => {
+    let recipeForShopping = meal;
+    let ingredientNames = getIngredientNames(recipeForShopping);
+
+    if (!ingredientNames.length && meal?.id && !meal?.isChefRecipe) {
+      try {
+        const res = await fetch(
+          `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${meal.id}`
+        );
+        const data = await res.json();
+        const mealData = data?.meals?.[0];
+
+        if (mealData) {
+          recipeForShopping = mealData;
+          ingredientNames = getIngredientNames(recipeForShopping);
+        }
+      } catch (error) {
+        console.error("Failed to load ingredients for shopping:", error);
+      }
+    }
+
+    if (!ingredientNames.length) {
+      Swal.fire({
+        icon: "info",
+        title: "Ingredients Not Available",
+        text: "No ingredient list found for this recipe.",
+      });
+      return;
+    }
+
+    setShoppingRecipe(recipeForShopping);
+  };
+
+  const closeShoppingIngredients = () => setShoppingRecipe(null);
+
+  const handleIngredientBuyClick = (ingredientName) => {
+    openAmazonIndiaIngredientsSearch(ingredientName);
+  };
 
   /* =====================================================
      VIDEO MODAL
@@ -581,7 +640,7 @@ export default function Favorites() {
         <p>No favorites yet. Go to Recipe Finder and add some ❤️</p>
       ) : (
         <div className="favorites-grid">
-          {favorites.map((meal) => {
+          {favorites.map((meal, index) => {
             const id = meal.id;
             const comments = meal.isChefRecipe
               ? chefComments[id] || meal.comments || []
@@ -591,6 +650,7 @@ export default function Favorites() {
               recipeStates[id] || {};
 
             return (
+              <React.Fragment key={`favorite-item-${id}-${index}`}>
               <div key={id} className="recipe-card">
                 <div className={`food-mark ${isVeg(meal) ? "veg" : "nonveg"}`}>
                   <div className="dot"></div>
@@ -657,7 +717,7 @@ export default function Favorites() {
 
                   <button
                     className="cart-btn"
-                    onClick={() => openAmazonIndiaIngredientsSearch(meal.title)}
+                    onClick={() => openShoppingIngredients(meal)}
                     title="Order Ingredients"
                     aria-label="Order Ingredients"
                   >
@@ -766,10 +826,19 @@ export default function Favorites() {
                   </button>
                 )}
               </div>
+              {(index + 1) % 6 === 0 && (
+                <div style={{ gridColumn: "1 / -1", width: "100%" }}>
+                  <GoogleAd />
+                </div>
+              )}
+              </React.Fragment>
             );
           })}
         </div>
       )}
+      <div style={{ marginTop: "30px" }}>
+        <GoogleAd />
+      </div>
 
       {selectedRecipe && (
         <div className="modal-overlay">
@@ -790,6 +859,36 @@ export default function Favorites() {
               ) : (
                 <li>No ingredients available</li>
               )}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {shoppingRecipe && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button onClick={closeShoppingIngredients} className="close-button">
+              ✖
+            </button>
+
+            <h2 className="modal-title">
+              {shoppingRecipe.title || shoppingRecipe.strMeal || shoppingRecipe.strDrink}
+            </h2>
+
+            <h3 className="modal-heading">Select ingredient to buy:</h3>
+
+            <ul className="modal-list amazon-ingredient-list">
+              {getIngredientNames(shoppingRecipe).map((ing, i) => (
+                <li key={`${ing}-${i}`}>
+                  <button
+                    type="button"
+                    className="ingredient-link-button"
+                    onClick={() => handleIngredientBuyClick(ing)}
+                  >
+                    {ing}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
