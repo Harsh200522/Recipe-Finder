@@ -159,22 +159,136 @@ body {
 
 .ai-cook-input-row {
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  flex-wrap: nowrap;
   padding: 10px 12px 14px;
   border-top: 1px solid #e5e7eb;
   background: #fff;
 }
 
 .ai-cook-input {
-  flex: 1;
+  width: 100%;
+  min-height: 88px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 0.95rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.ai-cook-input:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+.ai-cook-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.ai-cook-select {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  border: none;
+  border-radius: 8px;
+  padding: 0 36px 0 34px;
+  font-size: 0.95rem;
+  line-height: 1;
+  background: transparent;
+  color: #e5e7eb;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+
+.ai-cook-select--icon-only {
+  font-size: 0;
+  line-height: 0;
+  text-indent: -9999px;
+}
+
+.ai-cook-select--icon-only option {
+  font-size: 14px;
+  line-height: 1.3;
+  text-indent: 0;
+  color: #111827;
+}
+
+.ai-cook-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid #374151;
+  background: #1f2937;
+  border-radius: 8px;
+  height: 40px;
+  width: 70px;
+  flex: 0 0 auto;
+}
+
+.ai-cook-select-wrap::after {
+  content: attr(data-purpose);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  background: #111827;
+  color: #f9fafb;
+  border-radius: 6px;
+  padding: 4px 7px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(2px);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 8;
+}
+
+.ai-cook-select-wrap:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ai-cook-select-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.84rem;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.ai-cook-select-caret {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.ai-cook-select-wrap--mood {
+  width: 84px;
+  min-width: 84px;
 }
 
 .ai-cook-button {
+  flex: 1 1 100%;
+  width: 100%;
+  min-height: 40px;
+  white-space: nowrap;
+  margin-left: 0;
   border: none;
   background: #2563eb;
   color: #fff;
@@ -285,6 +399,47 @@ body {
   flex: 0 0 auto;
 }
 
+.ai-cook-toggle-btn {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 4px 0 8px;
+}
+
+.ai-cook-nutrition {
+  margin-bottom: 8px;
+}
+
+.ai-cook-nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ai-cook-nutri-pill {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  border: 1px solid #d1fae5;
+  background: #ecfdf5;
+  color: #065f46;
+  padding: 6px 8px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.ai-cook-nutri-pill b {
+  color: #047857;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
 .ai-cook-drawer .ai-cook-result-top {
   flex-direction: column;
 }
@@ -341,6 +496,41 @@ body {
   .ai-cook-launcher {
     right: 14px;
     bottom: 14px;
+    padding: 10px 14px;
+    font-size: 0.92rem;
+  }
+
+  .ai-cook-drawer {
+    width: min(88vw, 360px);
+    max-width: 88vw;
+    border-left: 1px solid #e5e7eb;
+    box-shadow: -10px 0 26px rgba(15, 23, 42, 0.2);
+  }
+
+  .ai-cook-drawer-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: inherit;
+    padding: 12px 12px 8px;
+  }
+
+  .ai-cook-chat-feed {
+    padding: 10px 10px 8px;
+  }
+
+  .ai-chat-bubble {
+    max-width: 88%;
+  }
+
+  .ai-chat-bubble.user {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .ai-chat-bubble.assistant {
+    margin-right: auto;
+    margin-left: 0;
   }
 
   .ai-cook-result-top {
@@ -355,7 +545,65 @@ body {
   }
 
   .ai-cook-input-row {
+    gap: 8px;
+    padding: 10px 10px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .ai-cook-input {
+    width: 94%;
+    min-height: 76px;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    margin: 0 auto;
+  }
+
+  .ai-cook-action-row {
     flex-wrap: wrap;
+    overflow: visible;
+    padding-bottom: 0;
+    gap: 6px;
+  }
+
+  .ai-cook-nutrition-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-cook-select-wrap,
+  .ai-cook-select-wrap--mood {
+    flex: 1 1 calc(20% - 6px);
+    width: auto;
+    min-width: 52px;
+    max-width: 64px;
+    height: 34px;
+  }
+
+  .ai-cook-select {
+    padding: 0 22px 0 22px;
+  }
+
+  .ai-cook-select-icon {
+    left: 8px;
+    font-size: 0.72rem;
+  }
+
+  .ai-cook-select-caret {
+    right: 8px;
+    font-size: 0.62rem;
+  }
+
+  .ai-cook-button {
+    flex: 1 0 100%;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .ai-cook-select-wrap--mood {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ai-cook-select-wrap::after {
+    display: none;
   }
 }
 

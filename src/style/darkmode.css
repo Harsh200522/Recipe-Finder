@@ -465,6 +465,12 @@ body.dark-mode .ai-cook-input {
   color: #f1f5f9;
 }
 
+body.dark-mode .ai-cook-select {
+  background: #23232a;
+  border: 1px solid #3a3a44;
+  color: #f1f5f9;
+}
+
 body.dark-mode .ai-cook-input-row {
   border-top: 1px solid #2f3544;
   background: #151821;
@@ -486,8 +492,36 @@ body.dark-mode .ai-chat-bubble.assistant {
 }
 
 body.dark-mode .ai-cook-input {
-  color: #e5e7eb;
+  background: #23232a !important;
+  color: #e5e7eb !important;
   caret-color: #93c5fd;
+}
+
+body.dark-mode .ai-cook-input:focus {
+  outline: none;
+  color: #ffffff !important;
+  border-color: #60a5fa !important;
+  background: #1b2230 !important;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+}
+
+body.dark-mode .ai-cook-input:focus::placeholder {
+  color: #94a3b8;
+}
+
+body.dark-mode .ai-cook-input:active,
+body.dark-mode .ai-cook-input:hover {
+  background: #1f2634 !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .ai-cook-input:-webkit-autofill,
+body.dark-mode .ai-cook-input:-webkit-autofill:hover,
+body.dark-mode .ai-cook-input:-webkit-autofill:focus,
+body.dark-mode .ai-cook-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+  box-shadow: 0 0 0 1000px #1b2230 inset !important;
 }
 
 body.dark-mode .ai-cook-button {

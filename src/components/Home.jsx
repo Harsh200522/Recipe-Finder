@@ -13,6 +13,12 @@ import {
   FaHeart,
   FaRegHeart,
   FaShoppingCart,
+  FaLeaf,
+  FaClock,
+  FaGlobeAmericas,
+  FaFire,
+  FaBrain,
+  FaChevronDown,
 } from "react-icons/fa";
 
 // ✅ Firebase
@@ -53,6 +59,12 @@ export default function RecipeFinder() {
   const [aiCookMessages, setAiCookMessages] = useState([]);
   const [aiCookLoading, setAiCookLoading] = useState(false);
   const [aiCookError, setAiCookError] = useState("");
+  const [aiCookDiet, setAiCookDiet] = useState("any");
+  const [aiCookTimeFilter, setAiCookTimeFilter] = useState("any");
+  const [aiCookCuisine, setAiCookCuisine] = useState("any");
+  const [aiCookDifficulty, setAiCookDifficulty] = useState("any");
+  const [aiCookMood, setAiCookMood] = useState("none");
+  const [aiCookShowNutrition, setAiCookShowNutrition] = useState(false);
   const aiCookFeedRef = useRef(null);
   const aiCookEndpoint =
     import.meta.env.VITE_AI_COOK_ENDPOINT ||
@@ -708,17 +720,47 @@ export default function RecipeFinder() {
       setAiCookError("Please enter ingredients first.");
       return;
     }
+    const timeFilterLabelMap = {
+      under15: "Under 15 mins",
+      under30: "Under 30 mins",
+      under60: "Under 1 hour",
+    };
+    const moodLabelMap = {
+      lazy: "Lazy",
+      gym: "Gym",
+      romantic: "Romantic",
+      party: "Party",
+    };
+
+    const stylePreferences = [];
+    if (aiCookTimeFilter !== "any") {
+      stylePreferences.push(`Cooking time target: ${timeFilterLabelMap[aiCookTimeFilter]}.`);
+    }
+    if (aiCookCuisine !== "any") {
+      stylePreferences.push(`Preferred cuisine: ${aiCookCuisine}.`);
+    }
+    if (aiCookDifficulty !== "any") {
+      stylePreferences.push(`Difficulty level: ${aiCookDifficulty}.`);
+    }
+    if (aiCookMood !== "none") {
+      stylePreferences.push(`Mood-based style: ${moodLabelMap[aiCookMood]}.`);
+    }
+    stylePreferences.push("Include a simple nutrition estimate with calories, protein, carbs, and fat.");
+    const styleInstruction = stylePreferences.join(" ");
+    const dietLabel = aiCookDiet === "nonveg" ? "Non-Veg" : aiCookDiet === "veg" ? "Veg" : "Any";
 
     setAiCookMessages((prev) => [
       ...prev,
-      { id: `u_${Date.now()}`, role: "user", text: ingredients },
+      { id: `u_${Date.now()}`, role: "user", text: `${ingredients} (${dietLabel})` },
     ]);
     setAiCookLoading(true);
     setAiCookError("");
     setPantryInput("");
 
     try {
-      const data = await requestAiCookRecipe(ingredients);
+      const data = await requestAiCookRecipe(ingredients, styleInstruction, {
+        dietPreference: aiCookDiet,
+      });
 
       setAiCookMessages((prev) => [
         ...prev,
@@ -737,7 +779,7 @@ export default function RecipeFinder() {
     }
   };
 
-  const requestAiCookRecipe = async (ingredients, styleInstruction = "") => {
+  const requestAiCookRecipe = async (ingredients, styleInstruction = "", options = {}) => {
     const styledIngredients = styleInstruction
       ? `${ingredients}\n\nStyle Preference: ${styleInstruction}`
       : ingredients;
@@ -745,7 +787,10 @@ export default function RecipeFinder() {
     const res = await fetch(aiCookEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ingredients: styledIngredients }),
+      body: JSON.stringify({
+        ingredients: styledIngredients,
+        dietPreference: options.dietPreference || "any",
+      }),
     });
 
     const raw = await res.text();
@@ -771,7 +816,22 @@ export default function RecipeFinder() {
     if (!data) {
       throw new Error("Backend returned empty/non-JSON response.");
     }
-    return data;
+    const nutrition = data.nutrition || data.nutritionInfo || {};
+    const normalizedCalories = data.calories || nutrition.calories || "Not available";
+    const normalizedProtein = data.protein || nutrition.protein || "Not available";
+    const normalizedCarbs = data.carbs || nutrition.carbs || "Not available";
+    const normalizedFat = data.fat || nutrition.fat || "Not available";
+
+    return {
+      ...data,
+      calories: normalizedCalories,
+      nutrition: {
+        calories: normalizedCalories,
+        protein: normalizedProtein,
+        carbs: normalizedCarbs,
+        fat: normalizedFat,
+      },
+    };
   };
 
   useEffect(() => {
@@ -1454,6 +1514,31 @@ export default function RecipeFinder() {
                           <b>Calories:</b> {msg.recipe?.calories || "Not available"}
                         </span>
                       </div>
+                      <button
+                        type="button"
+                        className="ai-cook-toggle-btn"
+                        onClick={() => setAiCookShowNutrition((prev) => !prev)}
+                      >
+                        {aiCookShowNutrition ? "Hide Nutrition" : "Show Nutrition"}
+                      </button>
+                      {aiCookShowNutrition && (
+                        <div className="ai-cook-nutrition">
+                          <div className="ai-cook-nutrition-grid">
+                            <span className="ai-cook-nutri-pill">
+                              <b>Calories:</b> {msg.recipe?.nutrition?.calories || "Not available"}
+                            </span>
+                            <span className="ai-cook-nutri-pill">
+                              <b>Protein:</b> {msg.recipe?.nutrition?.protein || "Not available"}
+                            </span>
+                            <span className="ai-cook-nutri-pill">
+                              <b>Carbs:</b> {msg.recipe?.nutrition?.carbs || "Not available"}
+                            </span>
+                            <span className="ai-cook-nutri-pill">
+                              <b>Fat:</b> {msg.recipe?.nutrition?.fat || "Not available"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                       {msg.recipe?.youtubeUrl && (
                         <p>
                           <b>YouTube Suggestion:</b>{" "}
@@ -1495,13 +1580,95 @@ export default function RecipeFinder() {
             placeholder="I have onion, potato, and cheese"
             className="ai-cook-input"
           />
-          <button
-            onClick={handleAiCookWithIngredients}
-            className="ai-cook-button"
-            disabled={aiCookLoading}
-          >
-            {aiCookLoading ? "Generating..." : "Generate Recipe"}
-          </button>
+          <div className="ai-cook-action-row">
+            <label className="ai-cook-select-wrap" data-purpose="Diet Filter">
+              <FaLeaf className="ai-cook-select-icon" />
+              <select
+                value={aiCookDiet}
+                onChange={(e) => setAiCookDiet(e.target.value)}
+                className="ai-cook-select ai-cook-select--icon-only"
+                aria-label="Diet filter"
+              >
+                <option value="any">Any</option>
+                <option value="veg">Veg</option>
+                <option value="nonveg">Non-Veg</option>
+              </select>
+              <FaChevronDown className="ai-cook-select-caret" />
+            </label>
+            <label className="ai-cook-select-wrap" data-purpose="Cooking Time Filter">
+              <FaClock className="ai-cook-select-icon" />
+              <select
+                value={aiCookTimeFilter}
+                onChange={(e) => setAiCookTimeFilter(e.target.value)}
+                className="ai-cook-select ai-cook-select--icon-only"
+                aria-label="Cooking time filter"
+              >
+                <option value="any">Any Time</option>
+                <option value="under15">Under 15 mins</option>
+                <option value="under30">Under 30 mins</option>
+                <option value="under60">Under 1 hour</option>
+              </select>
+              <FaChevronDown className="ai-cook-select-caret" />
+            </label>
+            <label className="ai-cook-select-wrap" data-purpose="Cuisine Filter">
+              <FaGlobeAmericas className="ai-cook-select-icon" />
+              <select
+                value={aiCookCuisine}
+                onChange={(e) => setAiCookCuisine(e.target.value)}
+                className="ai-cook-select ai-cook-select--icon-only"
+                aria-label="Cuisine filter"
+              >
+                <option value="any">Any Cuisine</option>
+                <option value="Indian">Indian</option>
+                <option value="Italian">Italian</option>
+                <option value="Chinese">Chinese</option>
+                <option value="Mexican">Mexican</option>
+                <option value="American">American</option>
+              </select>
+              <FaChevronDown className="ai-cook-select-caret" />
+            </label>
+            <label className="ai-cook-select-wrap" data-purpose="Difficulty Filter">
+              <FaFire className="ai-cook-select-icon" />
+              <select
+                value={aiCookDifficulty}
+                onChange={(e) => setAiCookDifficulty(e.target.value)}
+                className="ai-cook-select ai-cook-select--icon-only"
+                aria-label="Difficulty filter"
+              >
+                <option value="any">Any Difficulty</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+              <FaChevronDown className="ai-cook-select-caret" />
+            </label>
+            <label
+              className="ai-cook-select-wrap ai-cook-select-wrap--mood"
+              data-purpose="Mood-Based Suggestion"
+            >
+              <FaBrain className="ai-cook-select-icon" />
+              <select
+                value={aiCookMood}
+                onChange={(e) => setAiCookMood(e.target.value)}
+                className="ai-cook-select ai-cook-select--icon-only"
+                aria-label="Mood suggestion"
+              >
+                <option value="none">Mood: None</option>
+                <option value="lazy">Lazy</option>
+                <option value="gym">Gym</option>
+                <option value="romantic">Romantic</option>
+                <option value="party">Party</option>
+              </select>
+              <FaChevronDown className="ai-cook-select-caret" />
+            </label>
+            <button
+              onClick={handleAiCookWithIngredients}
+              className="ai-cook-button"
+              disabled={aiCookLoading}
+            >
+              {aiCookLoading ? "Generating..." : "Generate Recipe"}
+            </button>
+          </div>
         </div>
       </aside>
 
