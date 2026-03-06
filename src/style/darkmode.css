@@ -422,6 +422,157 @@ body.dark-mode .search-button:hover {
   transform: translateY(-2px);
 }
 
+body.dark-mode .ai-cook-card {
+  background: #1e1e26;
+  border: 1px solid #2f2f3a;
+}
+
+body.dark-mode .ai-cook-launcher {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.35);
+}
+
+body.dark-mode .ai-cook-overlay {
+  background: rgba(2, 6, 23, 0.6);
+}
+
+body.dark-mode .ai-cook-drawer {
+  background: #151821;
+  border-left: 1px solid #2f3544;
+}
+
+body.dark-mode .ai-cook-drawer-header {
+  border-bottom: 1px solid #2f3544;
+}
+
+body.dark-mode .ai-cook-close {
+  background: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+body.dark-mode .ai-cook-title {
+  color: #f8fafc;
+}
+
+body.dark-mode .ai-cook-subtitle {
+  color: #cbd5e1;
+}
+
+body.dark-mode .ai-cook-input {
+  background: #23232a;
+  border: 1px solid #3a3a44;
+  color: #f1f5f9;
+}
+
+body.dark-mode .ai-cook-select {
+  background: #23232a;
+  border: 1px solid #3a3a44;
+  color: #f1f5f9;
+}
+
+body.dark-mode .ai-cook-input-row {
+  border-top: 1px solid #2f3544;
+  background: #151821;
+}
+
+body.dark-mode .ai-chat-bubble.user {
+  background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
+  border-color: #3b82f6;
+  color: #f8fafc;
+}
+
+body.dark-mode .ai-chat-bubble.user p {
+  color: #f8fafc !important;
+}
+
+body.dark-mode .ai-chat-bubble.assistant {
+  background: #111827;
+  border-color: #374151;
+}
+
+body.dark-mode .ai-cook-input {
+  background: #23232a !important;
+  color: #e5e7eb !important;
+  caret-color: #93c5fd;
+}
+
+body.dark-mode .ai-cook-input:focus {
+  outline: none;
+  color: #ffffff !important;
+  border-color: #60a5fa !important;
+  background: #1b2230 !important;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+}
+
+body.dark-mode .ai-cook-input:focus::placeholder {
+  color: #94a3b8;
+}
+
+body.dark-mode .ai-cook-input:active,
+body.dark-mode .ai-cook-input:hover {
+  background: #1f2634 !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .ai-cook-input:-webkit-autofill,
+body.dark-mode .ai-cook-input:-webkit-autofill:hover,
+body.dark-mode .ai-cook-input:-webkit-autofill:focus,
+body.dark-mode .ai-cook-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+  box-shadow: 0 0 0 1000px #1b2230 inset !important;
+}
+
+body.dark-mode .ai-cook-button {
+  background: #3b82f6;
+}
+
+body.dark-mode .ai-cook-result {
+  border-top: 1px solid #374151;
+}
+
+body.dark-mode .ai-cook-result p,
+body.dark-mode .ai-cook-result li {
+  color: #e2e8f0;
+}
+
+body.dark-mode .ai-cook-steps li:hover {
+  color: #f8fafc;
+}
+
+body.dark-mode .ai-cook-result p b {
+  color: #5eead4;
+}
+
+body.dark-mode .ai-cook-result-image {
+  border-color: #374151;
+}
+
+body.dark-mode .ai-cook-meta-pill {
+  background: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+body.dark-mode .ai-cook-meta-pill b {
+  color: #93c5fd;
+}
+
+body.dark-mode .ai-cook-steps > b {
+  color: #fbbf24;
+}
+
+body.dark-mode .ai-cook-result a {
+  color: #eaf2ff;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: 1px solid #3b82f6;
+}
+
+body.dark-mode .ai-cook-result a:hover {
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.35);
+}
+
 /* =====================================================
    RECIPE CARDS
 ===================================================== */
@@ -621,6 +772,25 @@ body.dark-mode .modal-heading {
 body.dark-mode .modal-list li {
   color: #e5e7eb !important; 
   font-weight: 500;
+}
+
+body.dark-mode .ingredient-link-button {
+  color: #93c5fd;
+  background-color: transparent;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+body.dark-mode .ingredient-link-button:hover {
+  color: #e2e8f0;
+  background-color: #0f172a;
+  transform: scale(1.02);
+}
+
+body.dark-mode .ingredient-link-button:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
 }
 body.dark-mode .loader-text{
   color: #e5e7eb;

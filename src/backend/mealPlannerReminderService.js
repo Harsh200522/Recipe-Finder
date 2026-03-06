@@ -1,4 +1,5 @@
 // src/services/reminderService.js
+
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
@@ -19,21 +20,32 @@ const DEFAULT_REMINDER_TIMES = {
 const REMINDER_LEAD_MINUTES = 30;
 
 /* ==============================
-   EMAIL TRANSPORTER
+   SMTP EMAIL CLIENT
 ============================== */
 
-const createTransporter = () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+const createSmtpTransporter = () => {
+  if (!process.env.EMAIL_FROM) {
+    throw new Error("EMAIL_FROM is missing. Please set it in environment variables.");
+  }
+
+  const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+  const smtpPort = Number(process.env.SMTP_PORT || 587);
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+
+  if (!smtpUser || !smtpPass) {
     throw new Error(
-      "EMAIL_USER or EMAIL_PASS is missing. Please set them in environment variables."
+      "SMTP credentials are missing. Set SMTP_USER/SMTP_PASS or EMAIL_USER/EMAIL_PASS."
     );
   }
 
   return nodemailer.createTransport({
-    service: "gmail",
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: smtpUser,
+      pass: smtpPass,
     },
   });
 };
@@ -96,16 +108,12 @@ const getUserEmail = async (uid, plannerDocData) => {
   try {
     const userSnap = await getDoc(doc(db, "users", uid));
     if (!userSnap.exists()) {
-      console.warn(`⚠️ No user document found for uid: ${uid}`);
+      console.warn(`No user document found for uid: ${uid}`);
       return null;
     }
 
     const userData = userSnap.data() || {};
-    const email =
-      userData.email ||
-      userData.profile?.email ||
-      userData.auth?.email ||
-      null;
+    const email = userData.email || userData.profile?.email || userData.auth?.email || null;
 
     return email && email.includes("@") ? email : null;
   } catch (error) {
@@ -114,17 +122,7 @@ const getUserEmail = async (uid, plannerDocData) => {
   }
 };
 
-const getMealName = (meal) =>
-  meal?.strMeal || meal?.title || meal?.name || "Planned Recipe";
-
-const summarizeMailError = (error) => ({
-  name: error?.name,
-  message: error?.message,
-  code: error?.code,
-  responseCode: error?.responseCode,
-  command: error?.command,
-  response: error?.response,
-});
+const getMealName = (meal) => meal?.strMeal || meal?.title || meal?.name || "Planned Recipe";
 
 /* ==============================
    EMAIL TEMPLATE
@@ -135,7 +133,7 @@ const buildReminderHtml = ({ mealName, mealType, weekday, timeLabel }) => `
 <html>
   <body style="margin:0;padding:20px;background:#f4f7fb;font-family:Arial;">
     <div style="max-width:600px;margin:auto;background:#fff;border-radius:12px;padding:24px;border:1px solid #eee;">
-      <h2 style="color:#f97316;margin-top:0;">🍳 It's Time To Cook</h2>
+      <h2 style="color:#f97316;margin-top:0;">It's Time To Cook</h2>
       <p>Reminder for your <b>${mealType}</b> on <b>${weekday}</b>.</p>
       <div style="background:#fff7ed;padding:14px;border-radius:8px;margin:16px 0;">
         <h3 style="margin:0;color:#9a3412;">${mealName}</h3>
@@ -175,13 +173,12 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
     },
   };
 
-  let transporter;
+  let smtpTransporter;
   try {
-    transporter = createTransporter();
-    await transporter.verify();
-    console.log("✅ Email server ready");
+    smtpTransporter = createSmtpTransporter();
+    console.log("SMTP email client ready");
   } catch (err) {
-    console.error("❌ Email transporter failed:", err.message);
+    console.error("SMTP client failed:", err.message);
     report.summary.errors++;
     return report;
   }
@@ -190,12 +187,12 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
   try {
     plannerSnap = await getDocs(collection(db, "MealPlanner"));
   } catch (error) {
-    console.error("❌ Failed to fetch MealPlanner collection:", error.message);
+    console.error("Failed to fetch MealPlanner collection:", error.message);
     return report;
   }
 
   if (plannerSnap.empty) {
-    console.log("ℹ️ No MealPlanner documents found.");
+    console.log("No MealPlanner documents found.");
     return report;
   }
 
@@ -216,16 +213,7 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
     const { weekday, hhmm, dateKey } = getNowForTimeZone(timeZone);
     const dayMeals = planner?.[weekday];
 
-    const userEntry = { uid, timeZone, weekday, nowHHmm: hhmm, reminderEnabled };
-
-    if (!reminderEnabled) {
-      if (debug) console.log(`⏭️ Reminders disabled for uid: ${uid}`);
-      report.summary.skipped++;
-      continue;
-    }
-
-    if (!dayMeals) {
-      if (debug) console.log(`⏭️ No meals planned for ${weekday} — uid: ${uid}`);
+    if (!reminderEnabled || !dayMeals) {
       report.summary.skipped++;
       continue;
     }
@@ -250,44 +238,27 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
       const logId = `${uid}_${dateKey}_${mealType}`;
       const logRef = doc(db, "mealReminderLogs", logId);
 
-      let logSnap;
-      try {
-        logSnap = await getDoc(logRef);
-      } catch (error) {
-        console.error(`❌ Failed to check log for ${logId}:`, error.message);
-        report.summary.errors++;
-        continue;
-      }
-
+      const logSnap = await getDoc(logRef);
       if (!force && logSnap.exists()) {
-        if (debug) console.log(`⏭️ Already sent: ${logId}`);
         report.summary.skipped++;
         continue;
       }
 
       const toEmail = await getUserEmail(uid, data);
       if (!toEmail) {
-        console.warn(`⚠️ No email for uid: ${uid} — skipping ${mealType}`);
         report.summary.skipped++;
         continue;
       }
 
       const mealName = getMealName(plannedMeal);
 
-      if (dryRun) {
-        console.log(`🧪 DryRun: would send to ${toEmail} | ${mealType} | ${mealName}`);
-        continue;
-      }
+      if (dryRun) continue;
 
       try {
-        if (debug) {
-          console.log("📤 Sending:", { uid, to: toEmail, mealType, mealTime, reminderTime, timeZone });
-        }
-
-        const info = await transporter.sendMail({
-          from: `"Recipe Finder" <${process.env.EMAIL_USER}>`,
+        const mailOptions = {
+          from: `"Recipe Finder" <${process.env.EMAIL_FROM}>`,
           to: toEmail,
-          subject: `🍳 Time to cook: ${mealName}`,
+          subject: `Time to cook: ${mealName}`,
           text: `Reminder: ${mealType} (${mealName}) at ${mealTime}.`,
           html: buildReminderHtml({
             mealName,
@@ -295,9 +266,13 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
             weekday,
             timeLabel: `${reminderTime} (meal at ${mealTime})`,
           }),
-        });
+        };
 
-        console.log(`✅ Email sent to ${toEmail} | ${mealType} | ${info.messageId}`);
+        const info = await smtpTransporter.sendMail(mailOptions);
+
+        console.log(
+          `Email sent to ${toEmail} | ${mealType} | messageId: ${info?.messageId || "N/A"}`
+        );
 
         await setDoc(logRef, {
           uid,
@@ -311,28 +286,20 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 
         report.summary.sent++;
       } catch (error) {
-        console.error("❌ Send failed:", {
-          uid,
-          to: toEmail,
-          mealType,
-          error: summarizeMailError(error),
-        });
+        console.error("Send failed:", error?.message);
         report.summary.errors++;
       }
     }
-
-    if (debug) report.users.push(userEntry);
   }
 
-  console.log("📊 Run complete:", report.summary);
+  console.log("Run complete:", report.summary);
   return report;
 };
 
 /* ==============================
-   AUTO RUNNER (for Railway / Express server)
+   AUTO RUNNER
 ============================== */
 
-// ✅ Called from server.js — runs reminder check every 60 seconds continuously
 export const initMealPlannerReminderService = () => {
   let isRunning = false;
 
@@ -342,7 +309,7 @@ export const initMealPlannerReminderService = () => {
     try {
       await checkAndSendMealPlannerReminders();
     } catch (error) {
-      console.error("❌ Reminder error:", error);
+      console.error("Reminder error:", error);
     } finally {
       isRunning = false;
     }
@@ -350,5 +317,6 @@ export const initMealPlannerReminderService = () => {
 
   setTimeout(run, 10000);
   setInterval(run, 60 * 1000);
-  console.log("🚀 Reminder service started. Checking every 60 seconds.");
+
+  console.log("Reminder service started. Checking every 60 seconds.");
 };

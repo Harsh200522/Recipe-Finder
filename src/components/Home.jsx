@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import "../style/home.css";
 import { FaComment } from "react-icons/fa";
 import NoodleAnimation from "./NoodleAnimation";
+import GoogleAd from "./GoogleAd";
 import {
   FaThumbsUp,
   FaRegThumbsUp,
@@ -11,6 +12,13 @@ import {
   FaRegThumbsDown,
   FaHeart,
   FaRegHeart,
+  FaShoppingCart,
+  FaLeaf,
+  FaClock,
+  FaGlobeAmericas,
+  FaFire,
+  FaBrain,
+  FaChevronDown,
 } from "react-icons/fa";
 
 // ✅ Firebase
@@ -33,18 +41,36 @@ import {
   handleUnlike as applyUnlikeReaction,
   subscribeRecipeReactions,
 } from "../services/recipeReactions";
-
+import { openAmazonIndiaIngredientsSearch } from "../utils/amazonAffiliate";
 
 
 export default function RecipeFinder() {
   const [query, setQuery] = useState("");
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [shoppingRecipe, setShoppingRecipe] = useState(null);
   const [videoRecipe, setVideoRecipe] = useState(null);
   const [categories, setCategories] = useState({});
   const [loading, setLoading] = useState(true);
   const [showComments, setShowComments] = useState({});
   const [commentInputs, setCommentInputs] = useState({});
+  const [pantryInput, setPantryInput] = useState("");
+  const [aiCookOpen, setAiCookOpen] = useState(false);
+  const [aiCookMessages, setAiCookMessages] = useState([]);
+  const [aiCookLoading, setAiCookLoading] = useState(false);
+  const [aiCookError, setAiCookError] = useState("");
+  const [aiCookDiet, setAiCookDiet] = useState("any");
+  const [aiCookTimeFilter, setAiCookTimeFilter] = useState("any");
+  const [aiCookCuisine, setAiCookCuisine] = useState("any");
+  const [aiCookDifficulty, setAiCookDifficulty] = useState("any");
+  const [aiCookMood, setAiCookMood] = useState("none");
+  const [aiCookShowNutrition, setAiCookShowNutrition] = useState(false);
+  const aiCookFeedRef = useRef(null);
+  const aiCookEndpoint =
+    import.meta.env.VITE_AI_COOK_ENDPOINT ||
+    (import.meta.env.VITE_BACKEND_URL
+      ? `${import.meta.env.VITE_BACKEND_URL}/ai/cook-with-ingredients`
+      : "/api/ai/cook-with-ingredients");
   const getCurrentUserCommentName = (user) =>
     user?.displayName || user?.email?.split("@")[0] || "User";
   const canManageComment = (comment) => {
@@ -679,6 +705,176 @@ export default function RecipeFinder() {
 
   const openIngredients = (meal) => setSelectedRecipe(meal);
   const closeIngredients = () => setSelectedRecipe(null);
+  const getIngredientNames = (meal) => {
+    const names = [];
+    for (let i = 1; i <= 20; i++) {
+      const ing = (meal?.[`strIngredient${i}`] || "").trim();
+      if (ing) names.push(ing);
+    }
+    return names;
+  };
+
+  const handleAiCookWithIngredients = async () => {
+    const ingredients = pantryInput.trim();
+    if (!ingredients) {
+      setAiCookError("Please enter ingredients first.");
+      return;
+    }
+    const timeFilterLabelMap = {
+      under15: "Under 15 mins",
+      under30: "Under 30 mins",
+      under60: "Under 1 hour",
+    };
+    const moodLabelMap = {
+      lazy: "Lazy",
+      gym: "Gym",
+      romantic: "Romantic",
+      party: "Party",
+    };
+
+    const stylePreferences = [];
+    if (aiCookTimeFilter !== "any") {
+      stylePreferences.push(`Cooking time target: ${timeFilterLabelMap[aiCookTimeFilter]}.`);
+    }
+    if (aiCookCuisine !== "any") {
+      stylePreferences.push(`Preferred cuisine: ${aiCookCuisine}.`);
+    }
+    if (aiCookDifficulty !== "any") {
+      stylePreferences.push(`Difficulty level: ${aiCookDifficulty}.`);
+    }
+    if (aiCookMood !== "none") {
+      stylePreferences.push(`Mood-based style: ${moodLabelMap[aiCookMood]}.`);
+    }
+    stylePreferences.push("Include a simple nutrition estimate with calories, protein, carbs, and fat.");
+    const styleInstruction = stylePreferences.join(" ");
+    const dietLabel = aiCookDiet === "nonveg" ? "Non-Veg" : aiCookDiet === "veg" ? "Veg" : "Any";
+
+    setAiCookMessages((prev) => [
+      ...prev,
+      { id: `u_${Date.now()}`, role: "user", text: `${ingredients} (${dietLabel})` },
+    ]);
+    setAiCookLoading(true);
+    setAiCookError("");
+    setPantryInput("");
+
+    try {
+      const data = await requestAiCookRecipe(ingredients, styleInstruction, {
+        dietPreference: aiCookDiet,
+      });
+
+      setAiCookMessages((prev) => [
+        ...prev,
+        { id: `a_${Date.now()}`, role: "assistant", recipe: data },
+      ]);
+    } catch (error) {
+      console.error("AI cook request failed:", error);
+      const networkDown = error?.message?.toLowerCase().includes("failed to fetch");
+      setAiCookError(
+        networkDown
+          ? "Cannot connect to backend API. Check endpoint config and server status."
+          : (error.message || "Something went wrong.")
+      );
+    } finally {
+      setAiCookLoading(false);
+    }
+  };
+
+  const requestAiCookRecipe = async (ingredients, styleInstruction = "", options = {}) => {
+    const styledIngredients = styleInstruction
+      ? `${ingredients}\n\nStyle Preference: ${styleInstruction}`
+      : ingredients;
+
+    const res = await fetch(aiCookEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ingredients: styledIngredients,
+        dietPreference: options.dietPreference || "any",
+      }),
+    });
+
+    const raw = await res.text();
+    let data = null;
+    try {
+      data = raw ? JSON.parse(raw) : null;
+    } catch {
+      data = null;
+    }
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new Error(
+          `API route not found at ${aiCookEndpoint}. Check VITE_AI_COOK_ENDPOINT or VITE_BACKEND_URL.`
+        );
+      }
+      throw new Error(
+        data?.error ||
+        (raw ? `API error: ${raw.slice(0, 180)}` : "Failed to generate AI recipe.")
+      );
+    }
+
+    if (!data) {
+      throw new Error("Backend returned empty/non-JSON response.");
+    }
+    const nutrition = data.nutrition || data.nutritionInfo || {};
+    const normalizedCalories = data.calories || nutrition.calories || "Not available";
+    const normalizedProtein = data.protein || nutrition.protein || "Not available";
+    const normalizedCarbs = data.carbs || nutrition.carbs || "Not available";
+    const normalizedFat = data.fat || nutrition.fat || "Not available";
+
+    return {
+      ...data,
+      calories: normalizedCalories,
+      nutrition: {
+        calories: normalizedCalories,
+        protein: normalizedProtein,
+        carbs: normalizedCarbs,
+        fat: normalizedFat,
+      },
+    };
+  };
+
+  useEffect(() => {
+    if (!aiCookFeedRef.current) return;
+    aiCookFeedRef.current.scrollTop = aiCookFeedRef.current.scrollHeight;
+  }, [aiCookMessages, aiCookLoading, aiCookOpen]);
+
+  const openShoppingIngredients = async (meal) => {
+    let recipeForShopping = meal;
+    let ingredientNames = getIngredientNames(recipeForShopping);
+
+    if (!ingredientNames.length && meal?.idMeal) {
+      try {
+        const res = await fetch(
+          `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${meal.idMeal}`
+        );
+        const data = await res.json();
+        if (data?.meals?.[0]) {
+          recipeForShopping = data.meals[0];
+          ingredientNames = getIngredientNames(recipeForShopping);
+        }
+      } catch (error) {
+        console.error("Failed to load ingredients for shopping:", error);
+      }
+    }
+
+    if (!ingredientNames.length) {
+      Swal.fire({
+        icon: "info",
+        title: "Ingredients Not Available",
+        text: "No ingredient list found for this recipe.",
+      });
+      return;
+    }
+
+    setShoppingRecipe(recipeForShopping);
+  };
+
+  const closeShoppingIngredients = () => setShoppingRecipe(null);
+
+  const handleIngredientBuyClick = (ingredientName) => {
+    openAmazonIndiaIngredientsSearch(ingredientName);
+  };
 
   const openVideo = (meal) => setVideoRecipe(meal);
   const closeVideo = () => setVideoRecipe(null);
@@ -1253,6 +1449,229 @@ export default function RecipeFinder() {
         </button>
       </div>
 
+      <button
+        className="ai-cook-launcher"
+        onClick={() => setAiCookOpen(true)}
+        type="button"
+      >
+        AI Cook
+      </button>
+
+      {aiCookOpen && (
+        <button
+          type="button"
+          className="ai-cook-overlay"
+          aria-label="Close AI cook panel"
+          onClick={() => setAiCookOpen(false)}
+        />
+      )}
+
+      <aside className={`ai-cook-drawer ${aiCookOpen ? "open" : ""}`}>
+        <div className="ai-cook-drawer-header">
+          <div>
+            <h3 className="ai-cook-title">AI Cook With What I Have</h3>
+            <p className="ai-cook-subtitle">Example: onion, potato, cheese</p>
+          </div>
+          <button
+            type="button"
+            className="ai-cook-close"
+            aria-label="Close AI cook panel"
+            onClick={() => setAiCookOpen(false)}
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="ai-cook-chat-feed" ref={aiCookFeedRef}>
+          {aiCookMessages.length === 0 && (
+            <div className="ai-chat-bubble assistant">
+              <p>Send ingredients and I will generate a recipe.</p>
+            </div>
+          )}
+
+          {aiCookMessages.map((msg) => (
+            <div key={msg.id} className={`ai-chat-bubble ${msg.role}`}>
+              {msg.role === "user" ? (
+                <p>{msg.text}</p>
+              ) : (
+                <div className="ai-cook-result">
+                  <div className="ai-cook-result-top">
+                    {msg.recipe?.imageUrl && (
+                      <img
+                        src={msg.recipe.imageUrl}
+                        alt={msg.recipe.title || "AI recipe"}
+                        className="ai-cook-result-image"
+                        loading="lazy"
+                      />
+                    )}
+                    <div className="ai-cook-result-content">
+                      <h4>{msg.recipe?.title || "Suggested Recipe"}</h4>
+                      <div className="ai-cook-meta-row">
+                        <span className="ai-cook-meta-pill">
+                          <b>Cooking Time:</b> {msg.recipe?.cookingTime || "25-35 mins"}
+                        </span>
+                        <span className="ai-cook-meta-pill">
+                          <b>Calories:</b> {msg.recipe?.calories || "Not available"}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="ai-cook-toggle-btn"
+                        onClick={() => setAiCookShowNutrition((prev) => !prev)}
+                      >
+                        {aiCookShowNutrition ? "Hide Nutrition" : "Show Nutrition"}
+                      </button>
+                      {aiCookShowNutrition && (
+                        <div className="ai-cook-nutrition">
+                          <div className="ai-cook-nutrition-grid">
+                            <span className="ai-cook-nutri-pill">
+                              <b>Calories:</b> {msg.recipe?.nutrition?.calories || "Not available"}
+                            </span>
+                            <span className="ai-cook-nutri-pill">
+                              <b>Protein:</b> {msg.recipe?.nutrition?.protein || "Not available"}
+                            </span>
+                            <span className="ai-cook-nutri-pill">
+                              <b>Carbs:</b> {msg.recipe?.nutrition?.carbs || "Not available"}
+                            </span>
+                            <span className="ai-cook-nutri-pill">
+                              <b>Fat:</b> {msg.recipe?.nutrition?.fat || "Not available"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {msg.recipe?.youtubeUrl && (
+                        <p>
+                          <b>YouTube Suggestion:</b>{" "}
+                          <a href={msg.recipe.youtubeUrl} target="_blank" rel="noreferrer">
+                            Watch Recipe Videos
+                          </a>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="ai-cook-steps">
+                    <b>Recipe Steps:</b>
+                    <ol>
+                      {(msg.recipe?.recipeSteps || []).map((step, idx) => (
+                        <li key={`${step}-${idx}`}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {aiCookLoading && (
+            <div className="ai-chat-bubble assistant">
+              <p>Generating recipe...</p>
+            </div>
+          )}
+        </div>
+
+        {aiCookError && <p className="ai-cook-error">{aiCookError}</p>}
+
+        <div className="ai-cook-input-row">
+          <input
+            type="text"
+            value={pantryInput}
+            onChange={(e) => setPantryInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAiCookWithIngredients()}
+            placeholder="I have onion, potato, and cheese"
+            className="ai-cook-input"
+          />
+          <div className="ai-cook-action-row">
+            <label className="ai-cook-select-wrap" data-purpose="Diet Filter">
+              <FaLeaf className="ai-cook-select-icon" />
+              <select
+                value={aiCookDiet}
+                onChange={(e) => setAiCookDiet(e.target.value)}
+                className="ai-cook-select ai-cook-select--icon-only"
+                aria-label="Diet filter"
+              >
+                <option value="any">Any</option>
+                <option value="veg">Veg</option>
+                <option value="nonveg">Non-Veg</option>
+              </select>
+              <FaChevronDown className="ai-cook-select-caret" />
+            </label>
+            <label className="ai-cook-select-wrap" data-purpose="Cooking Time Filter">
+              <FaClock className="ai-cook-select-icon" />
+              <select
+                value={aiCookTimeFilter}
+                onChange={(e) => setAiCookTimeFilter(e.target.value)}
+                className="ai-cook-select ai-cook-select--icon-only"
+                aria-label="Cooking time filter"
+              >
+                <option value="any">Any Time</option>
+                <option value="under15">Under 15 mins</option>
+                <option value="under30">Under 30 mins</option>
+                <option value="under60">Under 1 hour</option>
+              </select>
+              <FaChevronDown className="ai-cook-select-caret" />
+            </label>
+            <label className="ai-cook-select-wrap" data-purpose="Cuisine Filter">
+              <FaGlobeAmericas className="ai-cook-select-icon" />
+              <select
+                value={aiCookCuisine}
+                onChange={(e) => setAiCookCuisine(e.target.value)}
+                className="ai-cook-select ai-cook-select--icon-only"
+                aria-label="Cuisine filter"
+              >
+                <option value="any">Any Cuisine</option>
+                <option value="Indian">Indian</option>
+                <option value="Italian">Italian</option>
+                <option value="Chinese">Chinese</option>
+                <option value="Mexican">Mexican</option>
+                <option value="American">American</option>
+              </select>
+              <FaChevronDown className="ai-cook-select-caret" />
+            </label>
+            <label className="ai-cook-select-wrap" data-purpose="Difficulty Filter">
+              <FaFire className="ai-cook-select-icon" />
+              <select
+                value={aiCookDifficulty}
+                onChange={(e) => setAiCookDifficulty(e.target.value)}
+                className="ai-cook-select ai-cook-select--icon-only"
+                aria-label="Difficulty filter"
+              >
+                <option value="any">Any Difficulty</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+              <FaChevronDown className="ai-cook-select-caret" />
+            </label>
+            <label
+              className="ai-cook-select-wrap ai-cook-select-wrap--mood"
+              data-purpose="Mood-Based Suggestion"
+            >
+              <FaBrain className="ai-cook-select-icon" />
+              <select
+                value={aiCookMood}
+                onChange={(e) => setAiCookMood(e.target.value)}
+                className="ai-cook-select ai-cook-select--icon-only"
+                aria-label="Mood suggestion"
+              >
+                <option value="none">Mood: None</option>
+                <option value="lazy">Lazy</option>
+                <option value="gym">Gym</option>
+                <option value="romantic">Romantic</option>
+                <option value="party">Party</option>
+              </select>
+              <FaChevronDown className="ai-cook-select-caret" />
+            </label>
+            <button
+              onClick={handleAiCookWithIngredients}
+              className="ai-cook-button"
+              disabled={aiCookLoading}
+            >
+              {aiCookLoading ? "Generating..." : "Generate Recipe"}
+            </button>
+          </div>
+        </div>
+      </aside>
+
       <div className="recipes-grid">
 
         {/* ================= LOADER ================= */}
@@ -1276,7 +1695,7 @@ export default function RecipeFinder() {
         ) : recipes.length > 0 ? (
 
           /* ================= SEARCH RESULTS ================= */
-          recipes.map((meal) => {
+          recipes.map((meal, index) => {
             const id = meal.idMeal || meal.idDrink;
             const { likes = 0, unlikes = 0, favorite = false } = recipeStates[id] || {};
             // const chefReaction = meal.isChefRecipe
@@ -1288,6 +1707,7 @@ export default function RecipeFinder() {
             //   : recipeStates[id]?.userReaction;
 
             return (
+              <React.Fragment key={`recipe-item-${id}-${index}`}>
               <div key={id} className="recipe-card">
                 {isVeg(meal) ? (
                   <div className="veg-icon">
@@ -1354,6 +1774,15 @@ export default function RecipeFinder() {
                     {favorite
                       ? <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
                       : <FaRegHeart style={{ fontSize: "20px" }} />}
+                  </button>
+
+                  <button
+                    className="cart-btn"
+                    onClick={() => openShoppingIngredients(meal)}
+                    title="Order Ingredients"
+                    aria-label="Order Ingredients"
+                  >
+                    <FaShoppingCart style={{ fontSize: "18px" }} />
                   </button>
 
                   {meal.isChefRecipe && (
@@ -1464,6 +1893,12 @@ export default function RecipeFinder() {
                   </button>
                 )}
               </div>
+              {(index + 1) % 6 === 0 && (
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <GoogleAd />
+                </div>
+              )}
+              </React.Fragment>
             );
           })
 
@@ -1540,6 +1975,15 @@ export default function RecipeFinder() {
                                 {favorite
                                   ? <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
                                   : <FaRegHeart style={{ fontSize: "20px" }} />}
+                              </button>
+
+                              <button
+                                className="cart-btn"
+                                onClick={() => openShoppingIngredients(meal)}
+                                title="Order Ingredients"
+                                aria-label="Order Ingredients"
+                              >
+                                <FaShoppingCart style={{ fontSize: "18px" }} />
                               </button>
                             </div>
 
@@ -1632,6 +2076,15 @@ export default function RecipeFinder() {
                                   ? <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
                                   : <FaRegHeart style={{ fontSize: "20px" }} />}
                               </button>
+
+                              <button
+                                className="cart-btn"
+                                onClick={() => openShoppingIngredients(meal)}
+                                title="Order Ingredients"
+                                aria-label="Order Ingredients"
+                              >
+                                <FaShoppingCart style={{ fontSize: "18px" }} />
+                              </button>
                             </div>
 
 
@@ -1652,7 +2105,6 @@ export default function RecipeFinder() {
           </>)}
 
       </div>
-
       {selectedRecipe && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -1665,6 +2117,29 @@ export default function RecipeFinder() {
                 const measure = selectedRecipe[`strMeasure${i}`];
                 return (ing && ing.trim() && <li key={i}>{ing} - {measure}</li>);
               })}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {shoppingRecipe && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button onClick={closeShoppingIngredients} className="close-button">✖</button>
+            <h2 className="modal-title">{shoppingRecipe.strMeal || shoppingRecipe.strDrink}</h2>
+            <h3 className="modal-heading">Select ingredient to buy:</h3>
+            <ul className="modal-list amazon-ingredient-list">
+              {getIngredientNames(shoppingRecipe).map((ing, index) => (
+                <li key={`${ing}-${index}`}>
+                  <button
+                    type="button"
+                    className="ingredient-link-button"
+                    onClick={() => handleIngredientBuyClick(ing)}
+                  >
+                    {ing}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
