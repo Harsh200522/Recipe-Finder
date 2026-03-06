@@ -25,7 +25,7 @@ const GoogleAd = () => {
       ref={adRef}
       className="adsbygoogle"
       style={{ display: "block", margin: "20px 0", minHeight: "90px" }}
-      data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+      data-ad-client="ca-pub-7458323864944754"
       data-ad-slot="1234567890"
       data-ad-format="auto"
       data-full-width-responsive="true"
