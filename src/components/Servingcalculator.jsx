@@ -91,18 +91,36 @@ const scaleMeasure = (measure, factor) => {
  */
 const parseIngredientLine = (line) => {
   if (!line) return { name: "", measure: "" };
-  const parts = line.split(" - ");
-  if (parts.length >= 2) {
-    return { name: parts[0].trim(), measure: parts.slice(1).join(" - ").trim() };
+  const str = line.trim();
+
+  // Format A: "paneer cubes - 250g" or "butter - 2 tbsp" (Favorites MealDB style)
+  const dashSplit = str.match(/^(.+?)\s*-\s*(.+)$/);
+  if (dashSplit) {
+    const possibleName = dashSplit[1].trim();
+    const possibleMeasure = dashSplit[2].trim();
+    if (/\d/.test(possibleMeasure)) {
+      return { name: possibleName, measure: possibleMeasure };
+    }
   }
-  return { name: line.trim(), measure: "" };
+
+  // Format B: "250g paneer cubes" / "2 tbsp butter" / "1/2 cup cream"
+  const frontQtyMatch = str.match(
+    /^([\d\/\.\s]+(?:g|kg|ml|l|ltr|oz|lb|cups?|tbsp|tsp|pieces?|slices?|pinch|bunch|cloves?|medium|large|small|handful)s?)\s+(.+)$/i
+  );
+  if (frontQtyMatch) {
+    return { name: frontQtyMatch[2].trim(), measure: frontQtyMatch[1].trim() };
+  }
+
+  // Format C: "2 eggs" / "3 potatoes" (plain number prefix)
+  const numPrefixMatch = str.match(/^(\d+(?:\/\d+)?)\s+(.+)$/);
+  if (numPrefixMatch) {
+    return { name: numPrefixMatch[2].trim(), measure: numPrefixMatch[1].trim() };
+  }
+
+  // Fallback: no quantity — "Salt to taste"
+  return { name: str, measure: "" };
 };
 
-/**
- * Builds ingredients list from either:
- * - meal.ingredients (array of "Name - Measure" strings) — Favorites format
- * - meal.strIngredient1..20 + meal.strMeasure1..20 — MealDB / RecipeFinder format
- */
 const buildIngredientsList = (meal) => {
   if (Array.isArray(meal?.ingredients) && meal.ingredients.length > 0) {
     return meal.ingredients
@@ -162,7 +180,6 @@ export default function ServingCalculator({ meal, onClose }) {
               disabled={currentServings <= 1}
               aria-label="Decrease servings"
             >
-              −
             </button>
             <span className="sc-serving-count">{currentServings}</span>
             <button

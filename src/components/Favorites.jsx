@@ -26,6 +26,7 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import GoogleAd from "./GoogleAd";
+import ServingCalculator from "./ServingCalculator"; // ✅ NEW
 
 import "../style/favorites.css";
 import {
@@ -39,6 +40,7 @@ export default function Favorites() {
   const [favorites, setFavorites] = useState([]);
   const [recipeStates, setRecipeStates] = useState({});
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [servingRecipe, setServingRecipe] = useState(null); // ✅ NEW
   const [shoppingRecipe, setShoppingRecipe] = useState(null);
   const [videoRecipe, setVideoRecipe] = useState(null);
   const [showComments, setShowComments] = useState({});
@@ -343,7 +345,7 @@ export default function Favorites() {
 
 
   /* =====================================================
-     INGREDIENTS MODAL
+     INGREDIENTS MODAL (kept as-is)
   ===================================================== */
   const openIngredients = async (meal) => {
     if (!meal.ingredients || meal.ingredients.length === 0) {
@@ -375,6 +377,77 @@ export default function Favorites() {
   };
 
   const closeIngredients = () => setSelectedRecipe(null);
+
+  // ✅ Parse "200g chicken" → { quantity: "200g", name: "chicken" }
+const parseIngredientLine = (raw = "") => {
+  const str = raw.trim();
+
+  // Pattern 1: "200g chicken" / "2 tbsp butter" / "1/2 cup cream"
+  const frontQtyMatch = str.match(
+    /^([\d/\.\s]+(?:g|kg|ml|l|ltr|oz|lb|cups?|tbsp|tsp|pieces?|slices?|pinch|bunch|cloves?|medium|large|small|handful)s?)\s+(.+)$/i
+  );
+  if (frontQtyMatch) {
+    return { quantity: frontQtyMatch[1].trim(), name: frontQtyMatch[2].trim() };
+  }
+
+  // Pattern 2: "chicken - 200g" / "paneer - 250g"
+  const backQtyMatch = str.match(/^(.+?)\s*[-–]\s*([\d/\.]+\s*\w+)$/);
+  if (backQtyMatch) {
+    return { name: backQtyMatch[1].trim(), quantity: backQtyMatch[2].trim() };
+  }
+
+  // Pattern 3: "2 eggs" / "3 potatoes"
+  const numPrefixMatch = str.match(/^([\d/\.]+)\s+(.+)$/);
+  if (numPrefixMatch) {
+    return { quantity: numPrefixMatch[1].trim(), name: numPrefixMatch[2].trim() };
+  }
+
+  // Fallback: "salt to taste"
+  return { quantity: "", name: str };
+};
+
+// ✅ Normalize favorite meal into strIngredient/strMeasure format for ServingCalculator
+const normalizeMealForServingCalc = (meal) => {
+  // Already in strIngredient format (MealDB recipes fetched fresh) — pass through
+  if (meal.strIngredient1) return meal;
+
+  // Favorites store ingredients as array: ["250g paneer cubes", "2 tbsp butter - measure"]
+  const normalized = { ...meal };
+
+  if (Array.isArray(meal.ingredients) && meal.ingredients.length > 0) {
+    meal.ingredients.slice(0, 20).forEach((item, index) => {
+      const text = String(item || "").trim();
+      if (!text) return;
+
+      // Favorites format: "ingredient name - measure" (stored by handleFavorite in RecipeFinder)
+      // e.g. "paneer cubes - 250g" OR "250g paneer cubes" (chef style)
+      const dashSplit = text.match(/^(.+?)\s*-\s*(.+)$/);
+      if (dashSplit) {
+        const possibleName = dashSplit[1].trim();
+        const possibleMeasure = dashSplit[2].trim();
+        // Check if measure part looks like a quantity
+        const looksLikeQty = /[\d]/.test(possibleMeasure);
+        if (looksLikeQty) {
+          normalized[`strIngredient${index + 1}`] = possibleName;
+          normalized[`strMeasure${index + 1}`] = possibleMeasure;
+          return;
+        }
+      }
+
+      // Chef recipe style: "200g chicken" — parse it
+      const { name, quantity } = parseIngredientLine(text);
+      normalized[`strIngredient${index + 1}`] = name;
+      normalized[`strMeasure${index + 1}`] = quantity;
+    });
+  }
+
+  return normalized;
+};
+
+// ✅ Serving calculator handlers
+const openServingCalc = (meal) => setServingRecipe(normalizeMealForServingCalc(meal));
+const closeServingCalc = () => setServingRecipe(null);
+
   const getIngredientNames = (meal) => {
     if (Array.isArray(meal?.ingredients) && meal.ingredients.length > 0) {
       return meal.ingredients
@@ -802,10 +875,11 @@ export default function Favorites() {
                   </div>
                 )}
 
+                {/* ✅ ONLY CHANGE: openIngredients → openServingCalc */}
                 {meal.isChefRecipe ? (
                   <div className="recipe-card-action-row">
                     <button
-                      onClick={() => openIngredients(meal)}
+                      onClick={() => openServingCalc(meal)}
                       className="ingredients-button"
                     >
                       🍴 Show Ingredients
@@ -819,7 +893,7 @@ export default function Favorites() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => openIngredients(meal)}
+                    onClick={() => openServingCalc(meal)}
                     className="ingredients-button"
                   >
                     🍴 Show Ingredients
@@ -840,6 +914,7 @@ export default function Favorites() {
         <GoogleAd />
       </div>
 
+      {/* OLD INGREDIENTS MODAL — kept as-is */}
       {selectedRecipe && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -862,6 +937,11 @@ export default function Favorites() {
             </ul>
           </div>
         </div>
+      )}
+
+      {/* ✅ NEW: SMART SERVING CALCULATOR */}
+      {servingRecipe && (
+        <ServingCalculator meal={servingRecipe} onClose={closeServingCalc} />
       )}
 
       {shoppingRecipe && (
@@ -919,5 +999,3 @@ export default function Favorites() {
     </div>
   );
 }
-
-

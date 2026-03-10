@@ -1434,3 +1434,19 @@ body.dark-mode .chef-tag-single {
   background: #c7c7d2;
   border-radius: 10px;
 }
+.cookbook-form-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  padding-top: 1.5rem  !important;
+  margin-top: 1.5rem !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+.cookbook-form-actions .cookbook-secondary-btn,
+.cookbook-form-actions .cookbook-primary-btn {
+  width: auto !important;
+  display: inline-flex !important;
+  margin: 0 !important;
+}

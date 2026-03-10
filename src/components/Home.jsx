@@ -5,6 +5,7 @@ import "../style/home.css";
 import { FaComment } from "react-icons/fa";
 import NoodleAnimation from "./NoodleAnimation";
 import GoogleAd from "./GoogleAd";
+import ServingCalculator from "./ServingCalculator";
 import {
   FaThumbsUp,
   FaRegThumbsUp,
@@ -48,6 +49,7 @@ export default function RecipeFinder() {
   const [query, setQuery] = useState("");
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [servingRecipe, setServingRecipe] = useState(null);
   const [shoppingRecipe, setShoppingRecipe] = useState(null);
   const [videoRecipe, setVideoRecipe] = useState(null);
   const [categories, setCategories] = useState({});
@@ -538,43 +540,80 @@ export default function RecipeFinder() {
   };
 
   const mapChefRecipeToHomeCard = (recipe) => {
-    const ingredients = (recipe.ingredients || "")
-      .split(/\r?\n|,/)
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .slice(0, 20);
+  // ✅ Step 1: Split raw ingredient string into individual lines
+  // Supports: newline-separated OR comma-separated entries
+  const rawIngredients = (recipe.ingredients || "")
+    .split(/\r?\n/)
+    .flatMap((line) => line.split(/,(?![^(]*\))/))
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 20);
 
-    const mapped = {
-      idMeal: `chef_${recipe.id}`,
-      strMeal: recipe.title || "Chef Recipe",
-      strCategory: recipe.category || "Community",
-      strArea: recipe.creatorCountry || "N/A",
-      strInstructions: recipe.steps || "",
-      comments: recipe.comments || [],
-      strMealThumb:
-        recipe.image ||
-        getYoutubeThumbnail(recipe.video) ||
-        "https://via.placeholder.com/600x400?text=Chef+Recipe",
-      strYoutube: recipe.video || null,
+  // ✅ Step 2: Parse each ingredient line into { name, quantity }
+  // Handles formats like:
+  //   "200g chicken"   → name: "chicken",    quantity: "200g"
+  //   "2 tbsp butter"  → name: "butter",     quantity: "2 tbsp"
+  //   "1/2 cup cream"  → name: "cream",      quantity: "1/2 cup"
+  //   "chicken - 200g" → name: "chicken",    quantity: "200g"
+  //   "salt"           → name: "salt",       quantity: ""
+  const parseIngredientLine = (raw = "") => {
+    const str = raw.trim();
 
-      // 🔥 IMPORTANT ADD THIS
-      userId: recipe.userId,            // ✅ REQUIRED
-      chefName: recipe.createdBy || "Unknown Chef",
+    // Pattern 1: quantity unit first — "200g chicken" / "2 tbsp butter" / "1/2 cup cream"
+    const frontQtyMatch = str.match(
+      /^([\d/\.\s]+(?:g|kg|ml|l|ltr|oz|lb|cups?|tbsp|tsp|pieces?|slices?|pinch|bunch|cloves?|medium|large|small|handful)s?)\s+(.+)$/i
+    );
+    if (frontQtyMatch) {
+      return { quantity: frontQtyMatch[1].trim(), name: frontQtyMatch[2].trim() };
+    }
 
-      isChefRecipe: true,
-      likes: recipe.likes || 0,
-      unlikes: recipe.unlikes || 0,
-      likedBy: recipe.likedBy || [],
-      unlikedBy: recipe.unlikedBy || [],
-    };
+    // Pattern 2: ingredient first, quantity after dash — "chicken - 200g" / "paneer - 250g"
+    const backQtyMatch = str.match(/^(.+?)\s*[-–]\s*([\d/\.]+\s*\w+)$/);
+    if (backQtyMatch) {
+      return { name: backQtyMatch[1].trim(), quantity: backQtyMatch[2].trim() };
+    }
 
-    ingredients.forEach((ing, index) => {
-      mapped[`strIngredient${index + 1}`] = ing;
-      mapped[`strMeasure${index + 1}`] = "";
-    });
+    // Pattern 3: plain number prefix — "2 eggs" / "3 potatoes"
+    const numPrefixMatch = str.match(/^([\d/\.]+)\s+(.+)$/);
+    if (numPrefixMatch) {
+      return { quantity: numPrefixMatch[1].trim(), name: numPrefixMatch[2].trim() };
+    }
 
-    return mapped;
+    // Fallback: no quantity, just name — "salt" / "salt to taste"
+    return { quantity: "", name: str };
   };
+
+  const mapped = {
+    idMeal: `chef_${recipe.id}`,
+    strMeal: recipe.title || "Chef Recipe",
+    strCategory: recipe.category || "Community",
+    strArea: recipe.creatorCountry || "N/A",
+    strInstructions: recipe.steps || "",
+    comments: recipe.comments || [],
+    strMealThumb:
+      recipe.image ||
+      getYoutubeThumbnail(recipe.video) ||
+      "https://via.placeholder.com/600x400?text=Chef+Recipe",
+    strYoutube: recipe.video || null,
+    userId: recipe.userId,
+    chefName: recipe.createdBy || "Unknown Chef",
+    isChefRecipe: true,
+    likes: recipe.likes || 0,
+    unlikes: recipe.unlikes || 0,
+    likedBy: recipe.likedBy || [],
+    unlikedBy: recipe.unlikedBy || [],
+  };
+
+  // ✅ Step 3: Store name in strIngredient, quantity in strMeasure
+  // This matches MealDB format exactly — ServingCalculator & isVeg() both work correctly
+  rawIngredients.forEach((ing, index) => {
+    const { name, quantity } = parseIngredientLine(ing);
+    mapped[`strIngredient${index + 1}`] = name;   // ✅ clean name only → isVeg() works
+    mapped[`strMeasure${index + 1}`] = quantity;  // ✅ quantity only → ServingCalculator scales it
+  });
+
+  return mapped;
+};
   const fetchChefRecommendationsForSearch = async (searchTerms) => {
     if (!searchTerms.length) return [];
 
@@ -713,6 +752,10 @@ export default function RecipeFinder() {
     }
     return names;
   };
+
+  // ✅ NEW: Serving calculator handlers
+  const openServingCalc = (meal) => setServingRecipe(meal);
+  const closeServingCalc = () => setServingRecipe(null);
 
   const handleAiCookWithIngredients = async () => {
     const ingredients = pantryInput.trim();
@@ -992,7 +1035,7 @@ export default function RecipeFinder() {
       Swal.fire("Error loading chef profile");
     }
   };
- 
+
   const handleLike = async (id) => {
     const user = auth.currentUser;
     if (!user) {
@@ -1516,13 +1559,6 @@ export default function RecipeFinder() {
           recipes.map((meal, index) => {
             const id = meal.idMeal || meal.idDrink;
             const { likes = 0, unlikes = 0, favorite = false } = recipeStates[id] || {};
-            // const chefReaction = meal.isChefRecipe
-            //   ? (meal.likedBy?.includes(auth.currentUser?.uid)
-            //     ? "like"
-            //     : meal.unlikedBy?.includes(auth.currentUser?.uid)
-            //       ? "unlike"
-            //       : "none")
-            //   : recipeStates[id]?.userReaction;
 
             return (
               <React.Fragment key={`recipe-item-${id}-${index}`}>
@@ -1690,7 +1726,7 @@ export default function RecipeFinder() {
                 {meal.isChefRecipe ? (
                   <div className="recipe-card-action-row">
                     <button
-                      onClick={() => openIngredients(meal)}
+                      onClick={() => openServingCalc(meal)}
                       className="ingredients-button"
                     >
                       🍴 Show Ingredients
@@ -1704,7 +1740,7 @@ export default function RecipeFinder() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => openIngredients(meal)}
+                    onClick={() => openServingCalc(meal)}
                     className="ingredients-button"
                   >
                     🍴 Show Ingredients
@@ -1806,7 +1842,7 @@ export default function RecipeFinder() {
                             </div>
 
                             <button
-                              onClick={() => openIngredients(meal)}
+                              onClick={() => openServingCalc(meal)}
                               className="ingredients-button"
                             >
                               🍴 Show Ingredients
@@ -1907,7 +1943,7 @@ export default function RecipeFinder() {
 
 
                             <button
-                              onClick={() => openIngredients(meal)}
+                              onClick={() => openServingCalc(meal)}
                               className="ingredients-button"
                             >
                               🍴 Show Ingredients
@@ -1923,6 +1959,8 @@ export default function RecipeFinder() {
           </>)}
 
       </div>
+
+      {/* ================= OLD INGREDIENTS MODAL (kept for compatibility) ================= */}
       {selectedRecipe && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -1938,6 +1976,11 @@ export default function RecipeFinder() {
             </ul>
           </div>
         </div>
+      )}
+
+      {/* ================= ✅ NEW: SMART SERVING CALCULATOR ================= */}
+      {servingRecipe && (
+        <ServingCalculator meal={servingRecipe} onClose={closeServingCalc} />
       )}
 
       {shoppingRecipe && (

@@ -44,46 +44,46 @@ export default function CommunityRecipes() {
   const [recipeStates, setRecipeStates] = useState({});
   const [creatorAvatars, setCreatorAvatars] = useState({});
   const communityRecipes = recipes;
- const viewChefProfile = async (userId) => {
-  try {
-    const userDoc = await getDoc(doc(db, "users", userId));
+  const viewChefProfile = async (userId) => {
+    try {
+      const userDoc = await getDoc(doc(db, "users", userId));
 
-    if (!userDoc.exists()) {
-      Swal.fire("User not found");
-      return;
-    }
+      if (!userDoc.exists()) {
+        Swal.fire("User not found");
+        return;
+      }
 
-    const data = userDoc.data();
-    const profile = data.profile || {};
-    const preferences = data.preferences || {};
+      const data = userDoc.data();
+      const profile = data.profile || {};
+      const preferences = data.preferences || {};
 
-    const avatar =
-      profile.avatar ||
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUmgrBOv_cpwabmIhfJ3-PWW0XOW6fhyjqEQ&s";
+      const avatar =
+        profile.avatar ||
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUmgrBOv_cpwabmIhfJ3-PWW0XOW6fhyjqEQ&s";
 
-    const dietaryTags =
-      preferences.dietaryRestrictions?.length > 0
-        ? preferences.dietaryRestrictions
+      const dietaryTags =
+        preferences.dietaryRestrictions?.length > 0
+          ? preferences.dietaryRestrictions
             .map(item => `<span class="chef-tag">${item}</span>`)
             .join("")
-        : `<span class="chef-tag-single">None specified</span>`;
+          : `<span class="chef-tag-single">None specified</span>`;
 
-    const allergyTags =
-      preferences.allergies?.length > 0
-        ? preferences.allergies
+      const allergyTags =
+        preferences.allergies?.length > 0
+          ? preferences.allergies
             .map(item => `<span class="chef-tag">${item}</span>`)
             .join("")
-        : `<span class="chef-tag-single">No allergies</span>`;
+          : `<span class="chef-tag-single">No allergies</span>`;
 
-    Swal.fire({
-      width: 700,
-      padding: 0,
-      showCloseButton: true,
-      confirmButtonText: "Close",
-      customClass: {
-        popup: "chef-popup",
-      },
-      html: `
+      Swal.fire({
+        width: 700,
+        padding: 0,
+        showCloseButton: true,
+        confirmButtonText: "Close",
+        customClass: {
+          popup: "chef-popup",
+        },
+        html: `
         <div class="chef-card">
 
           <!-- Header -->
@@ -138,13 +138,42 @@ export default function CommunityRecipes() {
 
         </div>
       `,
-    });
+      });
 
-  } catch (error) {
-    console.error("Error viewing chef profile:", error);
-    Swal.fire("Error", "Failed to load chef profile", "error");
-  }
-};
+    } catch (error) {
+      console.error("Error viewing chef profile:", error);
+      Swal.fire("Error", "Failed to load chef profile", "error");
+    }
+  };
+  const [instructionRows, setInstructionRows] = useState([""]);
+
+  const addInstructionRow = () => {
+    setInstructionRows(prev => [...prev, ""]);
+  };
+
+  const removeInstructionRow = (index) => {
+    setInstructionRows(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateInstructionRow = (index, value) => {
+    setInstructionRows(prev => prev.map((row, i) => i === index ? value : row));
+  };
+  const UNITS = ["", "g", "kg", "ml", "l", "tsp", "tbsp", "cup", "oz", "lb", "piece", "slice", "pinch", "bunch", "clove", "medium", "large", "small", "handful"];
+
+  const [ingredientRows, setIngredientRows] = useState([{ qty: "", unit: "", name: "" }]);
+  const addIngredientRow = () => {
+    setIngredientRows(prev => [...prev, { qty: "", unit: "", name: "" }]);
+  };
+
+  const removeIngredientRow = (index) => {
+    setIngredientRows(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateIngredientRow = (index, field, value) => {
+    setIngredientRows(prev => prev.map((row, i) =>
+      i === index ? { ...row, [field]: value } : row
+    ));
+  };
 
 
   const perPage = 6;
@@ -233,8 +262,8 @@ export default function CommunityRecipes() {
       .map(toReactionRecipeId);
   }, [communityRecipes]);
 
- // AFTER - don't clear state when no user, and use onAuthStateChanged
-useEffect(() => {
+  // AFTER - don't clear state when no user, and use onAuthStateChanged
+  useEffect(() => {
     let unsubReactions = null;
 
     const unsubAuth = onAuthStateChanged(auth, (user) => {
@@ -253,8 +282,8 @@ useEffect(() => {
             const userReaction = entry.likedBy.includes(user.uid)
               ? "like"
               : entry.unlikedBy.includes(user.uid)
-              ? "unlike"
-              : "none";
+                ? "unlike"
+                : "none";
 
             next[id] = {
               ...(next[id] || {}),
@@ -302,7 +331,6 @@ useEffect(() => {
         return;
       }
     }
-
     // Validate Image URL
     if (form.imageUrl) {
       const urlRegex = /^(https?:\/\/).+$/;
@@ -325,8 +353,11 @@ useEffect(() => {
       // 🔥 Common fields (used in both add & update)
       const baseData = {
         title: form.title,
-        ingredients: form.ingredients,
-        steps: form.steps,
+        ingredients: ingredientRows
+          .filter(r => r.name.trim())
+          .map(r => `${r.qty} ${r.unit} ${r.name}`.trim().replace(/\s+/g, " "))
+          .join("\n"),
+        steps: instructionRows.filter(s => s.trim()).join("\n"),
         category: finalCategory,
         image: form.imageUrl || "",
         video: form.videoUrl || "",
@@ -335,7 +366,25 @@ useEffect(() => {
         servings: form.servings,
         updatedAt: serverTimestamp(),
       };
-
+      const hasSteps = instructionRows.some(s => s.trim());
+      if (!hasSteps) {
+        Swal.fire({
+          icon: "error",
+          title: "Instructions Required",
+          text: "Please add at least one instruction step.",
+        });
+        return;
+      }
+      // Validate ingredients
+      const hasIngredients = ingredientRows.some(r => r.name.trim());
+      if (!hasIngredients) {
+        Swal.fire({
+          icon: "error",
+          title: "Ingredients Required",
+          text: "Please add at least one ingredient.",
+        });
+        return;
+      }
       if (editingRecipe) {
         // 🔥 Fetch latest user profile
         const userDocRef = doc(db, "users", user.uid);
@@ -607,7 +656,14 @@ useEffect(() => {
       prepTime: recipe.prepTime || "",
       servings: recipe.servings || "",
     });
-
+    const parsedSteps = (recipe.steps || "").split("\n").filter(Boolean);
+    setInstructionRows(parsedSteps.length > 0 ? parsedSteps : [""]);
+    const parsedRows = (recipe.ingredients || "").split("\n").filter(Boolean).map(line => {
+      const match = line.match(/^([\d\/\.]+)\s*(g|kg|ml|l|tsp|tbsp|cups?|oz|lb|pieces?|slices?|pinch|bunch|cloves?|medium|large|small|handful)?\s+(.+)$/i);
+      if (match) return { qty: match[1], unit: match[2] || "", name: match[3] };
+      return { qty: "", unit: "", name: line };
+    });
+    setIngredientRows(parsedRows.length > 0 ? parsedRows : [{ qty: "", unit: "", name: "" }]);
     if (recipe.category && !["Veg", "NonVeg", "Dessert"].includes(recipe.category)) {
       setCustomCategory(recipe.category);
     }
@@ -628,6 +684,8 @@ useEffect(() => {
       prepTime: "",
       servings: "",
     });
+    setInstructionRows([""]);
+    setIngredientRows([{ qty: "", unit: "", name: "" }]);
     setCustomCategory("");
     setEditingRecipe(null);
     setShowModal(false);
@@ -729,267 +787,267 @@ useEffect(() => {
               const userReaction = recipeStates[id]?.userReaction || "none";
 
               return (
-              <div key={id} className="cookbook-card">
-                {/* Recipe Image */}
-                <div className="cookbook-card-image">
-                  {recipe.image ? (
-                    <img src={recipe.image} alt={recipe.title} />
-                  ) : recipe.video ? (
-                    <iframe
-                      width="100%"
-                      height="200"
-                      src={`https://www.youtube.com/embed/${getYoutubeVideoId(recipe.video)}`}
-                      title="YouTube video"
-                      frameBorder="0"
-                      allowFullScreen
-                    ></iframe>
-                  ) : (<div className="cookbook-no-image">
-                    <FaUtensils />
-                  </div>
-                  )}
-                  <div className="cookbook-badge">
-                    <span className={`cookbook-difficulty ${recipe.difficulty?.toLowerCase()}`}>
-                      {recipe.difficulty || 'Easy'}
-                    </span>
-                  </div>
-                  {recipe.video && (
-                    <a
-                      href={recipe.video}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cookbook-video-link"
-                    >
-                      <FaYoutube /> Watch Video
-                    </a>
-                  )}
-                </div>
-
-                <div className="cookbook-card-content">
-                  {/* Recipe Header */}
-                  <div className="cookbook-card-header">
-                    <div>
-                      <h3 className="cookbook-card-title">{recipe.title}</h3>
-                      {/* Created By */}
-                      <div
-                        className="cookbook-creator"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => viewChefProfile(recipe.userId)}
+                <div key={id} className="cookbook-card">
+                  {/* Recipe Image */}
+                  <div className="cookbook-card-image">
+                    {recipe.image ? (
+                      <img src={recipe.image} alt={recipe.title} />
+                    ) : recipe.video ? (
+                      <iframe
+                        width="100%"
+                        height="200"
+                        src={`https://www.youtube.com/embed/${getYoutubeVideoId(recipe.video)}`}
+                        title="YouTube video"
+                        frameBorder="0"
+                        allowFullScreen
+                      ></iframe>
+                    ) : (<div className="cookbook-no-image">
+                      <FaUtensils />
+                    </div>
+                    )}
+                    <div className="cookbook-badge">
+                      <span className={`cookbook-difficulty ${recipe.difficulty?.toLowerCase()}`}>
+                        {recipe.difficulty || 'Easy'}
+                      </span>
+                    </div>
+                    {recipe.video && (
+                      <a
+                        href={recipe.video}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cookbook-video-link"
                       >
-                        <img
-                          src={recipe.creatorAvatar || creatorAvatars[recipe.userId] || DEFAULT_AVATAR_URL}
-                          alt={recipe.createdBy || "Chef"}
-                          className="cookbook-creator-avatar"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = DEFAULT_AVATAR_URL;
-                          }}
-                        />
-                        <span className="cookbook-creator-name">
-                          By {recipe.createdBy || "Unknown Chef"}
-                        </span>
-                      </div>
+                        <FaYoutube /> Watch Video
+                      </a>
+                    )}
+                  </div>
 
-                      <div className="cookbook-card-meta">
-                        <span className="cookbook-category-tag">
-                          <MdFastfood /> {recipe.category}
-                        </span>
-                        <div className="cookbook-meta-trailing">
-                        {recipe.prepTime && (
-                          <span className="cookbook-time-tag">
-                            ⏱️ {recipe.prepTime}
+                  <div className="cookbook-card-content">
+                    {/* Recipe Header */}
+                    <div className="cookbook-card-header">
+                      <div>
+                        <h3 className="cookbook-card-title">{recipe.title}</h3>
+                        {/* Created By */}
+                        <div
+                          className="cookbook-creator"
+                          style={{ cursor: "pointer" }}
+                          onClick={() => viewChefProfile(recipe.userId)}
+                        >
+                          <img
+                            src={recipe.creatorAvatar || creatorAvatars[recipe.userId] || DEFAULT_AVATAR_URL}
+                            alt={recipe.createdBy || "Chef"}
+                            className="cookbook-creator-avatar"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = DEFAULT_AVATAR_URL;
+                            }}
+                          />
+                          <span className="cookbook-creator-name">
+                            By {recipe.createdBy || "Unknown Chef"}
                           </span>
-                        )}
-                        {recipe.servings && (
-                          <span className="cookbook-serving-tag">
-                            <FaUsers /> {recipe.servings} servings
+                        </div>
+
+                        <div className="cookbook-card-meta">
+                          <span className="cookbook-category-tag">
+                            <MdFastfood /> {recipe.category}
                           </span>
-                        )}
+                          <div className="cookbook-meta-trailing">
+                            {recipe.prepTime && (
+                              <span className="cookbook-time-tag">
+                                ⏱️ {recipe.prepTime}
+                              </span>
+                            )}
+                            {recipe.servings && (
+                              <span className="cookbook-serving-tag">
+                                <FaUsers /> {recipe.servings} servings
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <div className="cookbook-card-actions">
+                        <button
+                          className={`cookbook-upload-chip ${recipe.isUploaded ? "active" : ""}`}
+                          onClick={() => toggleUploadRecipe(recipe)}
+                          title={recipe.isUploaded ? "Remove from Home search" : "Upload to Home search"}
+                          aria-label={recipe.isUploaded ? "Remove from Home search" : "Upload to Home search"}
+                        >
+                          <FaFire />
+                          <span>{recipe.isUploaded ? "Unpublish" : "Publish"}</span>
+                        </button>
+                        <button
+                          className="cookbook-icon-btn cookbook-edit-btn"
+                          onClick={() => editRecipe(recipe)}
+                          title="Edit recipe"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          className="cookbook-icon-btn cookbook-delete-btn"
+                          onClick={() => deleteRecipe(recipe.id)}
+                          title="Delete recipe"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     </div>
-                    <div className="cookbook-card-actions">
+
+                    {/* Recipe Stats */}
+                    <div className="cookbook-stats">
                       <button
-                        className={`cookbook-upload-chip ${recipe.isUploaded ? "active" : ""}`}
-                        onClick={() => toggleUploadRecipe(recipe)}
-                        title={recipe.isUploaded ? "Remove from Home search" : "Upload to Home search"}
-                        aria-label={recipe.isUploaded ? "Remove from Home search" : "Upload to Home search"}
+                        className={`cookbook-like-btn ${userReaction === "like" ? "liked" : ""}`}
+                        onClick={() => likeRecipe(id)}
                       >
-                        <FaFire />
-                        <span>{recipe.isUploaded ? "Unpublish" : "Publish"}</span>
+                        {userReaction === "like"
+                          ? <FaThumbsUp style={{ color: "green", fontSize: "20px" }} />
+                          : <FaRegThumbsUp style={{ fontSize: "20px" }} />}
+                        <span> {likes}</span>
                       </button>
+
                       <button
-                        className="cookbook-icon-btn cookbook-edit-btn"
-                        onClick={() => editRecipe(recipe)}
-                        title="Edit recipe"
+                        className={`cookbook-unlike-btn ${userReaction === "unlike" ? "unliked" : ""}`}
+                        onClick={() => unlikeRecipe(id)}
                       >
-                        <FaEdit />
+                        {userReaction === "unlike"
+                          ? <FaThumbsDown style={{ color: "red", fontSize: "20px" }} />
+                          : <FaRegThumbsDown style={{ fontSize: "20px" }} />}
+                        <span> {unlikes}</span>
                       </button>
+
                       <button
-                        className="cookbook-icon-btn cookbook-delete-btn"
-                        onClick={() => deleteRecipe(recipe.id)}
-                        title="Delete recipe"
+                        className="cookbook-comment-btn"
+                        onClick={() => setShowComments({
+                          ...showComments,
+                          [id]: !showComments[id]
+                        })}
                       >
-                        <FaTrash />
+                        <FaComment /> {recipe.comments?.length || 0}
                       </button>
                     </div>
-                  </div>
 
-                  {/* Recipe Stats */}
-                  <div className="cookbook-stats">
-                    <button
-                      className={`cookbook-like-btn ${userReaction === "like" ? "liked" : ""}`}
-                      onClick={() => likeRecipe(id)}
-                    >
-                      {userReaction === "like"
-                        ? <FaThumbsUp style={{ color: "green", fontSize: "20px" }} />
-                        : <FaRegThumbsUp style={{ fontSize: "20px" }} />}
-                      <span> {likes}</span>
-                    </button>
-
-                    <button
-                      className={`cookbook-unlike-btn ${userReaction === "unlike" ? "unliked" : ""}`}
-                      onClick={() => unlikeRecipe(id)}
-                    >
-                      {userReaction === "unlike"
-                        ? <FaThumbsDown style={{ color: "red", fontSize: "20px" }} />
-                        : <FaRegThumbsDown style={{ fontSize: "20px" }} />}
-                      <span> {unlikes}</span>
-                    </button>
-
-                    <button
-                      className="cookbook-comment-btn"
-                      onClick={() => setShowComments({
-                        ...showComments,
-                        [id]: !showComments[id]
-                      })}
-                    >
-                      <FaComment /> {recipe.comments?.length || 0}
-                    </button>
-                  </div>
-
-                  {/* Ingredients Preview */}
-                  <div className="cookbook-action-buttons">
-                    <button
-                      className="cookbook-show-ingredients-btn"
-                      onClick={() =>
-                        Swal.fire({
-                          title: `
+                    {/* Ingredients Preview */}
+                    <div className="cookbook-action-buttons">
+                      <button
+                        className="cookbook-show-ingredients-btn"
+                        onClick={() =>
+                          Swal.fire({
+                            title: `
                       <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
                         <span style="font-size:28px;">🥗</span>
                         <span>${recipe.title} - Ingredients</span>
                       </div>
                     `,
-                          html: `
+                            html: `
                       <div style="text-align:left; margin-top:10px;">
                         ${recipe.ingredients
-                              .split("\n")
-                              .map(item => `• ${item}`)
-                              .join("<br>")}
+                                .split("\n")
+                                .map(item => `• ${item}`)
+                                .join("<br>")}
                             </div>
                           `,
-                          confirmButtonText: "Close",
-                          width: "520px",
-                          showClass: {
-                            popup: "animate__animated animate__fadeInUp"
-                          }
-                        })
-                      }
-                    >
-                      Show Ingredients
-                    </button>
+                            confirmButtonText: "Close",
+                            width: "520px",
+                            showClass: {
+                              popup: "animate__animated animate__fadeInUp"
+                            }
+                          })
+                        }
+                      >
+                        Show Ingredients
+                      </button>
 
-                    <button
-                      className="cookbook-show-instructions-btn"
-                      onClick={() =>
-                        Swal.fire({
-                          title: `
+                      <button
+                        className="cookbook-show-instructions-btn"
+                        onClick={() =>
+                          Swal.fire({
+                            title: `
         <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
           <span style="font-size:28px;">📖</span>
           <span>${recipe.title} - Instructions</span>
         </div>
       `,
-                          html: `
+                            html: `
         <div style="text-align:left; margin-top:10px;">
           ${recipe.steps
-                              .split("\n")
-                              .map((step, index) => `<b>Step ${index + 1}:</b> ${step}`)
-                              .join("<br><br>")}
+                                .split("\n")
+                                .map((step, index) => `<b>Step ${index + 1}:</b> ${step}`)
+                                .join("<br><br>")}
         </div>
       `,
-                          confirmButtonText: "Close",
-                          width: "600px",
-                          showClass: {
-                            popup: "animate__animated animate__fadeInUp"
-                          }
-                        })
-                      }
-                    >
-                      Show Instructions
-                    </button>
+                            confirmButtonText: "Close",
+                            width: "600px",
+                            showClass: {
+                              popup: "animate__animated animate__fadeInUp"
+                            }
+                          })
+                        }
+                      >
+                        Show Instructions
+                      </button>
 
-                  </div>
-
-                  {/* Comments Section */}
-                  {showComments[id] && (
-                    <div className="cookbook-comments-area">
-                      <div className="cookbook-comment-form">
-                        <input
-                          type="text"
-                          placeholder="Add a comment..."
-                          className="cookbook-comment-field"
-                          value={commentText[id] || ""}
-                          onChange={(e) => setCommentText({
-                            ...commentText,
-                            [id]: e.target.value
-                          })}
-                          onKeyDown={(e) => e.key === 'Enter' && addComment(id)}
-                        />
-                        <button
-                          className="cookbook-submit-comment"
-                          onClick={() => addComment(id)}
-                        >
-                          Send
-                        </button>
-                      </div>
-
-                      <div className="cookbook-comments-list">
-                        {recipe.comments?.map((comment, index) => (
-                          <div key={index} className="cookbook-comment-item">
-                            <div>
-                              <span className="cookbook-comment-author">
-                                {comment.user}:
-                              </span>
-                              <span className="cookbook-comment-message">
-                                {comment.text}
-                              </span>
-                            </div>
-
-                            {comment.userId === auth.currentUser?.uid && (
-                              <div className="cookbook-comment-actions">
-                                <button
-                                  onClick={() => editComment(recipe, index)}
-                                  className="cookbook-comment-edit"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => deleteComment(recipe, index)}
-                                  className="cookbook-comment-delete"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-
-                      </div>
                     </div>
-                  )}
+
+                    {/* Comments Section */}
+                    {showComments[id] && (
+                      <div className="cookbook-comments-area">
+                        <div className="cookbook-comment-form">
+                          <input
+                            type="text"
+                            placeholder="Add a comment..."
+                            className="cookbook-comment-field"
+                            value={commentText[id] || ""}
+                            onChange={(e) => setCommentText({
+                              ...commentText,
+                              [id]: e.target.value
+                            })}
+                            onKeyDown={(e) => e.key === 'Enter' && addComment(id)}
+                          />
+                          <button
+                            className="cookbook-submit-comment"
+                            onClick={() => addComment(id)}
+                          >
+                            Send
+                          </button>
+                        </div>
+
+                        <div className="cookbook-comments-list">
+                          {recipe.comments?.map((comment, index) => (
+                            <div key={index} className="cookbook-comment-item">
+                              <div>
+                                <span className="cookbook-comment-author">
+                                  {comment.user}:
+                                </span>
+                                <span className="cookbook-comment-message">
+                                  {comment.text}
+                                </span>
+                              </div>
+
+                              {comment.userId === auth.currentUser?.uid && (
+                                <div className="cookbook-comment-actions">
+                                  <button
+                                    onClick={() => editComment(recipe, index)}
+                                    className="cookbook-comment-edit"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => deleteComment(recipe, index)}
+                                    className="cookbook-comment-delete"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
 
           {/* Pagination */}
@@ -1177,27 +1235,131 @@ useEffect(() => {
               {/* Ingredients */}
               <div className="cookbook-field-group">
                 <label>Ingredients *</label>
-                <textarea
-                  className="cookbook-textarea"
-                  placeholder="List ingredients (one per line)"
-                  value={form.ingredients}
-                  onChange={(e) => setForm({ ...form, ingredients: e.target.value })}
-                  rows={4}
-                  required
-                />
-              </div>
 
-              {/* Steps */}
+                {ingredientRows.map((row, index) => (
+                  <div key={index} style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
+
+                    {/* Quantity */}
+                    <input
+                      type="text"
+                      className="cookbook-field"
+                      placeholder="Qty"
+                      value={row.qty}
+                      onChange={(e) => updateIngredientRow(index, "qty", e.target.value)}
+                      style={{ width: "70px", flex: "none" }}
+                    />
+
+                    {/* Unit dropdown */}
+                    <select
+                      className="cookbook-select"
+                      value={row.unit}
+                      onChange={(e) => updateIngredientRow(index, "unit", e.target.value)}
+                      style={{ width: "90px", flex: "none" }}
+                    >
+                      {UNITS.map(u => (
+                        <option key={u} value={u}>{u === "" ? "Unit" : u}</option>
+                      ))}
+                    </select>
+
+                    {/* Ingredient name */}
+                    <input
+                      type="text"
+                      className="cookbook-field"
+                      placeholder="Ingredient name"
+                      value={row.name}
+                      onChange={(e) => updateIngredientRow(index, "name", e.target.value)}
+                      style={{ flex: 1 }}
+                    />
+
+                    {/* Remove row button */}
+                    {ingredientRows.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeIngredientRow(index)}
+                        style={{
+                          background: "#ef476f", color: "white", border: "none",
+                          borderRadius: "8px", width: "32px", height: "32px",
+                          cursor: "pointer", fontSize: "18px", flex: "none",
+                          display: "flex", alignItems: "center", justifyContent: "center"
+                        }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {/* Add row button */}
+                <button
+                  type="button"
+                  onClick={addIngredientRow}
+                  style={{
+                    background: "#4ecdc4", color: "white", border: "none",
+                    borderRadius: "8px", padding: "6px 14px", cursor: "pointer",
+                    fontWeight: 600, marginTop: "4px", fontSize: "14px"
+                  }}
+                >
+                  + Add Ingredient
+                </button>
+              </div>
+              {/* Instructions */}
               <div className="cookbook-field-group">
                 <label>Instructions *</label>
-                <textarea
-                  className="cookbook-textarea"
-                  placeholder="Step-by-step instructions"
-                  value={form.steps}
-                  onChange={(e) => setForm({ ...form, steps: e.target.value })}
-                  rows={5}
-                  required
-                />
+
+                {instructionRows.map((step, index) => (
+                  <div key={index} style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "flex-start" }}>
+
+                    {/* Step number badge */}
+                    <div style={{
+                      minWidth: "28px", height: "28px", borderRadius: "50%",
+                      background: "#ff6b6b", color: "white", display: "flex",
+                      alignItems: "center", justifyContent: "center",
+                      fontWeight: 700, fontSize: "13px", marginTop: "8px", flex: "none"
+                    }}>
+                      {index + 1}
+                    </div>
+
+                    {/* Step textarea */}
+                    <textarea
+                      className="cookbook-textarea"
+                      placeholder={`Step ${index + 1} instruction...`}
+                      value={step}
+                      onChange={(e) => updateInstructionRow(index, e.target.value)}
+                      rows={2}
+                      style={{ flex: 1, resize: "vertical" }}
+                    />
+
+                    {/* Remove step button */}
+                    {instructionRows.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeInstructionRow(index)}
+                        style={{
+                          background: "#ef476f", color: "white", border: "none",
+                          borderRadius: "8px", width: "32px", height: "32px",
+                          cursor: "pointer", fontSize: "18px", flex: "none",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          marginTop: "6px"
+                        }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {/* Add step button */}
+                <button
+                  type="button"
+                  onClick={addInstructionRow}
+                  style={{
+                    background: "#4ecdc4", color: "white", border: "none",
+                    borderRadius: "8px", padding: "6px 14px", cursor: "pointer",
+                    fontWeight: 600, marginTop: "4px", fontSize: "14px"
+                  }}
+                >
+                  + Add Step
+                </button>
               </div>
 
               {/* Form Actions */}

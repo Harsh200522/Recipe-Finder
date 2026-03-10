@@ -2102,3 +2102,144 @@ body.dark-mode .swal2-textarea:focus {
   background: #33333d !important;
   color: #ffffff !important;
 }
+/* ================= DARK MODE: SERVING CALCULATOR ================= */
+
+body.dark-mode .sc-overlay {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+body.dark-mode .sc-modal {
+  background: #1a1a2e;
+  border: 1px solid #2a2a40;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .sc-header {
+  border-bottom: 1px solid #2a2a40;
+}
+
+body.dark-mode .sc-title {
+  color: #efefef;
+}
+
+body.dark-mode .sc-close {
+  background: #252540;
+  color: #aaaacc;
+  border: none;
+}
+
+body.dark-mode .sc-close:hover {
+  background: #e84545;
+  color: #fff;
+}
+
+/* ── Serving Bar ── */
+body.dark-mode .sc-serving-bar {
+  background: #141428;
+  border-bottom: 1px solid #2a2a40;
+}
+
+body.dark-mode .sc-serving-label {
+  color: #aaaacc;
+}
+
+body.dark-mode .sc-serving-controls {
+  border: 2px solid #ff8c42;
+}
+
+body.dark-mode .sc-btn {
+  color: #ff8c42;
+}
+
+body.dark-mode .sc-btn:hover:not(:disabled) {
+  background: #ff8c42;
+  color: #fff;
+}
+
+body.dark-mode .sc-btn:disabled {
+  opacity: 0.25;
+}
+
+body.dark-mode .sc-serving-count {
+  background: #1a1a2e;
+  color: #efefef;
+}
+
+body.dark-mode .sc-reset {
+  border: 1.5px solid #2a2a40;
+  color: #666688;
+  background: transparent;
+}
+
+body.dark-mode .sc-reset:hover {
+  border-color: #ff8c42;
+  color: #ff8c42;
+}
+
+body.dark-mode .sc-scale-badge {
+  background: #ff8c42;
+  color: #fff;
+}
+
+/* ── Section Title ── */
+body.dark-mode .sc-section-title {
+  color: #555577;
+}
+
+/* ── Ingredient Rows ── */
+body.dark-mode .sc-item {
+  background: #20203a;
+  border-radius: 10px;
+}
+
+body.dark-mode .sc-item:nth-child(even) {
+  background: #252540;
+}
+
+body.dark-mode .sc-item--changed {
+  background: #2a1f10 !important;
+  border-left: 3px solid #ff8c42;
+}
+
+body.dark-mode .sc-ing-name {
+  color: #ccccdd;
+}
+
+body.dark-mode .sc-ing-measure {
+  color: #ff8c42;
+  font-weight: 700;
+}
+
+body.dark-mode .sc-original {
+  color: #44445a;
+}
+
+body.dark-mode .sc-empty {
+  color: #44445a;
+}
+
+/* ── Footer ── */
+body.dark-mode .sc-footer-note {
+  color: #44445a;
+  border-top: 1px solid #2a2a40;
+}
+
+body.dark-mode .sc-footer-note strong {
+  color: #ff8c42;
+}
+
+/* ── Scrollbar ── */
+body.dark-mode .sc-modal::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+body.dark-mode .sc-modal::-webkit-scrollbar-thumb {
+  background: #2a2a40;
+  border-radius: 3px;
+}
+
+body.dark-mode .sc-modal::-webkit-scrollbar-thumb:hover {
+  background: #ff8c42;
+}
