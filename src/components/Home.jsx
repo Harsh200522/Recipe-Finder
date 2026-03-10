@@ -5,7 +5,7 @@ import "../style/home.css";
 import { FaComment } from "react-icons/fa";
 import NoodleAnimation from "./NoodleAnimation";
 import GoogleAd from "./GoogleAd";
-import ServingCalculator from "./Servingcalculator";
+import ServingCalculator from "./ServingCalculator";
 import {
   FaThumbsUp,
   FaRegThumbsUp,

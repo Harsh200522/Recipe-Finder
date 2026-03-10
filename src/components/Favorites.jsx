@@ -26,7 +26,7 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import GoogleAd from "./GoogleAd";
-import ServingCalculator from "./Servingcalculator"; // ✅ NEW
+import ServingCalculator from "./ServingCalculator"; // ✅ NEW
 
 import "../style/favorites.css";
 import {
