@@ -6,6 +6,7 @@ import { FaComment } from "react-icons/fa";
 import NoodleAnimation from "./NoodleAnimation";
 import GoogleAd from "./GoogleAd";
 import ServingCalculator from "./ServingCalculator";
+import { FaMicrophone, FaStop } from "react-icons/fa";
 import {
   FaThumbsUp,
   FaRegThumbsUp,
@@ -67,6 +68,32 @@ export default function RecipeFinder() {
   const [aiCookDifficulty, setAiCookDifficulty] = useState("any");
   const [aiCookMood, setAiCookMood] = useState("none");
   const [aiCookShowNutrition, setAiCookShowNutrition] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
+
+  const startVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice not supported in this browser. Try Chrome.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setPantryInput(transcript); // ✅ fills your existing input
+    };
+
+    recognition.onerror = () => setIsListening(false);
+    recognition.start();
+  };
   const aiCookFeedRef = useRef(null);
   const aiCookEndpoint =
     import.meta.env.VITE_AI_COOK_ENDPOINT ||
@@ -540,80 +567,80 @@ export default function RecipeFinder() {
   };
 
   const mapChefRecipeToHomeCard = (recipe) => {
-  // ✅ Step 1: Split raw ingredient string into individual lines
-  // Supports: newline-separated OR comma-separated entries
-  const rawIngredients = (recipe.ingredients || "")
-    .split(/\r?\n/)
-    .flatMap((line) => line.split(/,(?![^(]*\))/))
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, 20);
+    // ✅ Step 1: Split raw ingredient string into individual lines
+    // Supports: newline-separated OR comma-separated entries
+    const rawIngredients = (recipe.ingredients || "")
+      .split(/\r?\n/)
+      .flatMap((line) => line.split(/,(?![^(]*\))/))
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 20);
 
-  // ✅ Step 2: Parse each ingredient line into { name, quantity }
-  // Handles formats like:
-  //   "200g chicken"   → name: "chicken",    quantity: "200g"
-  //   "2 tbsp butter"  → name: "butter",     quantity: "2 tbsp"
-  //   "1/2 cup cream"  → name: "cream",      quantity: "1/2 cup"
-  //   "chicken - 200g" → name: "chicken",    quantity: "200g"
-  //   "salt"           → name: "salt",       quantity: ""
-  const parseIngredientLine = (raw = "") => {
-    const str = raw.trim();
+    // ✅ Step 2: Parse each ingredient line into { name, quantity }
+    // Handles formats like:
+    //   "200g chicken"   → name: "chicken",    quantity: "200g"
+    //   "2 tbsp butter"  → name: "butter",     quantity: "2 tbsp"
+    //   "1/2 cup cream"  → name: "cream",      quantity: "1/2 cup"
+    //   "chicken - 200g" → name: "chicken",    quantity: "200g"
+    //   "salt"           → name: "salt",       quantity: ""
+    const parseIngredientLine = (raw = "") => {
+      const str = raw.trim();
 
-    // Pattern 1: quantity unit first — "200g chicken" / "2 tbsp butter" / "1/2 cup cream"
-    const frontQtyMatch = str.match(
-      /^([\d/\.\s]+(?:g|kg|ml|l|ltr|oz|lb|cups?|tbsp|tsp|pieces?|slices?|pinch|bunch|cloves?|medium|large|small|handful)s?)\s+(.+)$/i
-    );
-    if (frontQtyMatch) {
-      return { quantity: frontQtyMatch[1].trim(), name: frontQtyMatch[2].trim() };
-    }
+      // Pattern 1: quantity unit first — "200g chicken" / "2 tbsp butter" / "1/2 cup cream"
+      const frontQtyMatch = str.match(
+        /^([\d/\.\s]+(?:g|kg|ml|l|ltr|oz|lb|cups?|tbsp|tsp|pieces?|slices?|pinch|bunch|cloves?|medium|large|small|handful)s?)\s+(.+)$/i
+      );
+      if (frontQtyMatch) {
+        return { quantity: frontQtyMatch[1].trim(), name: frontQtyMatch[2].trim() };
+      }
 
-    // Pattern 2: ingredient first, quantity after dash — "chicken - 200g" / "paneer - 250g"
-    const backQtyMatch = str.match(/^(.+?)\s*[-–]\s*([\d/\.]+\s*\w+)$/);
-    if (backQtyMatch) {
-      return { name: backQtyMatch[1].trim(), quantity: backQtyMatch[2].trim() };
-    }
+      // Pattern 2: ingredient first, quantity after dash — "chicken - 200g" / "paneer - 250g"
+      const backQtyMatch = str.match(/^(.+?)\s*[-–]\s*([\d/\.]+\s*\w+)$/);
+      if (backQtyMatch) {
+        return { name: backQtyMatch[1].trim(), quantity: backQtyMatch[2].trim() };
+      }
 
-    // Pattern 3: plain number prefix — "2 eggs" / "3 potatoes"
-    const numPrefixMatch = str.match(/^([\d/\.]+)\s+(.+)$/);
-    if (numPrefixMatch) {
-      return { quantity: numPrefixMatch[1].trim(), name: numPrefixMatch[2].trim() };
-    }
+      // Pattern 3: plain number prefix — "2 eggs" / "3 potatoes"
+      const numPrefixMatch = str.match(/^([\d/\.]+)\s+(.+)$/);
+      if (numPrefixMatch) {
+        return { quantity: numPrefixMatch[1].trim(), name: numPrefixMatch[2].trim() };
+      }
 
-    // Fallback: no quantity, just name — "salt" / "salt to taste"
-    return { quantity: "", name: str };
+      // Fallback: no quantity, just name — "salt" / "salt to taste"
+      return { quantity: "", name: str };
+    };
+
+    const mapped = {
+      idMeal: `chef_${recipe.id}`,
+      strMeal: recipe.title || "Chef Recipe",
+      strCategory: recipe.category || "Community",
+      strArea: recipe.creatorCountry || "N/A",
+      strInstructions: recipe.steps || "",
+      comments: recipe.comments || [],
+      strMealThumb:
+        recipe.image ||
+        getYoutubeThumbnail(recipe.video) ||
+        "https://via.placeholder.com/600x400?text=Chef+Recipe",
+      strYoutube: recipe.video || null,
+      userId: recipe.userId,
+      chefName: recipe.createdBy || "Unknown Chef",
+      isChefRecipe: true,
+      likes: recipe.likes || 0,
+      unlikes: recipe.unlikes || 0,
+      likedBy: recipe.likedBy || [],
+      unlikedBy: recipe.unlikedBy || [],
+    };
+
+    // ✅ Step 3: Store name in strIngredient, quantity in strMeasure
+    // This matches MealDB format exactly — ServingCalculator & isVeg() both work correctly
+    rawIngredients.forEach((ing, index) => {
+      const { name, quantity } = parseIngredientLine(ing);
+      mapped[`strIngredient${index + 1}`] = name;   // ✅ clean name only → isVeg() works
+      mapped[`strMeasure${index + 1}`] = quantity;  // ✅ quantity only → ServingCalculator scales it
+    });
+
+    return mapped;
   };
-
-  const mapped = {
-    idMeal: `chef_${recipe.id}`,
-    strMeal: recipe.title || "Chef Recipe",
-    strCategory: recipe.category || "Community",
-    strArea: recipe.creatorCountry || "N/A",
-    strInstructions: recipe.steps || "",
-    comments: recipe.comments || [],
-    strMealThumb:
-      recipe.image ||
-      getYoutubeThumbnail(recipe.video) ||
-      "https://via.placeholder.com/600x400?text=Chef+Recipe",
-    strYoutube: recipe.video || null,
-    userId: recipe.userId,
-    chefName: recipe.createdBy || "Unknown Chef",
-    isChefRecipe: true,
-    likes: recipe.likes || 0,
-    unlikes: recipe.unlikes || 0,
-    likedBy: recipe.likedBy || [],
-    unlikedBy: recipe.unlikedBy || [],
-  };
-
-  // ✅ Step 3: Store name in strIngredient, quantity in strMeasure
-  // This matches MealDB format exactly — ServingCalculator & isVeg() both work correctly
-  rawIngredients.forEach((ing, index) => {
-    const { name, quantity } = parseIngredientLine(ing);
-    mapped[`strIngredient${index + 1}`] = name;   // ✅ clean name only → isVeg() works
-    mapped[`strMeasure${index + 1}`] = quantity;  // ✅ quantity only → ServingCalculator scales it
-  });
-
-  return mapped;
-};
   const fetchChefRecommendationsForSearch = async (searchTerms) => {
     if (!searchTerms.length) return [];
 
@@ -1433,14 +1460,26 @@ export default function RecipeFinder() {
         {aiCookError && <p className="ai-cook-error">{aiCookError}</p>}
 
         <div className="ai-cook-input-row">
-          <input
-            type="text"
-            value={pantryInput}
-            onChange={(e) => setPantryInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAiCookWithIngredients()}
-            placeholder="I have onion, potato, and cheese"
-            className="ai-cook-input"
-          />
+          <div className="ai-cook-input-wrap">
+            <textarea
+              value={pantryInput}
+              onChange={(e) => setPantryInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleAiCookWithIngredients()}
+              placeholder="I have onion, potato, and cheese"
+              className="ai-cook-input ai-cook-input--with-voice"
+              rows={3}
+            />
+            <button
+              type="button"
+              onClick={startVoiceInput}
+              className="ai-cook-voice-button"
+              style={{ background: isListening ? "#ef4444" : "#f97316" }}
+              title={isListening ? "Stop listening" : "Speak your ingredients"}
+              aria-label={isListening ? "Stop listening" : "Speak your ingredients"}
+            >
+              {isListening ? <FaStop /> : <FaMicrophone />}
+            </button>
+          </div>
           <div className="ai-cook-action-row">
             <label className="ai-cook-select-wrap" data-purpose="Diet Filter">
               <FaLeaf className="ai-cook-select-icon" />
@@ -1562,196 +1601,196 @@ export default function RecipeFinder() {
 
             return (
               <React.Fragment key={`recipe-item-${id}-${index}`}>
-              <div key={id} className="recipe-card">
-                {isVeg(meal) ? (
-                  <div className="veg-icon">
-                    <div className="circle"></div>
-                  </div>
-                ) : (
-                  <div className="nonveg-icon">
-                    <div className="circle"></div>
-                  </div>
-                )}
-
-                <img
-                  src={meal.strMealThumb || meal.strDrinkThumb}
-                  alt={meal.strMeal || meal.strDrink}
-                  className="recipe-image"
-                />
-
-                <h2 className="recipe-title">{meal.strMeal || meal.strDrink}</h2>
-
-                <p className="recipe-info">
-                  <b>Category:</b> {meal.strCategory} <br />
-                  <b>Chef:</b>{" "}
-                  {meal.isChefRecipe ? (
-                    <span
-                      onClick={() => handleChefDetails(meal)}
-                      className="chef-name"
-                    >
-                      {meal.chefName || "Unknown Chef"}
-                      <span className="chef-tooltip">Click to view information</span>
-                    </span>
-                  ) : (
-                    "System"
-                  )}
-                  <br />
-                  <b>Country:</b> {meal.strArea || "N/A"}
-                </p>
-
-                <button
-                  className="watch-video-btn"
-                  onClick={() => handleWatchVideo(meal)}
-                >
-                  ▶ Watch Video
-                </button>
-
-                <div className="reaction-buttons">
-                  <button className="like-btn" onClick={() => handleReaction(id, "like")}>
-                    {recipeStates[id]?.userReaction === "like"
-                      ? <FaThumbsUp style={{ color: "green", fontSize: "20px" }} />
-                      : <FaRegThumbsUp style={{ fontSize: "20px" }} />}
-                    <span> {likes}</span>
-                  </button>
-
-                  <button className="unlike-btn" onClick={() => handleReaction(id, "unlike")}>
-                    {recipeStates[id]?.userReaction === "unlike"
-                      ? <FaThumbsDown style={{ color: "red", fontSize: "20px" }} />
-                      : <FaRegThumbsDown style={{ fontSize: "20px" }} />}
-                    <span> {unlikes}</span>
-                  </button>
-
-                  <button
-                    className={`heart-btn ${favorite ? "active" : ""}`}
-                    onClick={() => handleFavorite(id, meal)}
-                  >
-                    {favorite
-                      ? <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
-                      : <FaRegHeart style={{ fontSize: "20px" }} />}
-                  </button>
-
-                  <button
-                    className="cart-btn"
-                    onClick={() => openShoppingIngredients(meal)}
-                    title="Order Ingredients"
-                    aria-label="Order Ingredients"
-                  >
-                    <FaShoppingCart style={{ fontSize: "18px" }} />
-                  </button>
-
-                  {meal.isChefRecipe && (
-                    <button
-                      className="comment-btn"
-                      onClick={() =>
-                        setShowComments((prev) => ({
-                          ...prev,
-                          [id]: !prev[id],
-                        }))
-                      }
-                    >
-                      <FaComment style={{ fontSize: "18px" }} />
-                      <span> {meal.comments?.length || 0}</span>
-                    </button>
-                  )}
-                </div>
-                {meal.isChefRecipe && showComments[id] && (
-                  <div className="cookbook-comments-area">
-
-                    {/* Comment List */}
-                    <div className="cookbook-comment-list">
-                      {meal.comments?.length > 0 ? (
-                        meal.comments.map((comment, index) => (
-                          <div key={index} className="cookbook-comment-item">
-
-                            <div className="cookbook-comment-content">
-                              <div className="cookbook-comment-author">
-                                {comment.user || "User"}
-                              </div>
-
-                              <div className="cookbook-comment-message">
-                                {comment.text}
-                              </div>
-                            </div>
-
-                            {/* Optional buttons (only show if current user wrote it) */}
-                            {canManageComment(comment) && (
-                              <div className="cookbook-comment-actions">
-                                <button
-                                  className="cookbook-comment-edit"
-                                  onClick={() => handleEditComment(meal, index)}
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  className="cookbook-comment-delete"
-                                  onClick={() => handleDeleteComment(meal, index)}
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            )}
-
-                          </div>
-                        ))
-                      ) : (
-                        <p style={{ opacity: 0.6 }}>No comments yet. Be the first!</p>
-                      )}
+                <div key={id} className="recipe-card">
+                  {isVeg(meal) ? (
+                    <div className="veg-icon">
+                      <div className="circle"></div>
                     </div>
+                  ) : (
+                    <div className="nonveg-icon">
+                      <div className="circle"></div>
+                    </div>
+                  )}
 
-                    {/* Comment Input */}
-                    <div className="cookbook-comment-form">
-                      <input
-                        type="text"
-                        className="cookbook-comment-field"
-                        placeholder="Write a comment..."
-                        value={commentInputs[id] || ""}
-                        onChange={(e) =>
-                          setCommentInputs((prev) => ({
+                  <img
+                    src={meal.strMealThumb || meal.strDrinkThumb}
+                    alt={meal.strMeal || meal.strDrink}
+                    className="recipe-image"
+                  />
+
+                  <h2 className="recipe-title">{meal.strMeal || meal.strDrink}</h2>
+
+                  <p className="recipe-info">
+                    <b>Category:</b> {meal.strCategory} <br />
+                    <b>Chef:</b>{" "}
+                    {meal.isChefRecipe ? (
+                      <span
+                        onClick={() => handleChefDetails(meal)}
+                        className="chef-name"
+                      >
+                        {meal.chefName || "Unknown Chef"}
+                        <span className="chef-tooltip">Click to view information</span>
+                      </span>
+                    ) : (
+                      "System"
+                    )}
+                    <br />
+                    <b>Country:</b> {meal.strArea || "N/A"}
+                  </p>
+
+                  <button
+                    className="watch-video-btn"
+                    onClick={() => handleWatchVideo(meal)}
+                  >
+                    ▶ Watch Video
+                  </button>
+
+                  <div className="reaction-buttons">
+                    <button className="like-btn" onClick={() => handleReaction(id, "like")}>
+                      {recipeStates[id]?.userReaction === "like"
+                        ? <FaThumbsUp style={{ color: "green", fontSize: "20px" }} />
+                        : <FaRegThumbsUp style={{ fontSize: "20px" }} />}
+                      <span> {likes}</span>
+                    </button>
+
+                    <button className="unlike-btn" onClick={() => handleReaction(id, "unlike")}>
+                      {recipeStates[id]?.userReaction === "unlike"
+                        ? <FaThumbsDown style={{ color: "red", fontSize: "20px" }} />
+                        : <FaRegThumbsDown style={{ fontSize: "20px" }} />}
+                      <span> {unlikes}</span>
+                    </button>
+
+                    <button
+                      className={`heart-btn ${favorite ? "active" : ""}`}
+                      onClick={() => handleFavorite(id, meal)}
+                    >
+                      {favorite
+                        ? <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
+                        : <FaRegHeart style={{ fontSize: "20px" }} />}
+                    </button>
+
+                    <button
+                      className="cart-btn"
+                      onClick={() => openShoppingIngredients(meal)}
+                      title="Order Ingredients"
+                      aria-label="Order Ingredients"
+                    >
+                      <FaShoppingCart style={{ fontSize: "18px" }} />
+                    </button>
+
+                    {meal.isChefRecipe && (
+                      <button
+                        className="comment-btn"
+                        onClick={() =>
+                          setShowComments((prev) => ({
                             ...prev,
-                            [id]: e.target.value,
+                            [id]: !prev[id],
                           }))
                         }
-                      />
-                      <button
-                        className="cookbook-submit-comment"
-                        onClick={() => handleAddComment(meal)}
                       >
-                        Post
+                        <FaComment style={{ fontSize: "18px" }} />
+                        <span> {meal.comments?.length || 0}</span>
+                      </button>
+                    )}
+                  </div>
+                  {meal.isChefRecipe && showComments[id] && (
+                    <div className="cookbook-comments-area">
+
+                      {/* Comment List */}
+                      <div className="cookbook-comment-list">
+                        {meal.comments?.length > 0 ? (
+                          meal.comments.map((comment, index) => (
+                            <div key={index} className="cookbook-comment-item">
+
+                              <div className="cookbook-comment-content">
+                                <div className="cookbook-comment-author">
+                                  {comment.user || "User"}
+                                </div>
+
+                                <div className="cookbook-comment-message">
+                                  {comment.text}
+                                </div>
+                              </div>
+
+                              {/* Optional buttons (only show if current user wrote it) */}
+                              {canManageComment(comment) && (
+                                <div className="cookbook-comment-actions">
+                                  <button
+                                    className="cookbook-comment-edit"
+                                    onClick={() => handleEditComment(meal, index)}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="cookbook-comment-delete"
+                                    onClick={() => handleDeleteComment(meal, index)}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+
+                            </div>
+                          ))
+                        ) : (
+                          <p style={{ opacity: 0.6 }}>No comments yet. Be the first!</p>
+                        )}
+                      </div>
+
+                      {/* Comment Input */}
+                      <div className="cookbook-comment-form">
+                        <input
+                          type="text"
+                          className="cookbook-comment-field"
+                          placeholder="Write a comment..."
+                          value={commentInputs[id] || ""}
+                          onChange={(e) =>
+                            setCommentInputs((prev) => ({
+                              ...prev,
+                              [id]: e.target.value,
+                            }))
+                          }
+                        />
+                        <button
+                          className="cookbook-submit-comment"
+                          onClick={() => handleAddComment(meal)}
+                        >
+                          Post
+                        </button>
+                      </div>
+
+                    </div>
+                  )}
+
+                  {meal.isChefRecipe ? (
+                    <div className="recipe-card-action-row">
+                      <button
+                        onClick={() => openServingCalc(meal)}
+                        className="ingredients-button"
+                      >
+                        🍴 Show Ingredients
+                      </button>
+                      <button
+                        onClick={() => handleShowInstructions(meal)}
+                        className="ingredients-button"
+                      >
+                        📖 Show Instructions
                       </button>
                     </div>
-
-                  </div>
-                )}
-
-                {meal.isChefRecipe ? (
-                  <div className="recipe-card-action-row">
+                  ) : (
                     <button
                       onClick={() => openServingCalc(meal)}
                       className="ingredients-button"
                     >
                       🍴 Show Ingredients
                     </button>
-                    <button
-                      onClick={() => handleShowInstructions(meal)}
-                      className="ingredients-button"
-                    >
-                      📖 Show Instructions
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => openServingCalc(meal)}
-                    className="ingredients-button"
-                  >
-                    🍴 Show Ingredients
-                  </button>
-                )}
-              </div>
-              {(index + 1) % 6 === 0 && (
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <GoogleAd />
+                  )}
                 </div>
-              )}
+                {(index + 1) % 6 === 0 && (
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <GoogleAd />
+                  </div>
+                )}
               </React.Fragment>
             );
           })
