@@ -1,4 +1,4 @@
-// src/services/reminderService.js
+// src/services/mealPlannerReminderService.js
 
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
@@ -79,13 +79,15 @@ const getNowForTimeZone = (timeZone = "UTC") => {
   return { weekday, hhmm, dateKey };
 };
 
+// FIX 1: Updated regex to allow single-digit hours (e.g. "8:00")
+// FIX 2: Use global isNaN() instead of Number.isNaN() for better string coercion handling
 const toReminderTime = (mealTime, leadMinutes = REMINDER_LEAD_MINUTES) => {
-  const match = String(mealTime || "").match(/^(\d{2}):(\d{2})$/);
+  const match = String(mealTime ?? "").match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return null;
 
   const hours = Number(match[1]);
   const minutes = Number(match[2]);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  if (isNaN(hours) || isNaN(minutes)) return null;
 
   const total = hours * 60 + minutes - leadMinutes;
   const normalized = ((total % 1440) + 1440) % 1440;
@@ -300,6 +302,9 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
    AUTO RUNNER
 ============================== */
 
+// FIX 3: Align interval to the top of the minute so hhmm comparisons always match.
+// Old code fired at arbitrary seconds (e.g. 05:06:36, 05:07:36) and never hit 07:30 exactly.
+// New code waits until the next clean :00 second, then ticks every 60s from there.
 export const initMealPlannerReminderService = () => {
   let isRunning = false;
 
@@ -315,8 +320,19 @@ export const initMealPlannerReminderService = () => {
     }
   };
 
-  setTimeout(run, 10000);
-  setInterval(run, 60 * 1000);
+  // Calculate ms remaining until the next whole minute
+  const now = new Date();
+  const msUntilNextMinute =
+    (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
 
-  console.log("Reminder service started. Checking every 60 seconds.");
+  console.log(
+    `Reminder service: first run in ${(msUntilNextMinute / 1000).toFixed(1)}s (aligning to minute boundary)`
+  );
+
+  setTimeout(() => {
+    run(); // Fire exactly at the top of the minute
+    setInterval(run, 60 * 1000); // Then every 60s, always aligned
+  }, msUntilNextMinute);
+
+  console.log("Reminder service started. Aligned to minute boundary.");
 };
