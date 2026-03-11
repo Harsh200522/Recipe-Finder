@@ -1938,21 +1938,7 @@ body {
     width: 100%;
   }
 }
-.recipe-finder-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-  padding: 1.5rem 1.5rem 0;
-  /* Remove height: 100svh and overflow: hidden */
-}
-
-.recipes-grid {
-  flex: 1;
-  overflow-y: auto;   /* ✅ scroll happens here */
-  padding-bottom: 2rem;
-}
-
 .main-container {
-  height: auto !important;      /* ✅ override the calc() height */
-  overflow: visible !important; /* ✅ let parent handle scroll */
+  height: auto !important;     
+  overflow: visible !important; 
 }
