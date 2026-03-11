@@ -400,25 +400,43 @@
   /* Ensure the grid is centered */
   .favorites-grid {
     display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 0 !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
     width: 100% !important;
     margin: 0 auto !important;
-    padding: 0 !important;
+    padding: 0 10px 10px !important;
     justify-content: center !important;
   }
   
   /* Ensure cards are centered - INCREASE WIDTH BY REDUCING PADDING */
   .favorites-page .recipe-card {
-    width: 90% !important;
+    width: 100% !important;
     max-width: 100% !important;
-    margin-top: 0 auto !important;
-    border-radius: 0 !important;
-    border-left: none !important;
-    border-right: none !important;
-    border-bottom: 1px solid #e5e7eb !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
     padding: 10px !important; /* CHANGED FROM 15px TO 10px */
+  }
+
+  .favorites-page .recipe-image {
+    height: 110px;
+  }
+
+  .favorites-page .recipe-title {
+    font-size: 1.05rem;
+  }
+
+  .favorites-page .recipe-info {
+    font-size: 11px;
+  }
+
+  .favorites-page .like-btn,
+  .favorites-page .unlike-btn {
+    font-size: 12px;
+  }
+
+  .favorites-page .like-btn span,
+  .favorites-page .unlike-btn span {
+    font-size: 12px;
   }
   
   /* Center the page container */
