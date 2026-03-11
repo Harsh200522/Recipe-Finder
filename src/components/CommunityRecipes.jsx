@@ -22,6 +22,7 @@ import Swal from "sweetalert2";
 import "../style/communityRecipes.css";
 import { FaComment, FaTrash, FaEdit, FaPlus, FaFilter, FaFire, FaImage, FaUtensils, FaYoutube, FaThumbsUp, FaRegThumbsUp, FaThumbsDown, FaRegThumbsDown } from "react-icons/fa";
 import { MdClose, MdFastfood, MdOutlineRestaurantMenu } from "react-icons/md";
+import ServingCalculator from "./ServingCalculator";
 
 const toReactionRecipeId = (recipeId) => `chef_${recipeId}`;
 const DEFAULT_AVATAR_URL =
@@ -43,6 +44,7 @@ export default function CommunityRecipes() {
   const [searchQuery, setSearchQuery] = useState("");
   const [recipeStates, setRecipeStates] = useState({});
   const [creatorAvatars, setCreatorAvatars] = useState({});
+  const [servingRecipe, setServingRecipe] = useState(null);
   const communityRecipes = recipes;
   const viewChefProfile = async (userId) => {
     try {
@@ -493,6 +495,25 @@ export default function CommunityRecipes() {
   };
 
   /* ================= UPLOAD TO HOME SEARCH ================= */
+  const normalizeCommunityRecipeForServingCalc = (recipe) => {
+    const normalized = { ...recipe };
+
+    if (typeof recipe.ingredients === "string") {
+      normalized.ingredients = recipe.ingredients
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    return normalized;
+  };
+
+  const openServingCalc = (recipe) => {
+    setServingRecipe(normalizeCommunityRecipeForServingCalc(recipe));
+  };
+
+  const closeServingCalc = () => setServingRecipe(null);
+
   const toggleUploadRecipe = async (recipe) => {
     const user = auth.currentUser;
     if (!user) return;
@@ -929,29 +950,7 @@ export default function CommunityRecipes() {
                     <div className="cookbook-action-buttons">
                       <button
                         className="cookbook-show-ingredients-btn"
-                        onClick={() =>
-                          Swal.fire({
-                            title: `
-                      <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
-                        <span style="font-size:28px;">🥗</span>
-                        <span>${recipe.title} - Ingredients</span>
-                      </div>
-                    `,
-                            html: `
-                      <div style="text-align:left; margin-top:10px;">
-                        ${recipe.ingredients
-                                .split("\n")
-                                .map(item => `• ${item}`)
-                                .join("<br>")}
-                            </div>
-                          `,
-                            confirmButtonText: "Close",
-                            width: "520px",
-                            showClass: {
-                              popup: "animate__animated animate__fadeInUp"
-                            }
-                          })
-                        }
+                        onClick={() => openServingCalc(recipe)}
                       >
                         Show Ingredients
                       </button>
@@ -1096,6 +1095,10 @@ export default function CommunityRecipes() {
             </div>
           )}
         </>
+      )}
+
+      {servingRecipe && (
+        <ServingCalculator meal={servingRecipe} onClose={closeServingCalc} />
       )}
 
       {/* Recipe Modal */}

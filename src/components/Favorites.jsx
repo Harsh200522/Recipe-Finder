@@ -68,6 +68,30 @@ export default function Favorites() {
   /* =====================================================
      FETCH FAVORITES (USER SPECIFIC 🔥 FIXED HERE)
   ===================================================== */
+  const hydrateFavoriteServings = async (fav) => {
+    if (fav.servings || !fav.isChefRecipe || !fav.id) return fav;
+
+    const recipeId = fav.id.startsWith("chef_")
+      ? fav.id.replace("chef_", "")
+      : fav.id;
+
+    if (!recipeId) return fav;
+
+    try {
+      const recipeSnap = await getDoc(doc(db, "recipes", recipeId));
+      if (recipeSnap.exists()) {
+        const data = recipeSnap.data();
+        if (data?.servings) {
+          return { ...fav, servings: data.servings };
+        }
+      }
+    } catch (error) {
+      console.error("Error hydrating favorite servings:", error);
+    }
+
+    return fav;
+  };
+
   useEffect(() => {
     let unsubFav = null;
 
@@ -80,13 +104,14 @@ export default function Favorites() {
       // 🔥 USER BASED COLLECTION
       const favRef = collection(db, "users", user.uid, "favorites");
 
-      unsubFav = onSnapshot(favRef, (snapshot) => {
+      unsubFav = onSnapshot(favRef, async (snapshot) => {
         const favs = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
 
-        setFavorites(favs);
+        const hydrated = await Promise.all(favs.map(hydrateFavoriteServings));
+        setFavorites(hydrated);
 
         setRecipeStates((prev) => {
           const next = {};
@@ -408,11 +433,16 @@ const parseIngredientLine = (raw = "") => {
 
 // ✅ Normalize favorite meal into strIngredient/strMeasure format for ServingCalculator
 const normalizeMealForServingCalc = (meal) => {
-  // Already in strIngredient format (MealDB recipes fetched fresh) — pass through
-  if (meal.strIngredient1) return meal;
+  // Preserve serving value from community or fallback to existing data
+  const normalized = {
+    ...meal,
+    servings: meal.servings || meal.serving || meal?.servings || meal?.serving || 2,
+  };
+
+  // Already formatted from MealDB structure
+  if (meal.strIngredient1) return normalized;
 
   // Favorites store ingredients as array: ["250g paneer cubes", "2 tbsp butter - measure"]
-  const normalized = { ...meal };
 
   if (Array.isArray(meal.ingredients) && meal.ingredients.length > 0) {
     meal.ingredients.slice(0, 20).forEach((item, index) => {

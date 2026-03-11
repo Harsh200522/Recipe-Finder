@@ -625,6 +625,7 @@ export default function RecipeFinder() {
       userId: recipe.userId,
       chefName: recipe.createdBy || "Unknown Chef",
       isChefRecipe: true,
+      servings: recipe.servings || recipe.serving || null,
       likes: recipe.likes || 0,
       unlikes: recipe.unlikes || 0,
       likedBy: recipe.likedBy || [],
@@ -1176,6 +1177,7 @@ export default function RecipeFinder() {
           image: meal.strMealThumb || meal.strDrinkThumb,
           youtube: meal.strYoutube || null,
           instructions: meal.strInstructions || meal.steps || "",
+          servings: meal.servings || meal.serving || null,
           ingredients: Array.from({ length: 20 }, (_, i) => {
             const ing = meal[`strIngredient${i + 1}`];
             const measure = meal[`strMeasure${i + 1}`];

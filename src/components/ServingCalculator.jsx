@@ -1,5 +1,5 @@
 // src/components/ServingCalculator.jsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import "../style/ServingCalculator.css";
 
 /**
@@ -137,9 +137,27 @@ const buildIngredientsList = (meal) => {
   return list;
 };
 
+const parseServingsInput = (val) => {
+  if (val === undefined || val === null) return null;
+  if (typeof val === "number" && !isNaN(val) && val > 0) return Number(val);
+  const num = parseFloat(String(val).replace(/[^\d.]/g, ""));
+  if (!isNaN(num) && num > 0) return num;
+  return null;
+};
+
 export default function ServingCalculator({ meal, onClose }) {
-  const [baseServings, setBaseServings] = useState(2);
-  const [currentServings, setCurrentServings] = useState(2);
+  const initialServings = useMemo(() => {
+    const mealServing = parseServingsInput(meal?.servings ?? meal?.serving);
+    return mealServing || 2;
+  }, [meal]);
+
+  const [baseServings, setBaseServings] = useState(initialServings);
+  const [currentServings, setCurrentServings] = useState(initialServings);
+
+  useEffect(() => {
+    setBaseServings(initialServings);
+    setCurrentServings(initialServings);
+  }, [initialServings]);
 
   const ingredients = useMemo(() => buildIngredientsList(meal), [meal]);
   const factor = currentServings / baseServings;
@@ -180,6 +198,7 @@ export default function ServingCalculator({ meal, onClose }) {
               disabled={currentServings <= 1}
               aria-label="Decrease servings"
             >
+              -
             </button>
             <span className="sc-serving-count">{currentServings}</span>
             <button
