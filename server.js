@@ -64,6 +64,17 @@ app.post("/run-meal-reminders", async (req, res) => {
   }
 });
 
+// Global error handlers to prevent silent crashes
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Promise Rejection:", reason);
+  console.error("Promise:", promise);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("❌ Uncaught Exception:", error);
+  console.error("Stack:", error.stack);
+});
+
 app.listen(PORT, () => {
   console.log(`Server on port ${PORT}`);
   initMealPlannerReminderService();
