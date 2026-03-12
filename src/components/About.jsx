@@ -196,7 +196,7 @@ export default function About() {
         <div className="about-footer">
           <p>Developed with ❤️ by <strong>Harsh Gilitwala</strong></p>
           <p className="footer-links">
-            <a href="/privacy">Privacy Policy</a> • 
+            <a href="/privacy-policy">Privacy Policy</a> • 
             <a href="/terms"> Terms of Service</a> • 
             <a href="/contact"> Contact Me</a>
           </p>

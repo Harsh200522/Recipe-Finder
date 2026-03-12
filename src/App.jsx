@@ -14,6 +14,7 @@ import "./App.css";
 import About from "./components/About.jsx";
 import CommunityRecipes from "./components/CommunityRecipes.jsx";
 import "./style/darkmode.css";
+import PrivacyPolicy from "./components/privacy-policy.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -55,6 +56,10 @@ function App() {
             <Route
               path="/auth"
               element={!user ? <Auth /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/privacy-policy"
+              element={<PrivacyPolicy />}
             />
 
             {/* Protected routes */}

@@ -2243,3 +2243,321 @@ body.dark-mode .sc-modal::-webkit-scrollbar-thumb {
 body.dark-mode .sc-modal::-webkit-scrollbar-thumb:hover {
   background: #ff8c42;
 }
+/* ============================================================
+   RECIPE FINDER — DARK MODE
+   Apply class "dark-mode" to <body> to activate
+   ============================================================ */
+
+/* ── SCROLLBAR ── */
+body.dark-mode ::-webkit-scrollbar {
+  width: 7px;
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+  background: #0d1117;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background: #1c2236;
+  border-radius: 999px;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #f0c040;
+}
+
+body.dark-mode ::selection {
+  background: rgba(240, 192, 64, 0.25);
+  color: #e8f0fe;
+}
+
+/* ── WRAPPER ── */
+body.dark-mode .pp-wrap {
+  background: #0a0c10;
+}
+
+/* ── HERO ── */
+body.dark-mode .pp-hero {
+  background: linear-gradient(135deg, #0d1117 0%, #111820 60%, #0d1117 100%);
+  border-bottom: 1px solid #141928;
+}
+
+body.dark-mode .pp-hero::before {
+  background:
+    radial-gradient(ellipse 60% 80% at 20% 50%, rgba(240, 192, 64, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(100, 160, 255, 0.04) 0%, transparent 60%);
+}
+
+body.dark-mode .pp-hero::after {
+  background: #0a0c10;
+}
+
+body.dark-mode .pp-hero h1 {
+  color: #e8f0fe;
+  text-shadow: 0 0 60px rgba(240, 192, 64, 0.15);
+}
+
+body.dark-mode .pp-hero-sub {
+  color: rgba(200, 218, 255, 0.5);
+}
+
+body.dark-mode .pp-eyebrow {
+  color: #f0c040;
+}
+
+body.dark-mode .pp-eyebrow::before,
+body.dark-mode .pp-eyebrow::after {
+  background: #f0c040;
+  opacity: 0.45;
+}
+
+body.dark-mode .pp-date-badge {
+  background: rgba(240, 192, 64, 0.08);
+  border-color: rgba(240, 192, 64, 0.2);
+  color: rgba(200, 218, 255, 0.4);
+}
+
+/* ── SIDEBAR ── */
+body.dark-mode .pp-sidebar {
+  background: #0d1117;
+  border-radius: 12px;
+  border: 1px solid #1c2236;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  overflow-x: hidden;
+}
+
+body.dark-mode .pp-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+body.dark-mode .pp-sidebar::-webkit-scrollbar-track {
+  background: #0a0c10;
+  border-radius: 10px;
+}
+
+body.dark-mode .pp-sidebar::-webkit-scrollbar-thumb {
+  background: #1c2236;
+  border-radius: 10px;
+}
+
+body.dark-mode .pp-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #f0c040;
+}
+
+body.dark-mode .pp-sidebar-label {
+  color: #3a4460;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  font-weight: 500;
+  padding-left: 28px;
+  margin-bottom: 14px;
+}
+
+body.dark-mode .pp-nav {
+  border-left-color: #f0c040;
+  margin-left: 26px;
+}
+
+body.dark-mode .pp-nav li {
+  position: relative;
+}
+
+body.dark-mode .pp-nav button {
+  color: #7a8aaa;
+  padding: 10px 24px 10px 20px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  border-radius: 0 6px 6px 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+body.dark-mode .pp-nav button:hover {
+  color: #f0c040;
+  background: rgba(240, 192, 64, 0.08);
+}
+
+body.dark-mode .pp-nav button.active {
+  color: #f0c040;
+  font-weight: 500;
+  background: linear-gradient(90deg, rgba(240, 192, 64, 0.12) 0%, rgba(240, 192, 64, 0) 100%);
+}
+
+body.dark-mode .pp-nav button.active::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #f0c040;
+  border-radius: 3px;
+  box-shadow: 0 0 8px #f0c040;
+}
+
+body.dark-mode .pp-nav .nav-num {
+  color: #1c2236;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  min-width: 24px;
+  transition: color 0.2s;
+}
+
+body.dark-mode .pp-nav button:hover .nav-num,
+body.dark-mode .pp-nav button.active .nav-num {
+  color: #f0c040;
+}
+
+/* ── SECTIONS ── */
+body.dark-mode .pp-section {
+  border-bottom-color: #141928;
+}
+
+body.dark-mode .pp-section-num {
+  color: #f0c040;
+}
+
+body.dark-mode .pp-section h2 {
+  color: #c8d8f8;
+}
+
+body.dark-mode .pp-section p {
+  color: #7a8aaa;
+}
+
+body.dark-mode .pp-section p strong {
+  color: #c8d8f8;
+}
+
+/* ── LISTS ── */
+body.dark-mode .pp-list li {
+  color: #7a8aaa;
+}
+
+body.dark-mode .pp-list li::before {
+  color: #f0c040;
+  background: #f0c040;
+}
+
+body.dark-mode .pp-list li strong {
+  color: #c8d8f8;
+}
+
+/* ── CALLOUT BOXES ── */
+body.dark-mode .pp-callout {
+  background: #0d1520;
+  border-color: #1c2a40;
+  border-left-color: #f0c040;
+  color: #8aaccc;
+}
+
+body.dark-mode .pp-callout strong {
+  color: #f0c040;
+}
+
+body.dark-mode .pp-callout-sage {
+  background: #0d150f;
+  border-color: #1a2e1e;
+  border-left-color: #4caf82;
+  color: #7aaa90;
+}
+
+body.dark-mode .pp-callout-sage strong {
+  color: #4caf82;
+}
+
+/* ── TABLE ── */
+body.dark-mode .pp-table thead tr {
+  background: #0d1520;
+}
+
+body.dark-mode .pp-table th {
+  color: #c8d8f8;
+}
+
+body.dark-mode .pp-table td {
+  border-bottom-color: #141928;
+  color: #7a8aaa;
+}
+
+body.dark-mode .pp-table td strong {
+  color: #c8d8f8;
+}
+
+body.dark-mode .pp-table tr:nth-child(even) td {
+  background: #0b0e18;
+}
+
+/* ── RIGHTS GRID ── */
+body.dark-mode .rights-card {
+  background: #0d1117;
+  border-color: #1c2236;
+}
+
+body.dark-mode .rights-card:hover {
+  border-color: #f0c040;
+}
+
+body.dark-mode .rights-card h4 {
+  color: #c8d8f8;
+}
+
+body.dark-mode .rights-card p {
+  color: #3a4460 !important;
+}
+
+/* ── CONTACT CARD ── */
+body.dark-mode .contact-card {
+  background: #0d1520;
+  border: 1px solid #1c2a40;
+  box-shadow:
+    0 0 0 1px rgba(240, 192, 64, 0.08),
+    inset 0 0 60px rgba(240, 192, 64, 0.02);
+}
+
+body.dark-mode .contact-card h3 {
+  color: #e8f0fe;
+}
+
+body.dark-mode .contact-card > p {
+  color: rgba(200, 218, 255, 0.45) !important;
+}
+
+body.dark-mode .contact-link {
+  background: rgba(240, 192, 64, 0.08);
+  border-color: rgba(240, 192, 64, 0.22);
+  color: #f0c040;
+}
+
+body.dark-mode .contact-link:hover {
+  background: rgba(240, 192, 64, 0.18);
+}
+
+/* ── INLINE LINKS ── */
+body.dark-mode .pp-content a {
+  color: #f0c040;
+}
+
+body.dark-mode .pp-content a:hover {
+  color: #f5d060;
+  text-decoration: underline;
+}
+
+/* ── FOOTER ── */
+body.dark-mode .pp-footer-note {
+  border-top-color: #141928;
+  color: #252f44;
+}
+
+body.dark-mode .pp-footer-note a {
+  color: #f0c040;
+}
+
+body.dark-mode .pp-footer-note a:hover {
+  color: #f5d060;
+}
