@@ -9,9 +9,9 @@ body {
 .recipe-finder-container {
   display: flex;
   flex-direction: column;
-  height: 100svh;
   min-height: 100dvh;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 1.5rem 1.5rem 0;
 }
 
