@@ -130,21 +130,24 @@ body {
   align-items: start; /* Critical for sticky to work */
 }
 
-/* ── SIDEBAR - FIXED STICKY POSITIONING ── */
+/* ── SIDEBAR - COMPLETE STICKY VERSION ── */
 .pp-sidebar {
-  position: sticky;
-  position: -webkit-sticky; /* Safari support */
-  top: 30px; /* Distance from top when sticky */
-  height: auto;
-  max-height: calc(100vh - 60px); /* Prevent sidebar from going off screen */
-  overflow-y: auto; /* Allow internal scrolling if content is too long */
-  overflow-x: hidden; /* Remove horizontal scroll */
+  /* Sticky positioning */
+  position: sticky !important;
+  position: -webkit-sticky !important;
+  top: 30px !important;
+  
+  /* Layout */
   align-self: start;
+  height: auto;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
   
   /* Visual styles */
   background: var(--cream);
   border-radius: 12px;
-  padding: 24px 0 24px 0;
+  padding: 24px 0;
   
   /* Ensure it stays above content */
   z-index: 100;
@@ -173,8 +176,8 @@ body {
   font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--text-muted);
-  font-weight: 500;
+  color: #ffd700 !important; /* Bright yellow */
+  font-weight: 600;
   margin-bottom: 14px;
   padding-left: 28px;
 }
@@ -277,11 +280,12 @@ body {
   align-items: baseline;
   gap: 14px;
   margin-bottom: 22px;
+  font-size: 28px;
 }
 
 .pp-section-num {
   font-family: 'Playfair Display', serif;
-  font-size: 14px;
+  font-size: 0.95em;
   font-style: italic;
   color: var(--spice-light);
   flex-shrink: 0;
@@ -289,7 +293,7 @@ body {
 
 .pp-section h2 {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 28px;
+  font-size: 1em;
   font-weight: 700;
   color: var(--warm-brown);
   line-height: 1.2;
@@ -607,11 +611,15 @@ body {
   }
 
   .pp-section h2 {
-    font-size: 24px;
+    font-size: 1em;
   }
 
   .pp-section p {
     font-size: 16px;
+  }
+
+  .pp-section-num {
+    font-size: 0.95em;
   }
 
   .rights-grid {

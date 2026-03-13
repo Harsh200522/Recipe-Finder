@@ -384,11 +384,8 @@ export default function PrivacyPolicy() {
                 <h3>🍳 Recipe Finder Privacy Team</h3>
                 <p>We aim to respond to all privacy-related inquiries within 2 business days.</p>
                 <div className="contact-links">
-                  <a href="mailto:privacy@recipefinder.com" className="contact-link">
-                    ✉️ privacy@recipefinder.com
-                  </a>
-                  <a href="mailto:support@recipefinder.com" className="contact-link">
-                    💬 support@recipefinder.com
+                  <a href="mailto:infolivesta@gmail.com" className="contact-link">
+                    ✉️ infolivesta@gmail.com
                   </a>
                 </div>
               </div>
