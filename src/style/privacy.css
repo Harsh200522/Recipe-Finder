@@ -450,6 +450,8 @@ body {
   flex-direction: column;
   gap: 10px;
   margin-top: 22px;
+  align-items: center;
+  text-align: center;
 }
 
 .contact-card h3 {
@@ -470,6 +472,7 @@ body {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 8px;
+  justify-content: center;
 }
 
 .contact-link {
