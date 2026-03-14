@@ -15,6 +15,8 @@ import About from "./components/About.jsx";
 import CommunityRecipes from "./components/CommunityRecipes.jsx";
 import "./style/darkmode.css";
 import PrivacyPolicy from "./components/privacy-policy.jsx";
+import Terms from "./components/Terms.jsx";
+import ContactUs from "./components/ContactUs.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -52,17 +54,25 @@ function App() {
         {user && <Header />}
         <main>
           <Routes>
-            {/* Public route */}
+            {/* ========== PUBLIC ROUTES (No Auth Required) ========== */}
             <Route
               path="/auth"
               element={!user ? <Auth /> : <Navigate to="/" />}
             />
             <Route
+              path="/reset"
+              element={<ResetPassword />}
+            />
+            <Route
               path="/privacy-policy"
               element={<PrivacyPolicy />}
             />
+            <Route
+              path="/terms"
+              element={<Terms />}
+            />
 
-            {/* Protected routes */}
+            {/* ========== PROTECTED ROUTES (Auth Required) ========== */}
             <Route
               path="/"
               element={user ? <Home /> : <Navigate to="/auth" />}
@@ -84,18 +94,18 @@ function App() {
               element={user ? <CommunityRecipes /> : <Navigate to="/auth" />}
             />
             <Route
+              path="/contact"
+              element={user ? <ContactUs /> : <Navigate to="/auth" />}
+            />
+            <Route
               path="/profile"
-              element={user ? <ProfileSettings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}/>: <Navigate to="/auth" />}
+              element={user ? <ProfileSettings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} /> : <Navigate to="/auth" />}
             />
 
-            {/* Catch-all: if route not found, go home or auth */}
+            {/* ========== CATCH-ALL ROUTE ========== */}
             <Route
               path="*"
               element={<Navigate to={user ? "/" : "/auth"} />}
-            />
-            <Route
-              path="/reset"
-              element={<ResetPassword />}
             />
           </Routes>
         </main>

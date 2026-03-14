@@ -40,6 +40,19 @@ const GEMINI_FALLBACK_MODELS = [
     "gemini-2.0-flash",
 ];
 
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+const CONTACT_RECEIVER = process.env.CONTACT_RECEIVER || EMAIL_USER;
+
+const createGmailTransporter = () =>
+    nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: EMAIL_USER,
+            pass: EMAIL_PASS,
+        },
+    });
+
 const parseSections = (text = "") => {
     const title = (text.match(/Recipe Name:\s*(.+)/i)?.[1] || "").trim();
     const cookingTime = (text.match(/Cooking Time:\s*(.+)/i)?.[1] || "").trim();
@@ -547,6 +560,68 @@ app.post("/run-meal-reminders", async (_req, res) => {
     }
 });
 
+app.post("/contact", async (req, res) => {
+    try {
+        if (!EMAIL_USER || !EMAIL_PASS) {
+            return res.status(500).json({ error: "Email service not configured." });
+        }
+
+        const name = String(req.body?.name || "").trim();
+        const email = String(req.body?.email || "").trim();
+        const subject = String(req.body?.subject || "").trim();
+        const message = String(req.body?.message || "").trim();
+        const category = String(req.body?.category || "general").trim();
+
+        if (!name || !email || !message) {
+            return res.status(400).json({ error: "Missing required fields." });
+        }
+
+        const safeSubject = subject ? subject.slice(0, 120) : "No subject";
+        const safeCategory = category ? category.slice(0, 60) : "general";
+
+        const htmlEmail = `
+            <div style="font-family: Arial, sans-serif; color: #111827;">
+                <h2 style="margin: 0 0 12px;">New Contact Message</h2>
+                <p style="margin: 0 0 8px;"><strong>Name:</strong> ${name}</p>
+                <p style="margin: 0 0 8px;"><strong>Email:</strong> ${email}</p>
+                <p style="margin: 0 0 8px;"><strong>Category:</strong> ${safeCategory}</p>
+                <p style="margin: 0 0 12px;"><strong>Subject:</strong> ${safeSubject}</p>
+                <div style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+                    <pre style="white-space: pre-wrap; margin: 0; font-family: Arial, sans-serif;">${message}</pre>
+                </div>
+            </div>
+        `;
+
+        const textEmail = `
+New Contact Message
+
+Name: ${name}
+Email: ${email}
+Category: ${safeCategory}
+Subject: ${safeSubject}
+
+Message:
+${message}
+        `.trim();
+
+        const transporter = createGmailTransporter();
+
+        await transporter.sendMail({
+            from: `"Recipe Finder Contact" <${EMAIL_USER}>`,
+            to: CONTACT_RECEIVER,
+            replyTo: email,
+            subject: `[Contact] ${safeCategory} - ${safeSubject}`,
+            text: textEmail,
+            html: htmlEmail,
+        });
+
+        return res.json({ success: true });
+    } catch (error) {
+        console.error("Contact form email failed:", error);
+        return res.status(500).json({ error: "Failed to send message." });
+    }
+});
+
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
 }
@@ -554,6 +629,9 @@ function generateOTP() {
 app.post('/generate-2fa-otp', async (req, res) => {
     const { email, uid } = req.body;
     if (!email || !uid) return res.status(400).json({ error: "Missing email or uid" });
+    if (!EMAIL_USER || !EMAIL_PASS) {
+        return res.status(500).json({ error: "Email service not configured." });
+    }
 
     const otp = generateOTP();
     const expiresAt = Date.now() + 5 * 60 * 1000; // expires in 5 minutes
@@ -565,13 +643,7 @@ app.post('/generate-2fa-otp', async (req, res) => {
     });
 
     // Send OTP via Gmail with HTML styling
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
+    const transporter = createGmailTransporter();
 
     // HTML email template with CSS
     const htmlEmail = `
@@ -895,7 +967,7 @@ app.post('/generate-2fa-otp', async (req, res) => {
     `;
 
     const mailOptions = {
-        from: `"Recipe Finder" <${process.env.EMAIL_USER}>`,
+        from: `"Recipe Finder" <${EMAIL_USER}>`,
         to: email,
         subject: '🔐 Your Recipe Finder 2FA Verification Code',
         text: textEmail,

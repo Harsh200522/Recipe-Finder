@@ -5,6 +5,7 @@ import {
   checkAndSendMealPlannerReminders,
   initMealPlannerReminderService,
 } from "./src/backend/mealPlannerReminderService.js";
+import chatHandler from "./api/chat.js";
 
 dotenv.config();
 
@@ -20,6 +21,9 @@ app.use(
 );
 
 app.use(express.json());
+
+// Live chat endpoint (HuggingFace API)
+app.post("/api/chat", chatHandler);
 
 app.get("/", (_req, res) => {
   res.send("Reminder service is running");

@@ -2561,3 +2561,694 @@ body.dark-mode .pp-footer-note a {
 body.dark-mode .pp-footer-note a:hover {
   color: #f5d060;
 }
+/* Dark Mode Styles */
+body.dark-mode {
+  background: #1a1a1a;
+  --cream: #2d2d2d;
+  --parchment: #3d3d3d;
+  --warm-brown: #8b6b4d;
+  --spice: #c97e4d;
+  --spice-light: #e69b6b;
+  --sage: #8b9a7a;
+  --text: #e0e0e0;
+  --text-muted: #b0b0b0;
+  --border: #4a4a4a;
+  --highlight: #3a3a3a;
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* Hero Section */
+body.dark-mode .contact-hero {
+  background: #2c2c2c;
+}
+
+body.dark-mode .contact-hero h1 {
+  color: #ffffff;
+}
+
+body.dark-mode .contact-hero-sub {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+body.dark-mode .contact-eyebrow {
+  color: #e6b450;
+}
+
+body.dark-mode .contact-eyebrow::before,
+body.dark-mode .contact-eyebrow::after {
+  background: #e6b450;
+}
+
+/* Contact Cards */
+body.dark-mode .contact-card {
+  background: #2d2d2d;
+  border-color: #4a4a4a;
+}
+
+body.dark-mode .contact-card:hover {
+  border-color: var(--spice-light);
+}
+
+body.dark-mode .card-icon {
+  background: #3d3d3d;
+  color: #e0e0e0;
+}
+
+body.dark-mode .contact-card:hover .card-icon {
+  background: var(--spice-light);
+  color: #ffffff;
+}
+
+body.dark-mode .contact-card h3 {
+  color: #e0e0e0;
+}
+
+body.dark-mode .contact-card p {
+  color: #b0b0b0;
+}
+
+body.dark-mode .card-note {
+  color: var(--sage) !important;
+}
+
+/* Chat Button */
+body.dark-mode .chat-button {
+  background: var(--spice);
+  color: #ffffff;
+}
+
+body.dark-mode .chat-button:hover {
+  background: var(--spice-light);
+}
+
+/* Contact Form */
+body.dark-mode .contact-form-container {
+  background: #2d2d2d;
+  border-color: #4a4a4a;
+}
+
+body.dark-mode .contact-form-container h2 {
+  color: #e0e0e0;
+}
+
+body.dark-mode .form-intro {
+  color: #b0b0b0;
+}
+
+body.dark-mode .form-group label {
+  color: #e0e0e0;
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group select,
+body.dark-mode .form-group textarea {
+  background: #3d3d3d;
+  border-color: #4a4a4a;
+  color: #e0e0e0;
+}
+
+body.dark-mode .form-group input:focus,
+body.dark-mode .form-group select:focus,
+body.dark-mode .form-group textarea:focus {
+  border-color: var(--spice);
+  box-shadow: 0 0 0 3px rgba(201, 126, 77, 0.2);
+}
+
+body.dark-mode .form-group input::placeholder,
+body.dark-mode .form-group textarea::placeholder {
+  color: #888888;
+}
+
+/* Success Message */
+body.dark-mode .success-message h3 {
+  color: #6ab04c;
+}
+
+body.dark-mode .success-message p {
+  color: #b0b0b0;
+}
+
+/* Side Info Blocks */
+body.dark-mode .info-block {
+  background: #2d2d2d;
+  border-color: #4a4a4a;
+}
+
+body.dark-mode .info-block h3 {
+  color: #e0e0e0;
+  border-bottom-color: #4a4a4a;
+}
+
+/* FAQ List */
+body.dark-mode .faq-list a {
+  color: #b0b0b0;
+}
+
+body.dark-mode .faq-list a:hover {
+  color: var(--spice-light);
+}
+
+body.dark-mode .view-all-link {
+  color: var(--spice-light);
+}
+
+/* Social Links (commented out in your code, but included for completeness) */
+body.dark-mode .social-link {
+  background: #3d3d3d;
+  color: #e0e0e0;
+}
+
+body.dark-mode .social-link:hover {
+  background: var(--spice);
+  color: #ffffff;
+}
+
+/* Hours Block */
+body.dark-mode .hours-list li {
+  border-bottom-color: #4a4a4a;
+  color: #b0b0b0;
+}
+
+body.dark-mode .hours-list span {
+  color: #e0e0e0;
+}
+
+body.dark-mode .emergency-note {
+  background: #3a3a3a;
+  color: #b0b0b0;
+}
+
+/* Map Section */
+body.dark-mode .map-section h2 {
+  color: #e0e0e0;
+}
+
+body.dark-mode .map-container {
+  background: #2d2d2d;
+  border-color: #4a4a4a;
+}
+
+body.dark-mode .map-placeholder {
+  background: #3d3d3d;
+  background-image: radial-gradient(circle at 20px 20px, #4a4a4a 1px, transparent 1px);
+}
+
+body.dark-mode .map-placeholder p {
+  color: #e0e0e0;
+}
+
+body.dark-mode .directions-button {
+  background: var(--spice);
+  color: #ffffff;
+}
+
+body.dark-mode .directions-button:hover {
+  background: var(--spice-light);
+}
+
+/* Error States */
+body.dark-mode .error-message {
+  color: #ff6b6b;
+}
+
+body.dark-mode .form-group input.error,
+body.dark-mode .form-group textarea.error {
+  border-color: #ff6b6b;
+}
+
+/* Submit Button */
+body.dark-mode .submit-button {
+  background: var(--spice);
+  color: #ffffff;
+}
+
+body.dark-mode .submit-button:hover {
+  background: var(--spice-light);
+  box-shadow: 0 8px 16px rgba(201, 126, 77, 0.4);
+}
+
+/* Footer Link (example from your request) */
+body.dark-mode .pp-footer-note a:hover {
+  color: #f5d060;
+}
+
+/* Scrollbar for dark mode (optional) */
+body.dark-mode ::-webkit-scrollbar {
+  width: 12px;
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 6px;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+/* Force dark mode for all inputs on focus */
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+  background-color: #3d3d3d !important;
+  color: #e0e0e0 !important;
+  border-color: var(--spice) !important;
+  box-shadow: 0 0 0 3px rgba(201, 126, 77, 0.3) !important;
+}
+
+/* Hover states */
+body.dark-mode input:hover,
+body.dark-mode select:hover,
+body.dark-mode textarea:hover {
+  background-color: #454545 !important;
+  border-color: var(--spice-light) !important;
+}
+
+/* Specific for name, email, subject inputs */
+body.dark-mode input[name="name"]:focus,
+body.dark-mode input[name="email"]:focus,
+body.dark-mode input[name="subject"]:focus,
+body.dark-mode input[name="name"]:hover,
+body.dark-mode input[name="email"]:hover,
+body.dark-mode input[name="subject"]:hover {
+  background-color: #454545 !important;
+}
+
+/* Override browser autofill styles */
+body.dark-mode input:-webkit-autofill,
+body.dark-mode input:-webkit-autofill:hover,
+body.dark-mode input:-webkit-autofill:focus,
+body.dark-mode input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #3d3d3d inset !important;
+  -webkit-text-fill-color: #e0e0e0 !important;
+  caret-color: #e0e0e0;
+}
+
+/* Submit button hover/focus */
+body.dark-mode .submit-button:hover {
+  background: var(--spice-light) !important;
+  transform: translateY(-2px);
+}
+
+body.dark-mode .submit-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(201, 126, 77, 0.5);
+}
+
+/* Chat button hover */
+body.dark-mode .chat-button:hover {
+  background: var(--spice-light) !important;
+}
+
+/* Directions button hover */
+body.dark-mode .directions-button:hover {
+  background: var(--spice-light) !important;
+  transform: scale(1.05);
+}
+
+/* =====================================================
+   FAQ MODAL DARK MODE
+===================================================== */
+
+body.dark-mode .faq-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+body.dark-mode .faq-modal-content {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+}
+
+body.dark-mode .faq-modal-header {
+  background: linear-gradient(135deg, #c97e4d 0%, #b86d3e 100%);
+  border-bottom-color: #444;
+}
+
+body.dark-mode .faq-modal-header h2 {
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .faq-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+body.dark-mode .faq-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .faq-modal-search {
+  background-color: #333;
+  border-bottom-color: #444;
+}
+
+body.dark-mode .faq-search-input {
+  background-color: #3a3a3a;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+body.dark-mode .faq-search-input::placeholder {
+  color: #888;
+}
+
+body.dark-mode .faq-search-input:focus {
+  border-color: #c97e4d;
+  box-shadow: 0 0 0 3px rgba(201, 126, 77, 0.1);
+  background-color: #3d3d3d;
+}
+
+body.dark-mode .faq-modal-list {
+  background-color: #2a2a2a;
+}
+
+body.dark-mode .faq-modal-list::-webkit-scrollbar-track {
+  background: #333;
+}
+
+body.dark-mode .faq-modal-list::-webkit-scrollbar-thumb {
+  background: #555;
+}
+
+body.dark-mode .faq-modal-list::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
+body.dark-mode .faq-question {
+  background-color: #3a3a3a;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+body.dark-mode .faq-question:hover {
+  background-color: #424242;
+  border-color: #c97e4d;
+  box-shadow: 0 2px 8px rgba(201, 126, 77, 0.1);
+}
+
+body.dark-mode .faq-question.active {
+  background-color: #3d2817;
+  border-color: #c97e4d;
+  color: #c97e4d;
+}
+
+body.dark-mode .faq-toggle-icon {
+  color: #c97e4d;
+}
+
+body.dark-mode .faq-answer {
+  background-color: #333;
+  border-color: #555;
+  color: #b0b0b0;
+}
+
+body.dark-mode .faq-no-results {
+  color: #777;
+}
+
+/* =====================================================
+   PRIVACY POLICY PAGE - DARK MODE
+===================================================== */
+
+body.dark-mode .pp-wrap {
+  background: #0f0f11;
+}
+
+body.dark-mode .pp-hero {
+  background: linear-gradient(135deg, #2a2a2a 0%, #222222 100%);
+  border-bottom: 1px solid #333;
+}
+
+body.dark-mode .pp-hero::before {
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+body.dark-mode .pp-eyebrow {
+  color: #c97e4d;
+}
+
+body.dark-mode .pp-eyebrow::before,
+body.dark-mode .pp-eyebrow::after {
+  background: #c97e4d;
+  opacity: 0.6;
+}
+
+body.dark-mode .pp-hero h1 {
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .pp-hero-sub {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .pp-date-badge {
+  background: rgba(201, 126, 77, 0.1);
+  border: 1px solid rgba(201, 126, 77, 0.2);
+  color: rgba(201, 126, 77, 0.8);
+}
+
+body.dark-mode .pp-body {
+  background: #0f0f11;
+  color: #e0e0e0;
+}
+
+body.dark-mode .pp-sidebar {
+  background: #1a1a1a;
+  border: 1px solid #333;
+}
+
+body.dark-mode .pp-sidebar-label {
+  color: #c97e4d;
+}
+
+body.dark-mode .pp-nav {
+  border-left-color: #333;
+}
+
+body.dark-mode .pp-nav button {
+  color: #999;
+}
+
+body.dark-mode .pp-nav button:hover {
+  color: #c97e4d;
+}
+
+body.dark-mode .pp-nav button.active {
+  color: #c97e4d;
+  border-left-color: #c97e4d;
+}
+
+body.dark-mode .pp-section {
+  border-bottom-color: #333;
+}
+
+body.dark-mode .pp-section-num {
+  color: #c97e4d;
+}
+
+body.dark-mode .pp-section h2 {
+  color: #ffffff;
+}
+
+body.dark-mode .pp-section p {
+  color: #e0e0e0;
+}
+
+body.dark-mode .pp-section strong {
+  color: #ffffff;
+}
+
+body.dark-mode .pp-list li {
+  color: #e0e0e0;
+}
+
+body.dark-mode .pp-list li::before {
+  color: #c97e4d;
+}
+
+body.dark-mode .pp-table {
+  background: #1a1a1a;
+  border: 1px solid #333;
+}
+
+body.dark-mode .pp-table th {
+  background: #252525;
+  color: #e0e0e0;
+  border-bottom-color: #333;
+}
+
+body.dark-mode .pp-table td {
+  border-color: #333;
+  color: #e0e0e0;
+}
+
+body.dark-mode .pp-table tr:hover {
+  background: #1f1f1f;
+}
+
+body.dark-mode .pp-callout {
+  background: #1a1a1a;
+  border-left-color: #c97e4d;
+  color: #e0e0e0;
+}
+
+body.dark-mode .pp-callout strong {
+  color: #c97e4d;
+}
+
+body.dark-mode .pp-footer {
+  background: #1a1a1a;
+  color: #999;
+  border-top-color: #333;
+}
+
+/* =====================================================
+   TERMS OF SERVICE PAGE - DARK MODE
+===================================================== */
+
+body.dark-mode .terms-wrap {
+  background: #0f0f11;
+}
+
+body.dark-mode .terms-hero {
+  background: linear-gradient(135deg, #2a2a2a 0%, #222222 100%);
+  border-bottom: 1px solid #333;
+}
+
+body.dark-mode .terms-hero::before {
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+body.dark-mode .terms-eyebrow {
+  color: #c97e4d;
+}
+
+body.dark-mode .terms-eyebrow::before,
+body.dark-mode .terms-eyebrow::after {
+  background: #c97e4d;
+  opacity: 0.6;
+}
+
+body.dark-mode .terms-hero h1 {
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .terms-hero-sub {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .terms-date-badge {
+  background: rgba(201, 126, 77, 0.1);
+  border: 1px solid rgba(201, 126, 77, 0.2);
+  color: rgba(201, 126, 77, 0.8);
+}
+
+body.dark-mode .terms-body {
+  background: #0f0f11;
+  color: #e0e0e0;
+}
+
+body.dark-mode .terms-sidebar {
+  background: #1a1a1a;
+  border: 1px solid #333;
+}
+
+body.dark-mode .terms-sidebar-label {
+  color: #c97e4d;
+}
+
+body.dark-mode .terms-nav {
+  border-left-color: #333;
+}
+
+body.dark-mode .terms-nav button {
+  color: #999;
+}
+
+body.dark-mode .terms-nav button:hover {
+  color: #c97e4d;
+}
+
+body.dark-mode .terms-nav button.active {
+  color: #c97e4d;
+  border-left-color: #c97e4d;
+}
+
+body.dark-mode .terms-section {
+  border-bottom-color: #333;
+}
+
+body.dark-mode .terms-section-num {
+  color: #c97e4d;
+}
+
+body.dark-mode .terms-section h2 {
+  color: #ffffff;
+}
+
+body.dark-mode .terms-section p {
+  color: #e0e0e0;
+}
+
+body.dark-mode .terms-section strong {
+  color: #ffffff;
+}
+
+body.dark-mode .terms-list li {
+  color: #e0e0e0;
+}
+
+body.dark-mode .terms-list li::before {
+  color: #c97e4d;
+}
+
+body.dark-mode .terms-callout {
+  background: #1a1a1a;
+  border-left-color: #c97e4d;
+  color: #e0e0e0;
+}
+
+body.dark-mode .terms-callout strong {
+  color: #c97e4d;
+}
+
+body.dark-mode .terms-callout.warning {
+  background: #2a1a0a;
+  border-left-color: #e07a45;
+  color: #ffa366;
+}
+
+body.dark-mode .terms-callout.warning strong {
+  color: #e07a45;
+}
+
+body.dark-mode .terms-contact-info {
+  background: #1a1a1a;
+  border: 1px solid #333;
+}
+
+body.dark-mode .terms-contact-info p {
+  color: #e0e0e0;
+}
+
+body.dark-mode .terms-contact-info a {
+  color: #c97e4d;
+  border-bottom-color: #c97e4d;
+}
+
+body.dark-mode .terms-contact-info a:hover {
+  color: #e07a45;
+  border-bottom-color: #e07a45;
+}
+
+body.dark-mode .terms-footer {
+  background: #1a1a1a;
+  color: #999;
+  border-top-color: #333;
+}
