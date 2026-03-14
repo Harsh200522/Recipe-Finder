@@ -105,6 +105,7 @@
   margin-bottom: 40px;
 }
 
+
 /* Day card */
 .day-card {
   background: linear-gradient(145deg, #ffffff, #f0f0f0);
@@ -265,6 +266,8 @@
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   border-left: 4px solid #4CAF50;
+  gap: 16px;
+  flex-wrap: nowrap;
 }
 
 .save-status-left {
@@ -272,6 +275,7 @@
   align-items: center;
   gap: 15px;
   flex: 1;
+  min-width: 0;
 }
 
 .unsaved-changes {
@@ -315,6 +319,8 @@
   gap: 15px;
   align-items: center;
   flex-shrink: 0;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 /* Reset Button */
@@ -459,6 +465,16 @@
     min-height: auto;
     gap: 10px;
   }
+    flex-direction: column;
+    align-items: flex-start;
+  }
+    flex-direction: column;
+    align-items: flex-start;
+  }
+    width: 100%;
+  }
+    width: 100%;
+  }
   
   .meal-row > span:first-child {
     width: 100%;
@@ -489,27 +505,7 @@
   
   /* Save status bar mobile */
   .save-status-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 15px;
-    padding: 20px;
-  }
-  
-  .save-status-left {
-    justify-content: center;
-    text-align: center;
-    flex-wrap: wrap;
-  }
-  
-  .save-actions {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .reset-btn,
-  .save-btn {
-    flex: 1;
-    min-width: 120px;
+    padding: 16px;
   }
   
   /* For very small screens */
@@ -559,13 +555,7 @@
     }
     
     .save-actions {
-      flex-direction: column;
-      width: 100%;
-    }
-    
-    .reset-btn,
-    .save-btn {
-      width: 100%;
+      width: auto;
     }
   }
 }

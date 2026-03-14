@@ -29,7 +29,8 @@ export default function LiveChat({ isOpen, onClose }) {
     "Login problem",
     "Dark mode toggle",
     "Community recipes",
-    "Report a bug"
+    "Report a bug",
+    "Others"
   ];
 
   const scrollToBottom = () => {
@@ -42,6 +43,24 @@ export default function LiveChat({ isOpen, onClose }) {
 
   const sendMessage = async () => {
     if (!selectedQuestion.trim()) return;
+
+    if (selectedQuestion === 'Others') {
+      const userMessage = {
+        id: messages.length + 1,
+        text: selectedQuestion,
+        sender: 'user',
+        timestamp: new Date()
+      };
+      const botMessage = {
+        id: messages.length + 2,
+        text: "Please send your whole message using the form on the Contact Us page.",
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+      setSelectedQuestion('');
+      return;
+    }
 
     // Add user message
     const userMessage = {
