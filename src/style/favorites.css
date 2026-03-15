@@ -210,6 +210,45 @@
   position: relative;
 }
 
+.comment-modal-content {
+  background: #fff;
+  padding: 18px 16px;
+  border-radius: 14px;
+  width: min(520px, 94vw);
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.comment-modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 8px 0 12px;
+}
+
+.comment-modal-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-bottom: 10px;
+}
+
+.comment-modal-form {
+  margin-top: 6px;
+}
+
+.comment-modal-content .cookbook-comment-actions {
+  display: flex !important;
+  opacity: 1;
+  transform: none;
+}
+
+.comment-modal-content .cookbook-comment-menu {
+  display: none !important;
+}
+
 .close-button {
   position: absolute;
   top: 12px;
@@ -437,6 +476,29 @@
   .favorites-page .like-btn span,
   .favorites-page .unlike-btn span {
     font-size: 12px;
+  }
+
+  .favorites-page .reaction-buttons {
+    flex-wrap: nowrap;
+    gap: 6px;
+    justify-content: space-between;
+  }
+
+  .favorites-page .like-btn,
+  .favorites-page .unlike-btn,
+  .favorites-page .heart-btn,
+  .favorites-page .cart-btn,
+  .favorites-page .comment-btn {
+    padding: 2px 3px;
+    gap: 2px;
+  }
+
+  .favorites-page .reaction-buttons svg {
+    font-size: 14px !important;
+  }
+
+  .favorites-page .reaction-buttons span {
+    font-size: 10px;
   }
   
   /* Center the page container */
@@ -697,6 +759,7 @@
   border-radius: 100%;
   transform: scale(1, 1) translate(-50%);
   transform-origin: 50% 50%;
+  pointer-events: none;
 }
 
 .cookbook-comment-item:active::after {
@@ -729,6 +792,8 @@
   font-size: 14px;
   margin-bottom: 4px;
   transition: color 0.3s ease;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .cookbook-comment-item:hover .cookbook-comment-author {
@@ -736,12 +801,14 @@
 }
 
 .cookbook-comment-message {
-  font-size: 14px;
+  font-size: 11px;
   color: #444;
   margin-top: 4px;
   line-height: 1.5;
   transition: color 0.3s ease;
   margin-left: 7px;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .cookbook-comment-item:hover .cookbook-comment-message {
@@ -756,6 +823,7 @@
   transition: all 0.3s ease !important;
   position: relative;
   z-index: 2;
+  flex-shrink: 0;
 }
 
 .cookbook-comment-item:hover .cookbook-comment-actions {
@@ -809,6 +877,50 @@
 .cookbook-comment-delete:active {
   transform: translateY(0px) !important;
   box-shadow: 0 2px 4px rgba(230,57,70,0.2) !important;
+}
+
+.cookbook-comment-menu {
+  display: none;
+  position: relative;
+  margin-left: 6px;
+  flex-shrink: 0;
+  z-index: 3;
+}
+
+.cookbook-comment-menu-btn {
+  background: rgba(0,0,0,0.06);
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 3;
+}
+
+.cookbook-comment-menu-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+  padding: 6px;
+  min-width: 120px;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.cookbook-comment-menu-popover button {
+  width: 100%;
+  text-align: left;
+  margin: 2px 0;
 }
 
 @keyframes cookbookFadeIn {
@@ -934,8 +1046,8 @@
 }
 
 .cookbook-comment-message {
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .cookbook-comment-form {
@@ -953,6 +1065,22 @@
     padding: 12px;
   }
 
+  .cookbook-comment-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    cursor: default;
+    overflow: visible;
+  }
+
+  .cookbook-comment-content {
+    width: 100%;
+  }
+
+  .cookbook-comment-message {
+    margin-left: 0;
+  }
+
   .cookbook-comment-form {
     flex-wrap: wrap;
   }
@@ -960,5 +1088,14 @@
   .cookbook-comment-field,
   .cookbook-submit-comment {
     width: 100%;
+  }
+
+  .cookbook-comment-actions {
+    display: none !important;
+  }
+
+  .cookbook-comment-menu {
+    display: flex !important;
+    align-self: flex-end;
   }
 }

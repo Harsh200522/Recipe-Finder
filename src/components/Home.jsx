@@ -1,4 +1,4 @@
-// src/components/RecipeFinder.jsx
+﻿// src/components/RecipeFinder.jsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Swal from "sweetalert2";
 import "../style/home.css";

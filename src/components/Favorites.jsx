@@ -1,4 +1,4 @@
-// src/components/Favorites.jsx
+﻿// src/components/Favorites.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { db, auth } from "../config/firbase";
 import {
@@ -38,12 +38,13 @@ import { openAmazonIndiaIngredientsSearch } from "../utils/amazonAffiliate";
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState([]);
+  const [openCommentMenu, setOpenCommentMenu] = useState({});
+  const [activeCommentId, setActiveCommentId] = useState(null);
   const [recipeStates, setRecipeStates] = useState({});
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [servingRecipe, setServingRecipe] = useState(null); // ✅ NEW
   const [shoppingRecipe, setShoppingRecipe] = useState(null);
   const [videoRecipe, setVideoRecipe] = useState(null);
-  const [showComments, setShowComments] = useState({});
   const [commentInputs, setCommentInputs] = useState({});
   const [chefComments, setChefComments] = useState({});
   const getCurrentUserCommentName = (user) =>
@@ -732,6 +733,37 @@ const closeServingCalc = () => setServingRecipe(null);
     }
   };
 
+  const toggleCommentMenu = (key) => {
+    setOpenCommentMenu((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const closeCommentMenu = (key) => {
+    setOpenCommentMenu((prev) => ({
+      ...prev,
+      [key]: false,
+    }));
+  };
+
+  const openCommentModal = (id) => {
+    setActiveCommentId(id);
+    setOpenCommentMenu({});
+  };
+
+  const closeCommentModal = () => {
+    setActiveCommentId(null);
+    setOpenCommentMenu({});
+  };
+
+  const activeCommentMeal = activeCommentId
+    ? favorites.find((meal) => meal.id === activeCommentId)
+    : null;
+  const activeComments = activeCommentMeal?.isChefRecipe
+    ? chefComments[activeCommentId] || activeCommentMeal.comments || []
+    : [];
+
   /* =====================================================
      UI
   ===================================================== */
@@ -827,83 +859,16 @@ const closeServingCalc = () => setServingRecipe(null);
                     <FaShoppingCart style={{ fontSize: "18px" }} />
                   </button>
 
-                  {meal.isChefRecipe && (
-                    <button
-                      className="comment-btn"
-                      onClick={() =>
-                        setShowComments((prev) => ({
-                          ...prev,
-                          [id]: !prev[id],
-                        }))
-                      }
-                    >
-                      <FaComment style={{ fontSize: "18px" }} />
-                      <span> {comments.length || 0}</span>
-                    </button>
-                  )}
-                </div>
-
-                {meal.isChefRecipe && showComments[id] && (
-                  <div className="cookbook-comments-area">
-                    <div className="cookbook-comment-list">
-                      {comments.length > 0 ? (
-                        comments.map((comment, index) => (
-                          <div key={index} className="cookbook-comment-item">
-                            <div className="cookbook-comment-content">
-                              <div className="cookbook-comment-author">
-                                {comment.user || "User"}
-                              </div>
-
-                              <div className="cookbook-comment-message">
-                                {comment.text}
-                              </div>
-                            </div>
-
-                            {canManageComment(comment) && (
-                              <div className="cookbook-comment-actions">
-                                <button
-                                  className="cookbook-comment-edit"
-                                  onClick={() => handleEditComment(meal, comments, index)}
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  className="cookbook-comment-delete"
-                                  onClick={() => handleDeleteComment(meal, comments, index)}
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <p style={{ opacity: 0.6 }}>No comments yet. Be the first!</p>
-                      )}
-                    </div>
-
-                    <div className="cookbook-comment-form">
-                      <input
-                        type="text"
-                        className="cookbook-comment-field"
-                        placeholder="Write a comment..."
-                        value={commentInputs[id] || ""}
-                        onChange={(e) =>
-                          setCommentInputs((prev) => ({
-                            ...prev,
-                            [id]: e.target.value,
-                          }))
-                        }
-                      />
-                      <button
-                        className="cookbook-submit-comment"
-                        onClick={() => handleAddComment(meal)}
-                      >
-                        Post
-                      </button>
-                    </div>
-                  </div>
+                {meal.isChefRecipe && (
+                  <button
+                    className="comment-btn"
+                    onClick={() => openCommentModal(id)}
+                  >
+                    <FaComment style={{ fontSize: "18px" }} />
+                    <span> {comments.length || 0}</span>
+                  </button>
                 )}
+                </div>
 
                 {/* ✅ ONLY CHANGE: openIngredients → openServingCalc */}
                 {meal.isChefRecipe ? (
@@ -943,6 +908,136 @@ const closeServingCalc = () => setServingRecipe(null);
       <div style={{ marginTop: "30px" }}>
         <GoogleAd />
       </div>
+
+      {activeCommentMeal && (
+        <div className="modal-overlay" onClick={closeCommentModal}>
+          <div
+            className="comment-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button onClick={closeCommentModal} className="close-button">
+              ✖
+            </button>
+
+            <h3 className="comment-modal-title">
+              Comments for {activeCommentMeal.title}
+            </h3>
+
+            <div className="cookbook-comment-list comment-modal-list">
+              {activeComments.length > 0 ? (
+                activeComments.map((comment, index) => (
+                  <div
+                    key={index}
+                    className="cookbook-comment-item"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="cookbook-comment-content">
+                      <div className="cookbook-comment-author">
+                        {comment.user || "User"}
+                      </div>
+                      <div className="cookbook-comment-message">
+                        {comment.text}
+                      </div>
+                    </div>
+
+                    {canManageComment(comment) && (
+                      <div className="cookbook-comment-actions">
+                        <button
+                          className="cookbook-comment-edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditComment(activeCommentMeal, activeComments, index);
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="cookbook-comment-delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteComment(activeCommentMeal, activeComments, index);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+
+                    {canManageComment(comment) && (
+                      <div className="cookbook-comment-menu">
+                        <button
+                          className="cookbook-comment-menu-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleCommentMenu(`${activeCommentId}-${index}`);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onTouchStart={(e) => e.stopPropagation()}
+                          aria-label="Comment actions"
+                          aria-expanded={!!openCommentMenu[`${activeCommentId}-${index}`]}
+                        >
+                          ⋮
+                        </button>
+                        {openCommentMenu[`${activeCommentId}-${index}`] && (
+                          <div className="cookbook-comment-menu-popover">
+                            <button
+                              className="cookbook-comment-edit"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditComment(activeCommentMeal, activeComments, index);
+                                closeCommentMenu(`${activeCommentId}-${index}`);
+                              }}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="cookbook-comment-delete"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteComment(activeCommentMeal, activeComments, index);
+                                closeCommentMenu(`${activeCommentId}-${index}`);
+                              }}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p style={{ opacity: 0.6 }}>No comments yet. Be the first!</p>
+              )}
+            </div>
+
+            <div className="cookbook-comment-form comment-modal-form">
+              <input
+                type="text"
+                className="cookbook-comment-field"
+                placeholder="Write a comment..."
+                value={commentInputs[activeCommentId] || ""}
+                onChange={(e) =>
+                  setCommentInputs((prev) => ({
+                    ...prev,
+                    [activeCommentId]: e.target.value,
+                  }))
+                }
+              />
+              <button
+                className="cookbook-submit-comment"
+                onClick={() => handleAddComment(activeCommentMeal)}
+              >
+                Post
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* OLD INGREDIENTS MODAL — kept as-is */}
       {selectedRecipe && (

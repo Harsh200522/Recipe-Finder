@@ -2060,6 +2060,37 @@ body.dark-mode .cookbook-comment-message {
   color: #ddd;
 }
 
+body.dark-mode .cookbook-comment-menu-btn {
+  background: rgba(255,255,255,0.08);
+  color: #f2f2f2;
+}
+
+body.dark-mode .cookbook-comment-menu-popover {
+  background: #2b2b33;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.45);
+}
+
+body.dark-mode .cookbook-comment-menu-popover .cookbook-comment-edit {
+  color: #8bbcff;
+  background: rgba(0,123,255,0.12);
+}
+
+body.dark-mode .cookbook-comment-menu-popover .cookbook-comment-delete {
+  color: #ff8d8d;
+  background: rgba(230,57,70,0.12);
+}
+
+body.dark-mode .comment-modal-content {
+  background: #2b2b33;
+  color: #f1f1f1;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.45);
+}
+
+body.dark-mode .comment-modal-title {
+  color: #f1f1f1;
+}
+
 body.dark-mode .cookbook-comment-item:hover .cookbook-comment-message {
   color: #fff !important;
 }
