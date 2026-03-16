@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   arrayUnion,
 } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import { FaUsers } from "react-icons/fa";
 import { db, auth } from "../config/firbase.js";
 import { onAuthStateChanged } from "firebase/auth";
@@ -20,7 +21,11 @@ import {
 } from "../services/recipeReactions";
 import Swal from "sweetalert2";
 import "../style/communityRecipes.css";
-import { FaComment, FaTrash, FaEdit, FaPlus, FaFilter, FaFire, FaImage, FaUtensils, FaYoutube, FaThumbsUp, FaRegThumbsUp, FaThumbsDown, FaRegThumbsDown } from "react-icons/fa";
+import {
+  FaComment, FaTrash, FaEdit, FaPlus, FaFilter, FaFire, FaImage,
+  FaUtensils, FaYoutube, FaThumbsUp, FaRegThumbsUp, FaThumbsDown,
+  FaRegThumbsDown, FaHeart, FaRegHeart
+} from "react-icons/fa";
 import { MdClose, MdFastfood, MdOutlineRestaurantMenu } from "react-icons/md";
 import ServingCalculator from "./ServingCalculator";
 
@@ -29,6 +34,248 @@ const DEFAULT_AVATAR_URL =
   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUmgrBOv_cpwabmIhfJ3-PWW0XOW6fhyjqEQ&s";
 
 export default function CommunityRecipes() {
+  // --- TOP-LEVEL COMMENT ACTIONS (LIVE SYNC) ---
+  // --- INSTAGRAM COMMENT STATES ---
+  const [activeCommentId, setActiveCommentId] = useState(null);
+  const [chefComments, setChefComments] = useState({});
+  const [userAvatars, setUserAvatars] = useState({});
+  const [visibleReplies, setVisibleReplies] = useState({});
+  const [commentInputs, setCommentInputs] = useState({});
+
+  // --- COMMENT HELPERS ---
+  const getChefRecipeDocId = (meal) => meal?.id || null;
+  // --- HELPERS FOR PERMISSIONS & NAMES ---
+  const getCurrentUserCommentName = (user) =>
+    user?.displayName || user?.email?.split("@")[0] || "User";
+
+  const canManageComment = (comment) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return false;
+
+    // If the comment has a userId, compare strictly by ID
+    if (comment?.userId) return comment.userId === currentUser.uid;
+
+    // Fallback for older comments that only have a 'user' string
+    const currentDisplayName = currentUser.displayName || "";
+    const currentEmailName = currentUser.email?.split("@")[0] || "";
+    return comment?.user === currentDisplayName || comment?.user === currentEmailName;
+  };
+
+  const activateReplyMode = (username, recipeId) => {
+    // recipeId is the doc id (e.g., activeCommentId)
+    setVisibleReplies(prev => ({ ...prev, [recipeId]: true }));
+    setCommentInputs(prev => ({
+      ...prev,
+      [recipeId]: `@${username} `
+    }));
+  };
+
+  const toggleReplies = (recipeId) => {
+    setVisibleReplies(prev => ({ ...prev, [recipeId]: !prev[recipeId] }));
+  };
+  // --- LIVE SYNC FOR COMMENTS ---
+  useEffect(() => {
+    if (!activeCommentId) return;
+
+    const unsub = onSnapshot(doc(db, "recipes", activeCommentId), (docSnap) => {
+      if (docSnap.exists()) {
+        const newComments = docSnap.data().comments || [];
+        setChefComments(prev => ({ ...prev, [activeCommentId]: newComments }));
+      }
+    });
+    return () => unsub();
+  }, [activeCommentId]);
+  // --- LIVE SYNC FOR COMMENTS ---
+  useEffect(() => {
+    if (!activeCommentId) return;
+
+    const unsub = onSnapshot(doc(db, "recipes", activeCommentId), (docSnap) => {
+      if (docSnap.exists()) {
+        const newComments = docSnap.data().comments || [];
+        setChefComments(prev => ({ ...prev, [activeCommentId]: newComments }));
+      }
+    });
+    return () => unsub();
+  }, [activeCommentId]);
+
+  const handleAddComment = async (recipe) => {
+    const user = auth.currentUser;
+    if (!user) return Swal.fire("Please login first");
+
+    const commentText = commentInputs[recipe.id]?.trim();
+    if (!commentText) return;
+
+    try {
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      const userAvatar = userSnap.exists() ? userSnap.data().profile?.avatar : "";
+
+      const newEntry = {
+        userId: user.uid,
+        user: getCurrentUserCommentName(user),
+        userAvatar: userAvatar || "",
+        text: commentText,
+        createdAt: new Date(),
+        likedBy: [],
+        likesCount: 0
+      };
+
+      let currentComments = [...(chefComments[recipe.id] || recipe.comments || [])];
+
+      if (commentText.startsWith("@")) {
+        const firstSpace = commentText.indexOf(" ");
+        const replyToUser = commentText.substring(1, firstSpace);
+        const parentIndex = currentComments.findIndex(c => c.user === replyToUser);
+
+        if (parentIndex !== -1) {
+          if (!currentComments[parentIndex].replies) currentComments[parentIndex].replies = [];
+          currentComments[parentIndex].replies.push(newEntry);
+        } else {
+          currentComments.push(newEntry);
+        }
+      } else {
+        currentComments.push(newEntry);
+      }
+
+      await updateDoc(doc(db, "recipes", recipe.id), { comments: currentComments });
+      setCommentInputs(prev => ({ ...prev, [recipe.id]: "" }));
+    } catch (err) { console.error(err); }
+  };
+
+  const toggleReplyLike = async (recipe, commentIndex, replyIndex) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const comments = chefComments[recipe.id] || recipe.comments || [];
+    const updatedComments = JSON.parse(JSON.stringify(comments));
+    const reply = updatedComments[commentIndex]?.replies?.[replyIndex];
+
+    if (!reply) return;
+    if (!reply.likedBy) reply.likedBy = [];
+
+    const hasLiked = reply.likedBy.includes(user.uid);
+    if (hasLiked) {
+      reply.likedBy = reply.likedBy.filter(id => id !== user.uid);
+      reply.likesCount = Math.max(0, (reply.likesCount || 1) - 1);
+    } else {
+      reply.likedBy.push(user.uid);
+      reply.likesCount = (reply.likesCount || 0) + 1;
+    }
+
+    await updateDoc(doc(db, "recipes", recipe.id), { comments: updatedComments });
+  };
+
+  const handleEditReply = async (recipe, commentIndex, replyIndex) => {
+    const comments = chefComments[recipe.id] || recipe.comments || [];
+    const reply = comments[commentIndex].replies[replyIndex];
+
+    const { value: newText } = await Swal.fire({
+      title: 'Edit Reply',
+      input: 'text',
+      inputValue: reply.text,
+      showCancelButton: true
+    });
+
+    if (newText && newText !== reply.text) {
+      const updatedComments = JSON.parse(JSON.stringify(comments));
+      updatedComments[commentIndex].replies[replyIndex].text = newText.trim();
+      await updateDoc(doc(db, "recipes", recipe.id), { comments: updatedComments });
+    }
+  };
+
+  const handleDeleteReply = async (recipe, commentIndex, replyIndex) => {
+    const result = await Swal.fire({ title: 'Delete reply?', icon: 'warning', showCancelButton: true });
+    if (result.isConfirmed) {
+      const updatedComments = JSON.parse(JSON.stringify(chefComments[recipe.id] || recipe.comments || []));
+      updatedComments[commentIndex].replies.splice(replyIndex, 1);
+      await updateDoc(doc(db, "recipes", recipe.id), { comments: updatedComments });
+    }
+  };
+
+  const navigate = useNavigate();
+  const [isProfileOwner, setIsProfileOwner] = useState(false); // Track profile status
+
+  /* ================= REUSABLE PROFILE CHECK ================= */
+  const checkProfileAndOpenModal = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      Swal.fire("Login Required", "Please login to add recipes", "warning");
+      return;
+    }
+
+    try {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.data();
+
+      // Check if profile exists and has required fields
+      const isComplete =
+        userDoc.exists() &&
+        userData.profile?.name &&
+        userData.profile?.email;
+
+      setIsProfileOwner(isComplete);
+
+      if (!isComplete) {
+        Swal.fire({
+          title: "Complete Your Profile",
+          text: "To participate in the community and add your own recipes, please complete your profile information first.",
+          icon: "info",
+          allowOutsideClick: false,
+          showCancelButton: true,
+          confirmButtonText: "Go to Settings",
+          cancelButtonText: "Just Browsing",
+          confirmButtonColor: "#4ecdc4",
+          cancelButtonColor: "#95a5a6",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate("/profile");
+          }
+        });
+      } else {
+        setShowModal(true);
+      }
+    } catch (error) {
+      console.error("Error checking profile:", error);
+    }
+  };
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          const userData = userDoc.data();
+
+          // Check if profile exists and has required fields
+          const isProfileComplete =
+            userDoc.exists() &&
+            userData.profile?.name &&
+            userData.profile?.email;
+
+          if (!isProfileComplete) {
+            Swal.fire({
+              title: "Complete Your Profile",
+              text: "To participate in the community and add your own recipes, please complete your profile information first.",
+              icon: "info",
+              allowOutsideClick: false, // Prevents user from clicking away
+              showCancelButton: true,
+              confirmButtonText: "Go to Settings",
+              cancelButtonText: "Just Browsing",
+              confirmButtonColor: "#4ecdc4",
+              cancelButtonColor: "#95a5a6",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                navigate("/profile");
+              }
+            });
+          }
+        } catch (error) {
+          console.error("Error checking profile on load:", error);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
   const recipeRef = collection(db, "recipes");
 
   /* ================= STATES ================= */
@@ -192,36 +439,39 @@ export default function CommunityRecipes() {
     servings: "",
   });
 
-  /* ================= REAL-TIME RECIPES ================= */
+  /* ================= REAL-TIME RECIPES (USER SPECIFIC) ================= */
   useEffect(() => {
-    setLoading(true);
-    const unsubscribe = onSnapshot(
-      collection(db, "recipes"),
-      (snap) => {
-        const recipesData = snap.docs
-          .map((d) => ({
-            id: d.id,
-            ...d.data(),
-          }))
-          .sort(
-            (a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)
-          );
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setLoading(true);
+        const unsubscribeSnap = onSnapshot(
+          collection(db, "recipes"),
+          (snap) => {
+            const recipesData = snap.docs
+              .map((d) => ({
+                id: d.id,
+                ...d.data(),
+              }))
+              .filter((recipe) => recipe.userId === user.uid)
+              .sort(
+                (a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)
+              );
 
-        setRecipes(recipesData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching recipes:", error);
-        setLoading(false);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Failed to fetch recipes",
-        });
+            setRecipes(recipesData);
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Error fetching recipes:", error);
+            setLoading(false);
+          }
+        );
+        return () => unsubscribeSnap();
+      } else {
+        setRecipes([]); // Clear recipes if logged out
       }
-    );
+    });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
   useEffect(() => {
@@ -738,7 +988,7 @@ export default function CommunityRecipes() {
         <div className="cookbook-header-actions">
           <button
             className="cookbook-add-btn"
-            onClick={() => setShowModal(true)}
+            onClick={checkProfileAndOpenModal}
           >
             <FaPlus /> Add Recipe
           </button>
@@ -791,7 +1041,7 @@ export default function CommunityRecipes() {
           <p>Create your first recipe to get started!</p>
           <button
             className="cookbook-primary-btn"
-            onClick={() => setShowModal(true)}
+            onClick={checkProfileAndOpenModal}
           >
             <FaPlus /> Add Your First Recipe
           </button>
@@ -937,10 +1187,7 @@ export default function CommunityRecipes() {
 
                       <button
                         className="cookbook-comment-btn"
-                        onClick={() => setShowComments({
-                          ...showComments,
-                          [id]: !showComments[id]
-                        })}
+                        onClick={() => setActiveCommentId(recipe.id)}
                       >
                         <FaComment /> {recipe.comments?.length || 0}
                       </button>
@@ -1383,6 +1630,105 @@ export default function CommunityRecipes() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {activeCommentId && (
+        <div className="comment-modal-overlay" onClick={() => setActiveCommentId(null)}>
+          <div className="comment-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="comment-modal-handle"></div>
+            <div className="comment-modal-header">
+              <h3>Comments</h3>
+              <button className="close-comment-btn" onClick={() => setActiveCommentId(null)}>✖</button>
+            </div>
+
+            <div className="comment-modal-body">
+              {(chefComments[activeCommentId] || []).length > 0 ? (
+                (chefComments[activeCommentId] || []).map((comment, index) => (
+                  <div key={index} className="comment-wrapper">
+                    <div className="insta-comment-item">
+                      <div className="insta-comment-avatar">
+                        {comment.userAvatar || userAvatars[comment.userId] ? (
+                          <img src={comment.userAvatar || userAvatars[comment.userId]} alt="avatar" />
+                        ) : (
+                          <span>{comment.user?.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="insta-comment-content">
+                        <p><span className="insta-comment-user">{comment.user}</span> {comment.text}</p>
+                        <div className="insta-comment-actions">
+                          {/* --- TOP COMMENT HEART --- */}
+                          <span className="action-heart" onClick={() => toggleCommentLike({ id: activeCommentId }, index)}>
+                            {comment.likedBy?.includes(auth.currentUser?.uid) ? (
+                              <FaHeart color="red" />
+                            ) : (
+                              <FaRegHeart />
+                            )}
+                            {comment.likesCount > 0 && <span className="like-count">{comment.likesCount}</span>}
+                          </span>
+
+                          <span className="action-link" onClick={() => activateReplyMode(comment.user, activeCommentId)}>Reply</span>
+                          {canManageComment(comment) && (
+                            <>
+                              <span className="action-link" onClick={() => handleEditComment({ id: activeCommentId }, chefComments[activeCommentId], index)}>Edit</span>
+                              <span className="action-link danger" onClick={() => handleDeleteComment({ id: activeCommentId }, chefComments[activeCommentId], index)}>Delete</span>
+                            </>
+                          )}
+                        </div>
+
+                        {comment.replies?.length > 0 && (
+                          <div className="view-replies-toggle" onClick={() => toggleReplies(activeCommentId)}>
+                            <span className="line"></span>
+                            {visibleReplies[activeCommentId] ? "Hide replies" : `View replies (${comment.replies.length})`}
+                          </div>
+                        )}
+
+                        {visibleReplies[activeCommentId] && comment.replies?.map((reply, rIdx) => (
+                          <div key={rIdx} className="insta-comment-item reply-item">
+                            <div className="insta-comment-avatar small">
+                              {reply.userAvatar ? <img src={reply.userAvatar} alt="avatar" /> : <span>{reply.user?.charAt(0).toUpperCase()}</span>}
+                            </div>
+                            <div className="insta-comment-content">
+                              <p><span className="insta-comment-user">{reply.user}</span> {reply.text}</p>
+                              <div className="insta-comment-actions">
+                                {/* --- REPLY HEART --- */}
+                                <span className="action-heart" onClick={() => toggleReplyLike({ id: activeCommentId }, index, rIdx)}>
+                                  {reply.likedBy?.includes(auth.currentUser?.uid) ? (
+                                    <FaHeart color="red" style={{ fontSize: "12px" }} />
+                                  ) : (
+                                    <FaRegHeart style={{ fontSize: "12px" }} />
+                                  )}
+                                  {reply.likesCount > 0 && <span className="like-count">{reply.likesCount}</span>}
+                                </span>
+                                {auth.currentUser?.uid === reply.userId && (
+                                  <>
+                                    <span className="action-link" onClick={() => handleEditReply({ id: activeCommentId }, index, rIdx)}>Edit</span>
+                                    <span className="action-link danger" onClick={() => handleDeleteReply({ id: activeCommentId }, index, rIdx)}>Delete</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-comments">No comments yet.</div>
+              )}
+            </div>
+
+            <div className="comment-modal-footer">
+              <input
+                type="text"
+                placeholder="Add a comment..."
+                value={commentInputs[activeCommentId] || ""}
+                onChange={(e) => setCommentInputs(prev => ({ ...prev, [activeCommentId]: e.target.value }))}
+                onKeyDown={(e) => e.key === "Enter" && handleAddComment({ id: activeCommentId })}
+              />
+              <button disabled={!commentInputs[activeCommentId]?.trim()} onClick={() => handleAddComment({ id: activeCommentId })}>Post</button>
+            </div>
           </div>
         </div>
       )}

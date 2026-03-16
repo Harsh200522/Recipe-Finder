@@ -47,6 +47,132 @@ export default function Favorites() {
   const [videoRecipe, setVideoRecipe] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
   const [chefComments, setChefComments] = useState({});
+  // --- NEW COMMENT STATES ---
+  const [userAvatars, setUserAvatars] = useState({});
+  const [visibleReplies, setVisibleReplies] = useState({});
+  // --- COMMENT HELPERS ---
+  const activateReplyMode = (username, index) => {
+    setVisibleReplies(prev => ({ ...prev, [index]: true }));
+    setCommentInputs(prev => ({
+      ...prev,
+      [activeCommentId]: `@${username} `
+    }));
+  };
+
+  const toggleReplies = (index) => {
+    setVisibleReplies(prev => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  // --- LIVE SYNC EFFECT ---
+  useEffect(() => {
+    if (!activeCommentId) return;
+    const recipeId = getChefRecipeDocId({ id: activeCommentId, isChefRecipe: true });
+    if (!recipeId) return;
+
+    const unsub = onSnapshot(doc(db, "recipes", recipeId), (docSnap) => {
+      if (docSnap.exists()) {
+        const newComments = docSnap.data().comments || [];
+        setChefComments(prev => ({ ...prev, [activeCommentId]: newComments }));
+      }
+    });
+    return () => unsub();
+  }, [activeCommentId]);
+
+  // --- REPLY LOGIC (SYNCED) ---
+  const toggleReplyLike = async (meal, commentIndex, replyIndex) => {
+    const user = auth.currentUser;
+    if (!user) return Swal.fire("Please login first");
+
+    const recipeId = getChefRecipeDocId(meal);
+    const comments = chefComments[meal.id] || [];
+    const updatedComments = JSON.parse(JSON.stringify(comments));
+    const reply = updatedComments[commentIndex]?.replies?.[replyIndex];
+
+    if (!reply) return;
+    if (!reply.likedBy) reply.likedBy = [];
+
+    const hasLiked = reply.likedBy.includes(user.uid);
+    if (hasLiked) {
+      reply.likedBy = reply.likedBy.filter(id => id !== user.uid);
+      reply.likesCount = Math.max(0, (reply.likesCount || 1) - 1);
+    } else {
+      reply.likedBy.push(user.uid);
+      reply.likesCount = (reply.likesCount || 0) + 1;
+    }
+
+    await updateDoc(doc(db, "recipes", recipeId), { comments: updatedComments });
+  };
+  const toggleCommentLike = async (meal, commentIndex) => {
+    const user = auth.currentUser;
+    if (!user) {
+      Swal.fire("Please login to like comments");
+      return;
+    }
+
+    const recipeDocId = getChefRecipeDocId(meal);
+    if (!recipeDocId) return;
+
+    // 1. Get the current comments for this specific meal
+    const comments = chefComments[meal.id] || meal.comments || [];
+
+    // 2. Create a deep copy to modify
+    const updatedComments = JSON.parse(JSON.stringify(comments));
+    const comment = updatedComments[commentIndex];
+
+    if (!comment) return;
+
+    // 3. Initialize likedBy array if it doesn't exist
+    if (!comment.likedBy) comment.likedBy = [];
+
+    const hasLiked = comment.likedBy.includes(user.uid);
+
+    if (hasLiked) {
+      // --- UNLIKE LOGIC ---
+      comment.likedBy = comment.likedBy.filter(id => id !== user.uid);
+      comment.likesCount = Math.max(0, (comment.likesCount || 1) - 1);
+    } else {
+      // --- LIKE LOGIC ---
+      comment.likedBy.push(user.uid);
+      comment.likesCount = (comment.likesCount || 0) + 1;
+    }
+
+    try {
+      // 4. Update Firestore. 
+      // Your existing useEffect onSnapshot listener will catch this and update the UI!
+      await updateDoc(doc(db, "recipes", recipeDocId), {
+        comments: updatedComments
+      });
+    } catch (err) {
+      console.error("Error toggling comment like:", err);
+    }
+  };
+
+  const handleEditReply = async (meal, commentIndex, replyIndex) => {
+    const comments = chefComments[meal.id] || [];
+    const reply = comments[commentIndex].replies[replyIndex];
+
+    const { value: newText } = await Swal.fire({
+      title: 'Edit Reply',
+      input: 'text',
+      inputValue: reply.text,
+      showCancelButton: true
+    });
+
+    if (newText && newText !== reply.text) {
+      const updatedComments = JSON.parse(JSON.stringify(comments));
+      updatedComments[commentIndex].replies[replyIndex].text = newText.trim();
+      await updateDoc(doc(db, "recipes", getChefRecipeDocId(meal)), { comments: updatedComments });
+    }
+  };
+
+  const handleDeleteReply = async (meal, commentIndex, replyIndex) => {
+    const result = await Swal.fire({ title: 'Delete reply?', icon: 'warning', showCancelButton: true });
+    if (result.isConfirmed) {
+      const updatedComments = JSON.parse(JSON.stringify(chefComments[meal.id]));
+      updatedComments[commentIndex].replies.splice(replyIndex, 1);
+      await updateDoc(doc(db, "recipes", getChefRecipeDocId(meal)), { comments: updatedComments });
+    }
+  };
   const getCurrentUserCommentName = (user) =>
     user?.displayName || user?.email?.split("@")[0] || "User";
   const canManageComment = (comment) => {
@@ -251,33 +377,47 @@ export default function Favorites() {
 
   const handleAddComment = async (meal) => {
     const user = auth.currentUser;
-    if (!user) {
-      Swal.fire("Please login first");
-      return;
-    }
+    if (!user) return Swal.fire("Please login first");
 
     const commentText = commentInputs[meal.id]?.trim();
     if (!commentText) return;
 
-    const recipeId = getChefRecipeDocId(meal);
-
-    if (!recipeId) return;
-
     try {
-      const newComment = {
+      const recipeDocId = getChefRecipeDocId(meal);
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      const userAvatar = userSnap.exists() ? userSnap.data().profile?.avatar : "";
+
+      const newEntry = {
         userId: user.uid,
         user: getCurrentUserCommentName(user),
+        userAvatar: userAvatar || "",
         text: commentText,
         createdAt: new Date(),
+        likedBy: [],
+        likesCount: 0
       };
 
-      await updateDoc(doc(db, "recipes", recipeId), {
-        comments: arrayUnion(newComment),
-      });
+      let updatedComments = [...(chefComments[meal.id] || [])];
 
-      setCommentInputs((prev) => ({ ...prev, [meal.id]: "" }));
+      if (commentText.startsWith("@")) {
+        const firstSpace = commentText.indexOf(" ");
+        const replyToUser = commentText.substring(1, firstSpace);
+        const parentIndex = updatedComments.findIndex(c => c.user === replyToUser);
+
+        if (parentIndex !== -1) {
+          if (!updatedComments[parentIndex].replies) updatedComments[parentIndex].replies = [];
+          updatedComments[parentIndex].replies.push(newEntry);
+        } else {
+          updatedComments.push(newEntry);
+        }
+      } else {
+        updatedComments.push(newEntry);
+      }
+
+      await updateDoc(doc(db, "recipes", recipeDocId), { comments: updatedComments });
+      setCommentInputs(prev => ({ ...prev, [meal.id]: "" }));
     } catch (err) {
-      console.error("Comment error:", err);
+      console.error(err);
     }
   };
 
@@ -405,79 +545,79 @@ export default function Favorites() {
   const closeIngredients = () => setSelectedRecipe(null);
 
   // ✅ Parse "200g chicken" → { quantity: "200g", name: "chicken" }
-const parseIngredientLine = (raw = "") => {
-  const str = raw.trim();
+  const parseIngredientLine = (raw = "") => {
+    const str = raw.trim();
 
-  // Pattern 1: "200g chicken" / "2 tbsp butter" / "1/2 cup cream"
-  const frontQtyMatch = str.match(
-    /^([\d/\.\s]+(?:g|kg|ml|l|ltr|oz|lb|cups?|tbsp|tsp|pieces?|slices?|pinch|bunch|cloves?|medium|large|small|handful)s?)\s+(.+)$/i
-  );
-  if (frontQtyMatch) {
-    return { quantity: frontQtyMatch[1].trim(), name: frontQtyMatch[2].trim() };
-  }
+    // Pattern 1: "200g chicken" / "2 tbsp butter" / "1/2 cup cream"
+    const frontQtyMatch = str.match(
+      /^([\d/\.\s]+(?:g|kg|ml|l|ltr|oz|lb|cups?|tbsp|tsp|pieces?|slices?|pinch|bunch|cloves?|medium|large|small|handful)s?)\s+(.+)$/i
+    );
+    if (frontQtyMatch) {
+      return { quantity: frontQtyMatch[1].trim(), name: frontQtyMatch[2].trim() };
+    }
 
-  // Pattern 2: "chicken - 200g" / "paneer - 250g"
-  const backQtyMatch = str.match(/^(.+?)\s*[-–]\s*([\d/\.]+\s*\w+)$/);
-  if (backQtyMatch) {
-    return { name: backQtyMatch[1].trim(), quantity: backQtyMatch[2].trim() };
-  }
+    // Pattern 2: "chicken - 200g" / "paneer - 250g"
+    const backQtyMatch = str.match(/^(.+?)\s*[-–]\s*([\d/\.]+\s*\w+)$/);
+    if (backQtyMatch) {
+      return { name: backQtyMatch[1].trim(), quantity: backQtyMatch[2].trim() };
+    }
 
-  // Pattern 3: "2 eggs" / "3 potatoes"
-  const numPrefixMatch = str.match(/^([\d/\.]+)\s+(.+)$/);
-  if (numPrefixMatch) {
-    return { quantity: numPrefixMatch[1].trim(), name: numPrefixMatch[2].trim() };
-  }
+    // Pattern 3: "2 eggs" / "3 potatoes"
+    const numPrefixMatch = str.match(/^([\d/\.]+)\s+(.+)$/);
+    if (numPrefixMatch) {
+      return { quantity: numPrefixMatch[1].trim(), name: numPrefixMatch[2].trim() };
+    }
 
-  // Fallback: "salt to taste"
-  return { quantity: "", name: str };
-};
-
-// ✅ Normalize favorite meal into strIngredient/strMeasure format for ServingCalculator
-const normalizeMealForServingCalc = (meal) => {
-  // Preserve serving value from community or fallback to existing data
-  const normalized = {
-    ...meal,
-    servings: meal.servings || meal.serving || meal?.servings || meal?.serving || 2,
+    // Fallback: "salt to taste"
+    return { quantity: "", name: str };
   };
 
-  // Already formatted from MealDB structure
-  if (meal.strIngredient1) return normalized;
+  // ✅ Normalize favorite meal into strIngredient/strMeasure format for ServingCalculator
+  const normalizeMealForServingCalc = (meal) => {
+    // Preserve serving value from community or fallback to existing data
+    const normalized = {
+      ...meal,
+      servings: meal.servings || meal.serving || meal?.servings || meal?.serving || 2,
+    };
 
-  // Favorites store ingredients as array: ["250g paneer cubes", "2 tbsp butter - measure"]
+    // Already formatted from MealDB structure
+    if (meal.strIngredient1) return normalized;
 
-  if (Array.isArray(meal.ingredients) && meal.ingredients.length > 0) {
-    meal.ingredients.slice(0, 20).forEach((item, index) => {
-      const text = String(item || "").trim();
-      if (!text) return;
+    // Favorites store ingredients as array: ["250g paneer cubes", "2 tbsp butter - measure"]
 
-      // Favorites format: "ingredient name - measure" (stored by handleFavorite in RecipeFinder)
-      // e.g. "paneer cubes - 250g" OR "250g paneer cubes" (chef style)
-      const dashSplit = text.match(/^(.+?)\s*-\s*(.+)$/);
-      if (dashSplit) {
-        const possibleName = dashSplit[1].trim();
-        const possibleMeasure = dashSplit[2].trim();
-        // Check if measure part looks like a quantity
-        const looksLikeQty = /[\d]/.test(possibleMeasure);
-        if (looksLikeQty) {
-          normalized[`strIngredient${index + 1}`] = possibleName;
-          normalized[`strMeasure${index + 1}`] = possibleMeasure;
-          return;
+    if (Array.isArray(meal.ingredients) && meal.ingredients.length > 0) {
+      meal.ingredients.slice(0, 20).forEach((item, index) => {
+        const text = String(item || "").trim();
+        if (!text) return;
+
+        // Favorites format: "ingredient name - measure" (stored by handleFavorite in RecipeFinder)
+        // e.g. "paneer cubes - 250g" OR "250g paneer cubes" (chef style)
+        const dashSplit = text.match(/^(.+?)\s*-\s*(.+)$/);
+        if (dashSplit) {
+          const possibleName = dashSplit[1].trim();
+          const possibleMeasure = dashSplit[2].trim();
+          // Check if measure part looks like a quantity
+          const looksLikeQty = /[\d]/.test(possibleMeasure);
+          if (looksLikeQty) {
+            normalized[`strIngredient${index + 1}`] = possibleName;
+            normalized[`strMeasure${index + 1}`] = possibleMeasure;
+            return;
+          }
         }
-      }
 
-      // Chef recipe style: "200g chicken" — parse it
-      const { name, quantity } = parseIngredientLine(text);
-      normalized[`strIngredient${index + 1}`] = name;
-      normalized[`strMeasure${index + 1}`] = quantity;
-    });
-  }
+        // Chef recipe style: "200g chicken" — parse it
+        const { name, quantity } = parseIngredientLine(text);
+        normalized[`strIngredient${index + 1}`] = name;
+        normalized[`strMeasure${index + 1}`] = quantity;
+      });
+    }
 
-  return normalized;
-};
+    return normalized;
+  };
 
-// ✅ Serving calculator handlers
-const openServingCalc = (meal) => setServingRecipe(normalizeMealForServingCalc(meal));
-const closeServingCalc = () => setServingRecipe(null);
+  // ✅ Serving calculator handlers
+  const openServingCalc = (meal) => setServingRecipe(normalizeMealForServingCalc(meal));
+  const closeServingCalc = () => setServingRecipe(null);
 
   const getIngredientNames = (meal) => {
     if (Array.isArray(meal?.ingredients) && meal.ingredients.length > 0) {
@@ -786,120 +926,120 @@ const closeServingCalc = () => setServingRecipe(null);
 
             return (
               <React.Fragment key={`favorite-item-${id}-${index}`}>
-              <div key={id} className="recipe-card">
-                <div className={`food-mark ${isVeg(meal) ? "veg" : "nonveg"}`}>
-                  <div className="dot"></div>
-                </div>
+                <div key={id} className="recipe-card">
+                  <div className={`food-mark ${isVeg(meal) ? "veg" : "nonveg"}`}>
+                    <div className="dot"></div>
+                  </div>
 
-                <img src={meal.image} alt={meal.title} className="recipe-image" />
+                  <img src={meal.image} alt={meal.title} className="recipe-image" />
 
-                <h2 className="recipe-title">{meal.title}</h2>
+                  <h2 className="recipe-title">{meal.title}</h2>
 
-                <p className="recipe-info">
-                  <b>Category:</b> {meal.category} <br />
-                  <b>Chef:</b>{" "}
-                  {meal.isChefRecipe ? (
-                    <span
-                      onClick={() => handleChefDetails(meal)}
-                      className="chef-name"
+                  <p className="recipe-info">
+                    <b>Category:</b> {meal.category} <br />
+                    <b>Chef:</b>{" "}
+                    {meal.isChefRecipe ? (
+                      <span
+                        onClick={() => handleChefDetails(meal)}
+                        className="chef-name"
+                      >
+                        {meal.chefName || "Unknown Chef"}
+                        <span className="chef-tooltip">Click to view information</span>
+                      </span>
+                    ) : (
+                      "System"
+                    )}{" "}
+                    <br />
+                    <b>Country:</b> {meal.country || "N/A"}
+                  </p>
+
+                  <button
+                    onClick={() => openVideo(meal)}
+                    className="video-button"
+                  >
+                    Watch Video
+                  </button>
+
+                  <div className="reaction-buttons">
+                    <button className="like-btn" onClick={() => handleReaction(id, "like")}>
+                      {recipeStates[id]?.userReaction === "like" ? (
+                        <FaThumbsUp style={{ color: "green", fontSize: "20px" }} />
+                      ) : (
+                        <FaRegThumbsUp style={{ fontSize: "20px" }} />
+                      )}
+                      <span> {likes}</span>
+                    </button>
+
+                    <button className="unlike-btn" onClick={() => handleReaction(id, "unlike")}>
+                      {recipeStates[id]?.userReaction === "unlike" ? (
+                        <FaThumbsDown style={{ color: "red", fontSize: "20px" }} />
+                      ) : (
+                        <FaRegThumbsDown style={{ fontSize: "20px" }} />
+                      )}
+                      <span> {unlikes}</span>
+                    </button>
+
+                    <button
+                      className={`heart-btn ${favorite ? "active" : ""}`}
+                      onClick={() => handleRemoveFavorite(id)}
                     >
-                      {meal.chefName || "Unknown Chef"}
-                      <span className="chef-tooltip">Click to view information</span>
-                    </span>
+                      {favorite ? (
+                        <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
+                      ) : (
+                        <FaRegHeart style={{ fontSize: "20px" }} />
+                      )}
+                    </button>
+
+                    <button
+                      className="cart-btn"
+                      onClick={() => openShoppingIngredients(meal)}
+                      title="Order Ingredients"
+                      aria-label="Order Ingredients"
+                    >
+                      <FaShoppingCart style={{ fontSize: "18px" }} />
+                    </button>
+
+                    {meal.isChefRecipe && (
+                      <button
+                        className="comment-btn"
+                        onClick={() => openCommentModal(id)}
+                      >
+                        <FaComment style={{ fontSize: "18px" }} />
+                        <span> {comments.length || 0}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* ✅ ONLY CHANGE: openIngredients → openServingCalc */}
+                  {meal.isChefRecipe ? (
+                    <div className="recipe-card-action-row">
+                      <button
+                        onClick={() => openServingCalc(meal)}
+                        className="ingredients-button"
+                      >
+                        🍴 Show Ingredients
+                      </button>
+                      <button
+                        onClick={() => handleShowInstructions(meal)}
+                        className="ingredients-button"
+                      >
+                        📖 Show Instructions
+                      </button>
+                    </div>
                   ) : (
-                    "System"
-                  )}{" "}
-                  <br />
-                  <b>Country:</b> {meal.country || "N/A"}
-                </p>
-
-                <button
-                  onClick={() => openVideo(meal)}
-                  className="video-button"
-                >
-                  Watch Video
-                </button>
-
-                <div className="reaction-buttons">
-                  <button className="like-btn" onClick={() => handleReaction(id, "like")}>
-                    {recipeStates[id]?.userReaction === "like" ? (
-                      <FaThumbsUp style={{ color: "green", fontSize: "20px" }} />
-                    ) : (
-                      <FaRegThumbsUp style={{ fontSize: "20px" }} />
-                    )}
-                    <span> {likes}</span>
-                  </button>
-
-                  <button className="unlike-btn" onClick={() => handleReaction(id, "unlike")}>
-                    {recipeStates[id]?.userReaction === "unlike" ? (
-                      <FaThumbsDown style={{ color: "red", fontSize: "20px" }} />
-                    ) : (
-                      <FaRegThumbsDown style={{ fontSize: "20px" }} />
-                    )}
-                    <span> {unlikes}</span>
-                  </button>
-
-                  <button
-                    className={`heart-btn ${favorite ? "active" : ""}`}
-                    onClick={() => handleRemoveFavorite(id)}
-                  >
-                    {favorite ? (
-                      <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
-                    ) : (
-                      <FaRegHeart style={{ fontSize: "20px" }} />
-                    )}
-                  </button>
-
-                  <button
-                    className="cart-btn"
-                    onClick={() => openShoppingIngredients(meal)}
-                    title="Order Ingredients"
-                    aria-label="Order Ingredients"
-                  >
-                    <FaShoppingCart style={{ fontSize: "18px" }} />
-                  </button>
-
-                {meal.isChefRecipe && (
-                  <button
-                    className="comment-btn"
-                    onClick={() => openCommentModal(id)}
-                  >
-                    <FaComment style={{ fontSize: "18px" }} />
-                    <span> {comments.length || 0}</span>
-                  </button>
-                )}
-                </div>
-
-                {/* ✅ ONLY CHANGE: openIngredients → openServingCalc */}
-                {meal.isChefRecipe ? (
-                  <div className="recipe-card-action-row">
                     <button
                       onClick={() => openServingCalc(meal)}
                       className="ingredients-button"
                     >
                       🍴 Show Ingredients
                     </button>
-                    <button
-                      onClick={() => handleShowInstructions(meal)}
-                      className="ingredients-button"
-                    >
-                      📖 Show Instructions
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => openServingCalc(meal)}
-                    className="ingredients-button"
-                  >
-                    🍴 Show Ingredients
-                  </button>
-                )}
-              </div>
-              {(index + 1) % 6 === 0 && (
-                <div style={{ gridColumn: "1 / -1", width: "100%" }}>
-                  <GoogleAd />
+                  )}
                 </div>
-              )}
+                {(index + 1) % 6 === 0 && (
+                  <div style={{ gridColumn: "1 / -1", width: "100%" }}>
+                    <GoogleAd />
+                  </div>
+                )}
               </React.Fragment>
             );
           })}
@@ -910,130 +1050,99 @@ const closeServingCalc = () => setServingRecipe(null);
       </div>
 
       {activeCommentMeal && (
-        <div className="modal-overlay" onClick={closeCommentModal}>
-          <div
-            className="comment-modal-content"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button onClick={closeCommentModal} className="close-button">
-              ✖
-            </button>
+        <div className="comment-modal-overlay" onClick={closeCommentModal}>
+          <div className="comment-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="comment-modal-handle"></div>
 
-            <h3 className="comment-modal-title">
-              Comments for {activeCommentMeal.title}
-            </h3>
+            <div className="comment-modal-header">
+              <h3>Comments</h3>
+              <button className="close-comment-btn" onClick={closeCommentModal}>✖</button>
+            </div>
 
-            <div className="cookbook-comment-list comment-modal-list">
+            <div className="comment-modal-body">
               {activeComments.length > 0 ? (
                 activeComments.map((comment, index) => (
-                  <div
-                    key={index}
-                    className="cookbook-comment-item"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="cookbook-comment-content">
-                      <div className="cookbook-comment-author">
-                        {comment.user || "User"}
-                      </div>
-                      <div className="cookbook-comment-message">
-                        {comment.text}
-                      </div>
-                    </div>
-
-                    {canManageComment(comment) && (
-                      <div className="cookbook-comment-actions">
-                        <button
-                          className="cookbook-comment-edit"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditComment(activeCommentMeal, activeComments, index);
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="cookbook-comment-delete"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteComment(activeCommentMeal, activeComments, index);
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-
-                    {canManageComment(comment) && (
-                      <div className="cookbook-comment-menu">
-                        <button
-                          className="cookbook-comment-menu-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleCommentMenu(`${activeCommentId}-${index}`);
-                          }}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onTouchStart={(e) => e.stopPropagation()}
-                          aria-label="Comment actions"
-                          aria-expanded={!!openCommentMenu[`${activeCommentId}-${index}`]}
-                        >
-                          ⋮
-                        </button>
-                        {openCommentMenu[`${activeCommentId}-${index}`] && (
-                          <div className="cookbook-comment-menu-popover">
-                            <button
-                              className="cookbook-comment-edit"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditComment(activeCommentMeal, activeComments, index);
-                                closeCommentMenu(`${activeCommentId}-${index}`);
-                              }}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onTouchStart={(e) => e.stopPropagation()}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="cookbook-comment-delete"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteComment(activeCommentMeal, activeComments, index);
-                                closeCommentMenu(`${activeCommentId}-${index}`);
-                              }}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onTouchStart={(e) => e.stopPropagation()}
-                            >
-                              Delete
-                            </button>
-                          </div>
+                  <div key={index} className="comment-wrapper">
+                    <div className="insta-comment-item">
+                      <div className="insta-comment-avatar">
+                        {comment.userAvatar ? (
+                          <img src={comment.userAvatar} alt={comment.user} />
+                        ) : (
+                          <span>{comment.user?.charAt(0).toUpperCase()}</span>
                         )}
                       </div>
-                    )}
+                      <div className="insta-comment-content">
+                        <p><span className="insta-comment-user">{comment.user}</span> {comment.text}</p>
+
+                        <div className="insta-comment-actions">
+                          <span className="action-heart" onClick={() => toggleCommentLike(activeCommentMeal, index)}>
+                            {/* Check if current user's UID is in the likedBy array */}
+                            {comment.likedBy?.includes(auth.currentUser?.uid) ? (
+                              <FaHeart color="red" />
+                            ) : (
+                              <FaRegHeart />
+                            )}
+                            {comment.likesCount > 0 && <span className="like-count">{comment.likesCount}</span>}
+                          </span>
+                          <span className="action-link" onClick={() => activateReplyMode(comment.user, index)}>Reply</span>
+                          {canManageComment(comment) && (
+                            <>
+                              <span className="action-link" onClick={() => handleEditComment(activeCommentMeal, activeComments, index)}>Edit</span>
+                              <span className="action-link danger" onClick={() => handleDeleteComment(activeCommentMeal, activeComments, index)}>Delete</span>
+                            </>
+                          )}
+                        </div>
+
+                        {comment.replies?.length > 0 && (
+                          <div className="view-replies-toggle" onClick={() => toggleReplies(index)}>
+                            <span className="line"></span>
+                            {visibleReplies[index] ? "Hide replies" : `View replies (${comment.replies.length})`}
+                          </div>
+                        )}
+
+                        {visibleReplies[index] && comment.replies?.map((reply, rIdx) => (
+                          <div key={rIdx} className="insta-comment-item reply-item">
+                            <div className="insta-comment-avatar small">
+                              {reply.userAvatar ? <img src={reply.userAvatar} alt={reply.user} /> : <span>{reply.user?.charAt(0).toUpperCase()}</span>}
+                            </div>
+                            <div className="insta-comment-content">
+                              <p><span className="insta-comment-user">{reply.user}</span> {reply.text}</p>
+                              <div className="insta-comment-actions">
+                                <span className="action-heart" onClick={() => toggleReplyLike(activeCommentMeal, index, rIdx)}>
+                                  {reply.likedBy?.includes(auth.currentUser?.uid) ? <FaHeart color="red" style={{ fontSize: "12px" }} /> : <FaRegHeart style={{ fontSize: "12px" }} />}
+                                  {reply.likesCount > 0 && <span className="like-count">{reply.likesCount}</span>}
+                                </span>
+                                {auth.currentUser?.uid === reply.userId && (
+                                  <>
+                                    <span className="action-link" onClick={() => handleEditReply(activeCommentMeal, index, rIdx)}>Edit</span>
+                                    <span className="action-link danger" onClick={() => handleDeleteReply(activeCommentMeal, index, rIdx)}>Delete</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 ))
               ) : (
-                <p style={{ opacity: 0.6 }}>No comments yet. Be the first!</p>
+                <div className="no-comments">No comments yet.</div>
               )}
             </div>
 
-            <div className="cookbook-comment-form comment-modal-form">
+            <div className="comment-modal-footer">
               <input
                 type="text"
-                className="cookbook-comment-field"
-                placeholder="Write a comment..."
+                placeholder="Add a comment..."
                 value={commentInputs[activeCommentId] || ""}
-                onChange={(e) =>
-                  setCommentInputs((prev) => ({
-                    ...prev,
-                    [activeCommentId]: e.target.value,
-                  }))
-                }
+                onChange={(e) => setCommentInputs(prev => ({ ...prev, [activeCommentId]: e.target.value }))}
+                onKeyDown={(e) => e.key === "Enter" && handleAddComment(activeCommentMeal)}
               />
               <button
-                className="cookbook-submit-comment"
+                disabled={!commentInputs[activeCommentId]?.trim()}
                 onClick={() => handleAddComment(activeCommentMeal)}
-              >
-                Post
-              </button>
+              >Post</button>
             </div>
           </div>
         </div>

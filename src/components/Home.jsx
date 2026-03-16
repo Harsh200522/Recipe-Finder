@@ -55,7 +55,7 @@ export default function RecipeFinder() {
   const [videoRecipe, setVideoRecipe] = useState(null);
   const [categories, setCategories] = useState({});
   const [loading, setLoading] = useState(true);
-  const [showComments, setShowComments] = useState({});
+  const [activeCommentMeal, setActiveCommentMeal] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
   const [pantryInput, setPantryInput] = useState("");
   const [aiCookOpen, setAiCookOpen] = useState(false);
@@ -70,6 +70,57 @@ export default function RecipeFinder() {
   const [aiCookShowNutrition, setAiCookShowNutrition] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
+  const [userAvatars, setUserAvatars] = useState({});
+  // Add this state near your other useState hooks
+  const [visibleReplies, setVisibleReplies] = useState({}); // Stores { commentIndex: true/false }
+  // Renamed to avoid conflicts
+  const activateReplyMode = (username, index) => {
+    // 1. Show the replies list for this comment
+    setVisibleReplies(prev => ({
+      ...prev,
+      [index]: true
+    }));
+
+    // 2. Add the @tag to the input field
+    setCommentInputs(prev => ({
+      ...prev,
+      [activeCommentMeal.idMeal]: `@${username} `
+    }));
+  };
+  // Toggle replies without triggering the input
+  const toggleReplies = (index) => {
+    setVisibleReplies(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+  useEffect(() => {
+    const fetchAvatars = async () => {
+      // Get unique IDs of people who commented
+      const uniqueUserIds = [...new Set(activeCommentMeal?.comments?.map(c => c.userId))];
+      const newAvatars = { ...userAvatars };
+
+      for (const uid of uniqueUserIds) {
+        if (uid && !newAvatars[uid]) {
+          try {
+            const snap = await getDoc(doc(db, "users", uid));
+            if (snap.exists()) {
+              const userData = snap.data();
+              // ✅ IMPORTANT: Match the structure used in ProfileSettings (profile.avatar)
+              if (userData.profile?.avatar) {
+                newAvatars[uid] = userData.profile.avatar;
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching user avatar:", err);
+          }
+        }
+      }
+      setUserAvatars(newAvatars);
+    };
+
+    if (activeCommentMeal) fetchAvatars();
+  }, [activeCommentMeal]);
 
   const startVoiceInput = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -143,24 +194,56 @@ export default function RecipeFinder() {
       const recipeDocId = getChefRecipeDocId(meal);
       if (!recipeDocId) return;
 
-      const newComment = {
+      const userDocRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userDocRef);
+      const userAvatar = userSnap.exists() ? userSnap.data().profile?.avatar : "";
+
+      const newEntry = {
         userId: user.uid,
         user: getCurrentUserCommentName(user),
+        userAvatar: userAvatar || "",
         text: commentText,
         createdAt: new Date(),
+        likedBy: [],
+        likesCount: 0
       };
 
+      let updatedComments = [...(meal.comments || [])];
+
+      // CHECK: Is this a reply? (Starts with @username)
+      if (commentText.startsWith("@")) {
+        const firstSpaceIndex = commentText.indexOf(" ");
+        const replyToUser = commentText.substring(1, firstSpaceIndex);
+
+        // Find the original comment index that we are replying to
+        const parentIndex = updatedComments.findIndex(c => c.user === replyToUser);
+
+        if (parentIndex !== -1) {
+          if (!updatedComments[parentIndex].replies) {
+            updatedComments[parentIndex].replies = [];
+          }
+          updatedComments[parentIndex].replies.push(newEntry);
+        } else {
+          // If user not found, just save as a normal comment
+          updatedComments.push(newEntry);
+        }
+      } else {
+        // Normal top-level comment
+        updatedComments.push(newEntry);
+      }
+
       await updateDoc(doc(db, "recipes", recipeDocId), {
-        comments: arrayUnion(newComment),
+        comments: updatedComments,
       });
 
       setCommentInputs((prev) => ({ ...prev, [meal.idMeal]: "" }));
-      updateRecipeCommentsInState(meal.idMeal, [...(meal.comments || []), newComment]);
+      updateRecipeCommentsInState(meal.idMeal, updatedComments);
+
+      Toast.fire({ icon: "success", title: "Comment posted!" });
     } catch (err) {
       console.error("Comment error:", err);
     }
   };
-
   const handleEditComment = async (meal, commentIndex) => {
     const user = auth.currentUser;
     if (!user) {
@@ -182,6 +265,9 @@ export default function RecipeFinder() {
       inputValue: targetComment.text || "",
       showCancelButton: true,
       confirmButtonText: "Update",
+      didOpen: () => {
+        Swal.getContainer().style.zIndex = "3000";
+      },
       inputValidator: (value) => {
         if (!value || !value.trim()) return "Comment cannot be empty";
         return null;
@@ -1244,6 +1330,54 @@ export default function RecipeFinder() {
 
   }, [categories]); // ✅ correct
 
+  const toggleCommentLike = async (meal, commentIndex) => {
+    const user = auth.currentUser;
+    if (!user) {
+      Swal.fire("Please login to like comments");
+      return;
+    }
+
+    const recipeDocId = getChefRecipeDocId(meal);
+    if (!recipeDocId) return;
+
+    // Create a deep copy to avoid direct state mutation
+    const updatedComments = JSON.parse(JSON.stringify(meal.comments || []));
+    const comment = updatedComments[commentIndex];
+
+    if (!comment) return;
+
+    // Initialize arrays if they don't exist
+    if (!comment.likedBy) comment.likedBy = [];
+
+    const hasLiked = comment.likedBy.includes(user.uid);
+
+    if (hasLiked) {
+      // --- UNLIKE LOGIC ---
+      comment.likedBy = comment.likedBy.filter(id => id !== user.uid);
+      comment.isLiked = false;
+      // Ensure count doesn't go below 0
+      comment.likesCount = Math.max(0, (comment.likesCount || 1) - 1);
+    } else {
+      // --- LIKE LOGIC ---
+      comment.likedBy.push(user.uid);
+      comment.isLiked = true;
+      comment.likesCount = (comment.likesCount || 0) + 1;
+    }
+
+    try {
+      // Update Firestore
+      await updateDoc(doc(db, "recipes", recipeDocId), {
+        comments: updatedComments
+      });
+
+      // Update Local UI State
+      updateRecipeCommentsInState(meal.idMeal, updatedComments);
+
+    } catch (err) {
+      console.error("Error toggling comment like:", err);
+      Toast.fire({ icon: "error", title: "Failed to update like" });
+    }
+  };
 
   const getRecommended = () => {
     let allMeals = [];
@@ -1305,6 +1439,130 @@ export default function RecipeFinder() {
     return scored
       .sort((a, b) => b.aiScore - a.aiScore)
       .slice(0, 10);
+  };
+  // --- REPLY ACTIONS ---
+
+ const toggleReplyLike = async (meal, commentIndex, replyIndex) => {
+    const user = auth.currentUser;
+    if (!user) {
+      Swal.fire("Please login to like replies");
+      return;
+    }
+
+    const recipeDocId = getChefRecipeDocId(meal);
+    if (!recipeDocId) return;
+
+    // 1. Clone the current comments to modify them
+    const updatedComments = JSON.parse(JSON.stringify(meal.comments || []));
+    const reply = updatedComments[commentIndex]?.replies?.[replyIndex];
+
+    if (!reply) return;
+
+    // 2. Logic for Liking/Unliking
+    if (!reply.likedBy) reply.likedBy = [];
+    const hasLiked = reply.likedBy.includes(user.uid);
+
+    if (hasLiked) {
+      // --- UNLIKE ---
+      reply.likedBy = reply.likedBy.filter(id => id !== user.uid);
+      reply.likesCount = Math.max(0, (reply.likesCount || 1) - 1);
+    } else {
+      // --- LIKE ---
+      reply.likedBy.push(user.uid);
+      reply.likesCount = (reply.likesCount || 0) + 1;
+    }
+
+    try {
+      // 3. Push to Firestore only. 
+      // The onSnapshot listener in Step 2 will catch this change and update your screen!
+      await updateDoc(doc(db, "recipes", recipeDocId), { 
+        comments: updatedComments 
+      });
+    } catch (err) {
+      console.error("Error toggling reply like:", err);
+      // Optional: use a toast for errors
+    }
+  };
+  // ✅ Live Sync for Comments and Replies
+useEffect(() => {
+  if (!activeCommentMeal) return;
+
+  const recipeDocId = getChefRecipeDocId(activeCommentMeal);
+  if (!recipeDocId) return;
+
+  // Listen for real-time changes to the specific recipe document
+  const unsub = onSnapshot(doc(db, "recipes", recipeDocId), (docSnap) => {
+    if (docSnap.exists()) {
+      const updatedData = docSnap.data();
+      const newComments = updatedData.comments || [];
+
+      // 1. Update the modal's current meal data so the modal refreshes
+      setActiveCommentMeal((prev) => ({
+        ...prev,
+        comments: newComments,
+      }));
+
+      // 2. Update the main recipes list so the comment count icon on the card updates
+      setRecipes((prevRecipes) =>
+        prevRecipes.map((r) =>
+          (r.idMeal || r.id) === activeCommentMeal.idMeal
+            ? { ...r, comments: newComments }
+            : r
+        )
+      );
+    }
+  });
+
+  return () => unsub(); // Detach listener when modal closes
+}, [activeCommentMeal?.idMeal]);
+  const handleDeleteReply = async (meal, commentIndex, replyIndex) => {
+    const confirmDelete = await Swal.fire({
+      title: "Delete reply?",
+      text: "This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Delete",
+    });
+
+    if (!confirmDelete.isConfirmed) return;
+
+    const updatedComments = JSON.parse(JSON.stringify(meal.comments));
+    updatedComments[commentIndex].replies.splice(replyIndex, 1);
+
+    try {
+      await updateDoc(doc(db, "recipes", getChefRecipeDocId(meal)), { comments: updatedComments });
+      updateRecipeCommentsInState(meal.idMeal, updatedComments);
+    } catch (err) {
+      console.error("Delete reply error:", err);
+    }
+  };
+
+  const handleEditReply = async (meal, commentIndex, replyIndex) => {
+    const reply = meal.comments[commentIndex].replies[replyIndex];
+
+    const { value: newText } = await Swal.fire({
+      title: 'Edit Reply',
+      input: 'text',
+      inputValue: reply.text,
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value || !value.trim()) return "Reply cannot be empty";
+        return null;
+      },
+    });
+
+    if (newText && newText !== reply.text) {
+      const updatedComments = JSON.parse(JSON.stringify(meal.comments));
+      updatedComments[commentIndex].replies[replyIndex].text = newText.trim();
+
+      try {
+        await updateDoc(doc(db, "recipes", getChefRecipeDocId(meal)), { comments: updatedComments });
+        updateRecipeCommentsInState(meal.idMeal, updatedComments);
+      } catch (err) {
+        console.error("Edit reply error:", err);
+      }
+    }
   };
 
   const [recommendedMeals, setRecommendedMeals] = useState([]);
@@ -1683,86 +1941,13 @@ export default function RecipeFinder() {
                     {meal.isChefRecipe && (
                       <button
                         className="comment-btn"
-                        onClick={() =>
-                          setShowComments((prev) => ({
-                            ...prev,
-                            [id]: !prev[id],
-                          }))
-                        }
+                        onClick={() => setActiveCommentMeal(meal)} // Open the modal
                       >
                         <FaComment style={{ fontSize: "18px" }} />
                         <span> {meal.comments?.length || 0}</span>
                       </button>
                     )}
                   </div>
-                  {meal.isChefRecipe && showComments[id] && (
-                    <div className="cookbook-comments-area">
-
-                      {/* Comment List */}
-                      <div className="cookbook-comment-list">
-                        {meal.comments?.length > 0 ? (
-                          meal.comments.map((comment, index) => (
-                            <div key={index} className="cookbook-comment-item">
-
-                              <div className="cookbook-comment-content">
-                                <div className="cookbook-comment-author">
-                                  {comment.user || "User"}
-                                </div>
-
-                                <div className="cookbook-comment-message">
-                                  {comment.text}
-                                </div>
-                              </div>
-
-                              {/* Optional buttons (only show if current user wrote it) */}
-                              {canManageComment(comment) && (
-                                <div className="cookbook-comment-actions">
-                                  <button
-                                    className="cookbook-comment-edit"
-                                    onClick={() => handleEditComment(meal, index)}
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    className="cookbook-comment-delete"
-                                    onClick={() => handleDeleteComment(meal, index)}
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              )}
-
-                            </div>
-                          ))
-                        ) : (
-                          <p style={{ opacity: 0.6 }}>No comments yet. Be the first!</p>
-                        )}
-                      </div>
-
-                      {/* Comment Input */}
-                      <div className="cookbook-comment-form">
-                        <input
-                          type="text"
-                          className="cookbook-comment-field"
-                          placeholder="Write a comment..."
-                          value={commentInputs[id] || ""}
-                          onChange={(e) =>
-                            setCommentInputs((prev) => ({
-                              ...prev,
-                              [id]: e.target.value,
-                            }))
-                          }
-                        />
-                        <button
-                          className="cookbook-submit-comment"
-                          onClick={() => handleAddComment(meal)}
-                        >
-                          Post
-                        </button>
-                      </div>
-
-                    </div>
-                  )}
 
                   {meal.isChefRecipe ? (
                     <div className="recipe-card-action-row">
@@ -2061,6 +2246,131 @@ export default function RecipeFinder() {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ================= INSTAGRAM STYLE COMMENT MODAL ================= */}
+      {activeCommentMeal && (
+        <div className="comment-modal-overlay" onClick={() => setActiveCommentMeal(null)}>
+          <div className="comment-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="comment-modal-handle"></div>
+
+            <div className="comment-modal-header">
+              <h3>Comments</h3>
+              <button className="close-comment-btn" onClick={() => setActiveCommentMeal(null)}>✖</button>
+            </div>
+
+            <div className="comment-modal-body">
+              {activeCommentMeal.comments?.length > 0 ? (
+                activeCommentMeal.comments.map((comment, index) => (
+                  <div key={index} className="comment-wrapper">
+                    <div className="insta-comment-item">
+                      <div className="insta-comment-avatar">
+                        {(comment.userAvatar || userAvatars[comment.userId]) ? (
+                          <img src={comment.userAvatar || userAvatars[comment.userId]} alt={comment.user} />
+                        ) : (
+                          <span>{comment.user?.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="insta-comment-content">
+                        <p><span className="insta-comment-user">{comment.user}</span> {comment.text}</p>
+
+                        <div className="insta-comment-actions">
+                          <span
+                            className="action-heart"
+                            onClick={() => toggleCommentLike(activeCommentMeal, index)}
+                          >
+                            {comment.isLiked ? <FaHeart color="red" /> : <FaRegHeart />}
+                            {comment.likesCount > 0 && <span className="like-count">{comment.likesCount}</span>}
+                          </span>
+                          <span
+                            className="action-link"
+                            onClick={() => activateReplyMode(comment.user, index)}
+                          >
+                            Reply
+                          </span>
+                          {canManageComment(comment) && (
+                            <>
+                              <span className="action-link" onClick={() => handleEditComment(activeCommentMeal, index)}>Edit</span>
+                              <span className="action-link danger" onClick={() => handleDeleteComment(activeCommentMeal, index)}>Delete</span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* --- VIEW REPLIES TOGGLE --- */}
+                        {comment.replies?.length > 0 && (
+                          <div className="view-replies-toggle" onClick={() => toggleReplies(index)}>
+                            <span className="line"></span>
+                            {visibleReplies[index] ? "Hide replies" : `View replies (${comment.replies.length})`}
+                          </div>
+                        )}
+
+                        {/* --- NESTED REPLIES LIST --- */}
+                        {visibleReplies[index] && comment.replies?.map((reply, rIdx) => (
+                          <div key={rIdx} className="insta-comment-item reply-item">
+                            <div className="insta-comment-avatar small">
+                              {reply.userAvatar ? (
+                                <img src={reply.userAvatar} alt={reply.user} />
+                              ) : (
+                                <span>{reply.user?.charAt(0).toUpperCase()}</span>
+                              )}
+                            </div>
+                            <div className="insta-comment-content">
+                              <p><span className="insta-comment-user">{reply.user}</span> {reply.text}</p>
+
+                              <div className="insta-comment-actions">
+                                {/* REPLY LIKE BUTTON */}
+                                <span
+                                  className="action-heart"
+                                  onClick={() => toggleReplyLike(activeCommentMeal, index, rIdx)}
+                                >
+                                  {reply.likedBy?.includes(auth.currentUser?.uid) ?
+                                    <FaHeart color="red" style={{ fontSize: "12px" }} /> :
+                                    <FaRegHeart style={{ fontSize: "12px" }} />
+                                  }
+                                  {reply.likesCount > 0 && <span className="like-count">{reply.likesCount}</span>}
+                                </span>
+
+                                {/* PERMISSION CHECK: Only same user can edit/delete */}
+                                {auth.currentUser?.uid === reply.userId && (
+                                  <>
+                                    <span className="action-link" onClick={() => handleEditReply(activeCommentMeal, index, rIdx)}>Edit</span>
+                                    <span className="action-link danger" onClick={() => handleDeleteReply(activeCommentMeal, index, rIdx)}>Delete</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-comments">No comments yet.</div>
+              )}
+            </div>
+
+            <div className="comment-modal-footer">
+              <input
+                type="text"
+                placeholder={`Add a comment for ${activeCommentMeal.strMeal}...`}
+                value={commentInputs[activeCommentMeal.idMeal] || ""}
+                onChange={(e) =>
+                  setCommentInputs((prev) => ({
+                    ...prev,
+                    [activeCommentMeal.idMeal]: e.target.value,
+                  }))
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleAddComment(activeCommentMeal)}
+              />
+              <button
+                disabled={!commentInputs[activeCommentMeal.idMeal]?.trim()}
+                onClick={() => handleAddComment(activeCommentMeal)}
+              >
+                Post
+              </button>
             </div>
           </div>
         </div>

@@ -1565,6 +1565,9 @@ body {
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: subpixel-antialiased;
+  will-change: transform, box-shadow;
 }
 
 /* Ripple effect */
@@ -1591,8 +1594,9 @@ body {
 .cookbook-comment-item:hover {
   background: linear-gradient(135deg, #fff5e6, #ffe4d0) !important;
   border-color: #ff7a18 !important;
-  transform: translateY(-2px) scale(1.01) !important;
+  transform: translateY(-2px) !important; 
   box-shadow: 0 8px 20px rgba(255, 122, 24, 0.25) !important;
+  z-index: 5;
 }
 
 /* Active/Pressed effect */
@@ -1916,6 +1920,16 @@ body {
     padding: 4px 6px;
     font-size: 9px;
   }
+  .cookbook-comment-item:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: #ff7a18 !important;
+  }
+  
+  /* Prevent layout shifts when actions appear/disappear */
+  .cookbook-comment-actions {
+    display: none !important;
+  }
 }
 
 /* Tablet screens */
@@ -2057,4 +2071,415 @@ body {
 .main-container {
   height: auto !important;     
   overflow: visible !important; 
+}
+/* Container Overlay */
+.comment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+/* Modal Box */
+.comment-modal-container {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+.comment-modal-handle { display: none; } /* Hidden on desktop */
+
+/* Header */
+.comment-modal-header {
+  padding: 15px;
+  border-bottom: 1px solid #efefef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comment-modal-header h3 {
+  font-size: 1rem;
+  margin: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.close-comment-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  position: absolute;
+  right: 15px;
+}
+
+/* Body Scroll Area */
+.comment-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+.insta-comment-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.insta-comment-avatar {
+  width: 32px;
+  height: 32px;
+  background: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.insta-comment-user {
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.insta-comment-actions {
+  font-size: 0.75rem;
+  color: #8e8e8e;
+  margin-top: 4px;
+  display: flex;
+  gap: 15px;
+}
+
+.insta-comment-actions span {
+  cursor: pointer;
+}
+
+/* Footer Input Area */
+.comment-modal-footer {
+  padding: 10px 15px;
+  border-top: 1px solid #efefef;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: #fff;
+}
+
+.comment-modal-footer input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 10px;
+  font-size: 0.95rem;
+}
+
+.comment-modal-footer button {
+  background: none;
+  border: none;
+  color: #0095f6;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.comment-modal-footer button:disabled {
+  opacity: 0.3;
+}
+
+/* Responsive Mobile Style (Bottom Sheet) */
+@media (max-width: 768px) {
+  .comment-modal-overlay {
+    align-items: flex-end; /* Stick to bottom */
+  }
+
+  .comment-modal-container {
+    height: 85vh; /* Taller on mobile */
+    border-radius: 15px 15px 0 0;
+    max-width: 100%;
+    animation: slideUpMobile 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .comment-modal-handle {
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: #dbdbdb;
+    border-radius: 2px;
+    margin: 10px auto 0;
+  }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUpMobile {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.insta-comment-avatar {
+    width: 32px;
+    height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    flex-shrink: 0;
+    overflow: hidden; /* This keeps the image inside the circle */
+    border: 1px solid #eee;
+}
+
+.insta-comment-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+/* ============================= */
+/* UPDATED POST BUTTON STYLES    */
+/* ============================= */
+
+.comment-modal-footer button {
+    background: #0095f6; /* Classic primary blue */
+    color: #ffffff !important; /* Force white text for contrast */
+    border: none;
+    outline: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect */
+.comment-modal-footer button:hover:not(:disabled) {
+    background: #1877f2; /* Slightly darker blue on hover */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Active/Pressed effect */
+.comment-modal-footer button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Disabled state - when input is empty */
+.comment-modal-footer button:disabled {
+    background: #e2e8f0; /* Light grey */
+    color: #94a3b8 !important;
+    cursor: not-allowed;
+    opacity: 1; /* Resetting your previous 0.3 opacity for better look */
+    box-shadow: none;
+}
+
+/* Optional: Ensure the footer container handles the new button size well */
+.comment-modal-footer {
+    padding: 12px 15px;
+    border-top: 1px solid #efefef;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: #fff;
+}
+
+.comment-modal-footer input {
+    flex: 1;
+    border: 1px solid #f1f1f1; /* Added a subtle border to the input too */
+    background: #fafafa;
+    border-radius: 20px;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.comment-modal-footer input:focus {
+    border-color: #0095f6;
+}
+/* ========================================= */
+/* UPDATED COMMENT TEXT COLORS (MODAL & CARD) */
+/* ========================================= */
+
+/* 1. The Username - Keep the Recipe Finder Orange */
+.insta-comment-user, 
+.cookbook-comment-author {
+    color: #ff7a18 !important; /* Your signature orange */
+    font-weight: 700;
+    margin-right: 6px;
+    text-decoration: none;
+}
+
+/* 2. The Comment Text - Change to Dark Grey for readability */
+.insta-comment-item p,
+.cookbook-comment-message {
+    color: #334155 !important; /* Deep slate grey (easier on the eyes than pure black) */
+    font-weight: 400;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* 3. Hover state for Username only */
+.insta-comment-user:hover {
+    color: #e04f00 !important; /* Darker orange on hover to show it's a link */
+    cursor: pointer;
+}
+
+/* 4. Ensure the Edit/Delete actions remain subtle */
+.insta-comment-actions span {
+    color: #94a3b8; /* Light slate for secondary actions */
+    font-size: 0.75rem;
+    margin-right: 12px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.insta-comment-actions span:hover {
+    color: #64748b;
+}
+/* Ensure SweetAlert is always above the Comment Modal (which is at 2000) */
+.swal2-container {
+    z-index: 3000 !important;
+}
+.insta-comment-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 8px;
+    align-items: center;
+}
+
+.action-heart {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+}
+
+.action-heart:active {
+    transform: scale(1.3); /* Pop effect when clicked */
+}
+
+.like-count {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+/* Dark Mode support */
+body.dark-mode .like-count {
+    color: #94a3b8;
+}
+
+.action-link {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.action-link:hover { color: #ff7a18; }
+.action-link.danger:hover { color: #ef4444; }
+.insta-comment-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 8px;
+    align-items: center;
+}
+
+.action-heart {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+}
+
+.action-heart:active {
+    transform: scale(1.3); /* Pop effect when clicked */
+}
+
+.like-count {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+/* Dark Mode support */
+body.dark-mode .like-count {
+    color: #94a3b8;
+}
+
+.action-link {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.action-link:hover { color: #ff7a18; }
+.action-link.danger:hover { color: #ef4444; }
+/* Indent replies to the right */
+.reply-item {
+    margin-left: 48px !important; /* The left margin you requested */
+    margin-top: 10px;
+    padding-left: 10px;
+    border-left: 2px solid #efefef; /* Optional: vertical line to show connection */
+}
+
+body.dark-mode .reply-item {
+    border-left-color: #333;
+}
+
+.insta-comment-avatar.small {
+    width: 24px;
+    height: 24px;
+}
+/* Makes the "View replies" toggle feel interactive */
+.view-replies-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #8e8e8e; /* Instagram grey */
+    font-weight: 600;
+    user-select: none; /* Prevents text highlighting on double-click */
+}
+
+.view-replies-toggle:hover {
+    color: #262626; /* Darkens on hover */
+}
+
+.view-replies-toggle .line {
+    width: 24px;
+    height: 1px;
+    background-color: #8e8e8e;
 }
