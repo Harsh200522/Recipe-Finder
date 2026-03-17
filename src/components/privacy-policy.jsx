@@ -14,35 +14,65 @@ const sections = [
   { id: "changes", title: "Policy Changes", num: "11" },
   { id: "contact", title: "Contact Us", num: "12" },
 ];
+const scrollTo = (id) => {
+  const el = document.getElementById(id);
+  if (el) {
+    // 1. Use a dynamic offset based on whether it's mobile or desktop
+    const offset = window.innerWidth < 768 ? 80 : 100; 
+    
+    const bodyRect = document.body.getBoundingClientRect().top;
+    const elementRect = el.getBoundingClientRect().top;
+    const elementPosition = elementRect - bodyRect;
+    const offsetPosition = elementPosition - offset;
 
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth"
+    });
+  }
+};
 export default function PrivacyPolicy() {
-  const [activeSection, setActiveSection] = useState("introduction");
-  const [scrolled, setScrolled] = useState(false);
+const [activeSection, setActiveSection] = useState("introduction");
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
-      const current = sections.find((s) => {
-        const el = document.getElementById(s.id);
-        if (!el) return false;
-        const rect = el.getBoundingClientRect();
-        return rect.top <= 120 && rect.bottom > 120;
-      });
-      if (current) setActiveSection(current.id);
+    const observerOptions = {
+      root: null,
+      // rootMargin: Top, Right, Bottom, Left
+      // We use a larger top margin for mobile to catch the section earlier
+      rootMargin: '-10% 0px -75% 0px', 
+      threshold: [0, 0.1] 
     };
 
-    window.addEventListener("scroll", handleScroll);
-    handleScroll();
+    const observerCallback = (entries) => {
+      entries.forEach((entry) => {
+        // Only update if the section is coming into the top of the view
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    sections.forEach((s) => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+
+    // Handle the very top of the page manually
+    const handleTopScroll = () => {
+      if (window.scrollY < 100) {
+        setActiveSection("introduction");
+      }
+    };
+
+    window.addEventListener("scroll", handleTopScroll);
+
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      observer.disconnect();
+      window.removeEventListener("scroll", handleTopScroll);
     };
   }, []);
-
-  const scrollTo = (id) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   return (
     <>
      
