@@ -1,7 +1,7 @@
 import React from "react";
 import "../style/about.css";
 import { MdRestaurantMenu } from "react-icons/md";
-
+import { NavLink } from 'react-router-dom';
 
 export default function About() {
   return (
@@ -30,9 +30,9 @@ export default function About() {
         <div className="about-section">
           <h2>Who I Am</h2>
           <p>
-            Hi, I'm <span className="highlight">Harsh Gilitwala</span>, the solo developer behind Recipe Finder. 
-            I created this smart food discovery platform to help users quickly search and explore 
-            delicious recipes from around the world. Whether you're a beginner or a master chef, 
+            Hi, I'm <span className="highlight">Harsh Gilitwala</span>, the solo developer behind Recipe Finder.
+            I created this smart food discovery platform to help users quickly search and explore
+            delicious recipes from around the world. Whether you're a beginner or a master chef,
             I've designed this app to make cooking simple, fun, and inspiring.
           </p>
         </div>
@@ -45,7 +45,7 @@ export default function About() {
               <h3>Harsh Gilitwala</h3>
               <p className="developer-role">Full Stack Developer & Food Enthusiast</p>
               <p className="developer-bio">
-                Passionate about creating practical solutions that make everyday life easier. 
+                Passionate about creating practical solutions that make everyday life easier.
                 Recipe Finder combines my love for coding with my appreciation for good food.
               </p>
             </div>
@@ -196,9 +196,30 @@ export default function About() {
         <div className="about-footer">
           <p>Developed with ❤️ by <strong>Harsh Gilitwala</strong></p>
           <p className="footer-links">
-            <a href="/privacy-policy">Privacy Policy</a> • 
-            <a href="/terms"> Terms of Service</a> • 
-            <a href="/contact"> Contact Me</a>
+
+            <NavLink
+              to="/privacy-policy"
+              onClick={() => setIsNavCollapsed(true)}
+              className={({ isActive }) => isActive ? "active" : ""}
+            >
+              Privacy Policy
+            </NavLink>
+            {" • "}
+            <NavLink
+              to="/terms"
+              onClick={() => setIsNavCollapsed(true)}
+              className={({ isActive }) => isActive ? "active" : ""}
+            >
+              Terms of Service
+            </NavLink>
+            {" • "}
+            <NavLink
+              to="/contact"
+              onClick={() => setIsNavCollapsed(true)}
+              className={({ isActive }) => isActive ? "active" : ""}
+            >
+              Contact Me
+            </NavLink>
           </p>
         </div>
 

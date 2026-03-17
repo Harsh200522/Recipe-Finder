@@ -3409,3 +3409,95 @@ body.dark-mode .view-replies-toggle:hover .line {
 body.dark-mode .insta-comment-actions .action-heart:hover {
     color: #ff7a18;
 }
+/* ================= FORCE LIGHT MODE COLORS IN DARK MODE ================= */
+
+/* 1. Main Background Gradient */
+body.dark-mode .auth-container {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%) !important;
+}
+
+/* 2. The Main Card (White with Blur) */
+body.dark-mode .auth-card {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+    color: #333 !important; /* Base text color */
+}
+
+/* 3. Form Labels and Input Text */
+body.dark-mode .form-label {
+    color: #5d4037 !important;
+}
+
+body.dark-mode .form-control {
+    background-color: #fafafa !important;
+    color: #5d4037 !important;
+    border: 2px solid #e0e0e0 !important;
+}
+
+body.dark-mode .form-control:focus {
+    background-color: white !important;
+    border-color: #ff9800 !important;
+}
+
+/* 4. Auth Toggle and Link Colors */
+body.dark-mode .auth-toggle {
+    border-top: 1px solid #e0e0e0 !important;
+    color: #333 !important;
+}
+
+body.dark-mode .toggle-button {
+    color: #ff9800 !important;
+}
+
+body.dark-mode .toggle-button:hover {
+    color: #ff5722 !important;
+    background-color: rgba(255, 152, 0, 0.1) !important;
+}
+
+/* 5. Forgot Password Link */
+body.dark-mode .forgot-link {
+    color: #ff6b6b !important;
+}
+
+body.dark-mode .forgot-link:hover {
+    background-color: rgba(255, 107, 107, 0.1) !important;
+    color: #ff5252 !important;
+}
+
+/* 6. Chef Hat and Face (Ensuring they don't turn dark) */
+body.dark-mode .hat-base, 
+body.dark-mode .hat-top {
+    background: white !important;
+    border-color: #ddd !important;
+}
+
+body.dark-mode .chef-face {
+    background: #ffccbc !important;
+    border-color: #eab09f !important;
+}
+
+body.dark-mode .chef-body {
+    background: white !important;
+    border-color: #eee !important;
+}
+/* ================= TEXT BOX HOVER FIX FOR DARK MODE ================= */
+
+/* Ensure the background stays light and text stays dark on hover */
+body.dark-mode .form-control:hover {
+    background-color: #f2f2f2 !important; /* Slightly darker than the default #fafafa */
+    border-color: #bdbdbd !important;    /* Subtle border change */
+    color: #5d4037 !important;           /* Keeps your brown/dark text */
+}
+
+/* Ensure placeholder text doesn't disappear on hover */
+body.dark-mode .form-control:hover::placeholder {
+    color: #888888 !important;
+}
+
+/* If the focus state is also turning black, use this: */
+body.dark-mode .form-control:focus {
+    background-color: #ffffff !important;
+    color: #5d4037 !important;
+    border-color: #ff9800 !important;
+}
