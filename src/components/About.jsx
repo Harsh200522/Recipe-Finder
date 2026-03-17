@@ -1,8 +1,7 @@
 import React from "react";
 import "../style/about.css";
 import { MdRestaurantMenu } from "react-icons/md";
-import { NavLink } from 'react-router-dom';
-
+import { Link } from 'react-router-dom';
 export default function About() {
   return (
     <div className="about-container">
@@ -196,17 +195,17 @@ export default function About() {
         <div className="about-footer">
           <p>Developed with ❤️ by <strong>Harsh Gilitwala</strong></p>
           <p className="footer-links">
-            <a href="/privacy-policy" className="footer-link">
+            <Link to="/privacy-policy" className="footer-link">
               Privacy Policy
-            </a>
+            </Link>
             {" • "}
-            <a href="/terms" className="footer-link">
+            <Link to="/terms" className="footer-link">
               Terms of Service
-            </a>
+            </Link>
             {" • "}
-            <a href="/contact" className="footer-link">
+            <Link to="/contact" className="footer-link">
               Contact Me
-            </a>
+            </Link>
           </p>
         </div>
 
