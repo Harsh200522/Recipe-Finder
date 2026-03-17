@@ -17,7 +17,7 @@ import "./style/darkmode.css";
 import PrivacyPolicy from "./components/privacy-policy.jsx";
 import Terms from "./components/Terms.jsx";
 import ContactUs from "./components/ContactUs.jsx";
-
+import NotFound from "./components/NotFound.jsx";
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -103,10 +103,7 @@ function App() {
             />
 
             {/* ========== CATCH-ALL ROUTE ========== */}
-            <Route
-              path="*"
-              element={<Navigate to={user ? "/" : "/auth"} />}
-            />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
       </div>

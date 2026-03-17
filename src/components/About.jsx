@@ -196,30 +196,17 @@ export default function About() {
         <div className="about-footer">
           <p>Developed with ❤️ by <strong>Harsh Gilitwala</strong></p>
           <p className="footer-links">
-
-            <NavLink
-              to="/privacy-policy"
-              onClick={() => setIsNavCollapsed(true)}
-              className={({ isActive }) => isActive ? "active" : ""}
-            >
+            <a href="/privacy-policy" className="footer-link">
               Privacy Policy
-            </NavLink>
+            </a>
             {" • "}
-            <NavLink
-              to="/terms"
-              onClick={() => setIsNavCollapsed(true)}
-              className={({ isActive }) => isActive ? "active" : ""}
-            >
+            <a href="/terms" className="footer-link">
               Terms of Service
-            </NavLink>
+            </a>
             {" • "}
-            <NavLink
-              to="/contact"
-              onClick={() => setIsNavCollapsed(true)}
-              className={({ isActive }) => isActive ? "active" : ""}
-            >
+            <a href="/contact" className="footer-link">
               Contact Me
-            </NavLink>
+            </a>
           </p>
         </div>
 
