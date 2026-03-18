@@ -725,3 +725,25 @@ body {
     font-size: 16px;
   }
 }
+@media (max-width: 860px) {
+  /* Ensure the sidebar doesn't block clicks to the content below */
+  .pp-sidebar {
+    position: sticky !important;
+    top: 0;
+    z-index: 9999; /* Make sure it's on top */
+    background: var(--cream);
+    pointer-events: auto !important; /* Force allow clicks */
+  }
+
+  .pp-nav button {
+    display: block !important;
+    width: 100% !important;
+    position: relative;
+    z-index: 10000; /* Ensure the buttons themselves are clickable */
+  }
+
+  /* CRITICAL: This allows the browser to find the section correctly */
+  .pp-section {
+    scroll-margin-top: 150px; 
+  }
+}
