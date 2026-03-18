@@ -27,23 +27,25 @@ const scrollTo = (id) => {
 useEffect(() => {
   const observerOptions = {
     root: null,
-    // This looks at a larger area (the top-middle 45% of the screen)
-    rootMargin: '-10% 0px -45% 0px', 
-    threshold: 0 
+    // -15% from top and -15% from bottom creates a large 70% "active" area 
+    // in the middle of the mobile screen.
+    rootMargin: '-15% 0px -15% 0px', 
+    // Threshold [0, 0.25] tells the observer to fire when even a 
+    // tiny bit (0) or a quarter (0.25) of the section is visible.
+    threshold: [0, 0.25] 
   };
 
   const observerCallback = (entries) => {
-    entries.forEach((entry) => {
-      // Logic: If the section is currently in the "viewing window"
-      if (entry.isIntersecting) {
-        setActiveSection(entry.target.id);
-      }
-    });
+    // We want to find the entry that is MOST visible or hitting the top
+    const visibleSection = entries.find(entry => entry.isIntersecting);
+    
+    if (visibleSection) {
+      setActiveSection(visibleSection.target.id);
+    }
   };
 
   const observer = new IntersectionObserver(observerCallback, observerOptions);
 
-  // Re-observe all sections
   sections.forEach((s) => {
     const el = document.getElementById(s.id);
     if (el) observer.observe(el);
