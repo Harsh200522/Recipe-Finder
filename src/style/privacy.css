@@ -647,17 +647,80 @@ body {
     color: black;
   }
 }
-/* Add a wrapper class in your JSX or target the table directly */
-.pp-table {
-  display: block;
-  width: 100%;
-  overflow-x: auto; /* Enable horizontal scroll */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  white-space: nowrap; /* Prevents text from wrapping into tiny columns */
-}
+/* ── MOBILE TABLE CARD VIEW ── */
+@media (max-width: 768px) {
+  /* Force the table to not behave like a table anymore */
+  .pp-table, 
+  .pp-table thead, 
+  .pp-table tbody, 
+  .pp-table th, 
+  .pp-table td, 
+  .pp-table tr {
+    display: block;
+    width: 100%;
+  }
 
-/* Allow text to wrap only within specific cells to maintain some structure */
-.pp-table td {
-  white-space: normal; 
-  min-width: 140px; /* Ensures columns don't get too thin */
+  /* Hide table headers (but keep for accessibility) */
+  .pp-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  .pp-table tr {
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--parchment);
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+
+  .pp-table td {
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    position: relative;
+    padding: 12px 15px 12px 40% !important; /* Create space for labels */
+    text-align: left;
+    font-size: 14px;
+    min-height: 45px;
+    white-space: normal;
+  }
+
+  .pp-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Add labels manually since we can't edit JSX data-attributes */
+  .pp-table td::before {
+    position: absolute;
+    left: 15px;
+    width: 35%;
+    white-space: nowrap;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--spice);
+  }
+
+  /* Targeting specific rows by nth-child to create labels */
+  .pp-table td:nth-of-type(1)::before { content: "Category"; }
+  .pp-table td:nth-of-type(2)::before { content: "Examples"; }
+  .pp-table td:nth-of-type(3)::before { content: "Source"; }
+
+  /* Bold the first piece of info (Category) */
+  .pp-table td:nth-of-type(1) {
+    background: var(--warm-brown);
+    color: white;
+    padding-left: 15px !important; /* No label needed for the header-style row */
+  }
+  
+  .pp-table td:nth-of-type(1)::before {
+    display: none;
+  }
+
+  .pp-table td:nth-of-type(1) strong {
+    color: #fff;
+    font-size: 16px;
+  }
 }
