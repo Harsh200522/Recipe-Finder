@@ -25,29 +25,32 @@ const scrollTo = (id) => {
   };
 
 useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: '-10% 0px -45% 0px', // Updated for better mobile detection
-      threshold: 0 
-    };
+  const observerOptions = {
+    root: null,
+    // This looks at a larger area (the top-middle 45% of the screen)
+    rootMargin: '-10% 0px -45% 0px', 
+    threshold: 0 
+  };
 
-    const observerCallback = (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
-        }
-      });
-    }; // <--- MAKE SURE THIS BRACE IS HERE
-
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-    sections.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
+  const observerCallback = (entries) => {
+    entries.forEach((entry) => {
+      // Logic: If the section is currently in the "viewing window"
+      if (entry.isIntersecting) {
+        setActiveSection(entry.target.id);
+      }
     });
+  };
 
-    return () => observer.disconnect();
-  }, []); // <--- THIS IS LINE 63 WHERE THE ERROR IS TRIGGERED
+  const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+  // Re-observe all sections
+  sections.forEach((s) => {
+    const el = document.getElementById(s.id);
+    if (el) observer.observe(el);
+  });
+
+  return () => observer.disconnect();
+}, []);
   return (
     <>
      
