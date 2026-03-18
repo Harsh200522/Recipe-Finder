@@ -726,24 +726,18 @@ body {
   }
 }
 @media (max-width: 860px) {
-  /* Ensure the sidebar doesn't block clicks to the content below */
+  .pp-body {
+    grid-template-columns: 1fr;
+    padding: 24px 16px;
+  }
+
   .pp-sidebar {
-    position: sticky !important;
-    top: 0;
-    z-index: 9999; /* Make sure it's on top */
-    background: var(--cream);
-    pointer-events: auto !important; /* Force allow clicks */
-  }
-
-  .pp-nav button {
-    display: block !important;
-    width: 100% !important;
-    position: relative;
-    z-index: 10000; /* Ensure the buttons themselves are clickable */
-  }
-
-  /* CRITICAL: This allows the browser to find the section correctly */
-  .pp-section {
-    scroll-margin-top: 150px; 
+    position: relative; /* ✅ NOT sticky */
+    max-height: none;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 30px;
+    background: var(--parchment);
   }
 }
