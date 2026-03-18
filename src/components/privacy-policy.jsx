@@ -25,19 +25,32 @@ const scrollTo = (id) => {
   };
 
   useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: '-20% 0px -70% 0px', // Better detection area for mobile
-      threshold: 0 
-    };
+  const observerOptions = {
+    root: null,
+    // Adjusting margin: This looks at the top 40% of the screen.
+    // It's more reliable for varying section heights on mobile.
+    rootMargin: '-10% 0px -45% 0px', 
+    threshold: [0, 0.1, 0.2] // Multiple thresholds help with fast scrolling
+  };
 
-    const observerCallback = (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
-        }
-      });
-    };
+  const observerCallback = (entries) => {
+    entries.forEach((entry) => {
+      // If the section is entering the top half of the screen
+      if (entry.isIntersecting) {
+        setActiveSection(entry.target.id);
+      }
+    });
+  };
+
+  const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+  sections.forEach((s) => {
+    const el = document.getElementById(s.id);
+    if (el) observer.observe(el);
+  });
+
+  return () => observer.disconnect();
+}, []);
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
 
