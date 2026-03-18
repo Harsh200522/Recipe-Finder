@@ -17,23 +17,33 @@ const sections = [
 
 export default function PrivacyPolicy() {
   const [activeSection, setActiveSection] = useState("introduction");
-  const scrollTo = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      // Offset calculation for sticky mobile headers
-      const offset = window.innerWidth < 860 ? 180 : 80;
-      const elementPosition = el.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - offset;
+  // const scrollTo = (id) => {
+  //   const el = document.getElementById(id);
+  //   if (el) {
+  //     // Offset calculation for sticky mobile headers
+  //     const offset = window.innerWidth < 860 ? 180 : 80;
+  //     const elementPosition = el.getBoundingClientRect().top;
+  //     const offsetPosition = elementPosition + window.pageYOffset - offset;
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth",
-      });
+  //     window.scrollTo({
+  //       top: offsetPosition,
+  //       behavior: "smooth",
+  //     });
 
-      setActiveSection(id);
-    }
-  };
+  //     setActiveSection(id);
+  //   }
+  // };
+const scrollTo = (id) => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
 
+    setActiveSection(id);
+  }
+};
   useEffect(() => {
     const observerOptions = {
       root: null,
