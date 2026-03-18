@@ -24,33 +24,20 @@ const scrollTo = (id) => {
     }
   };
 
-  useEffect(() => {
-  const observerOptions = {
-    root: null,
-    // Adjusting margin: This looks at the top 40% of the screen.
-    // It's more reliable for varying section heights on mobile.
-    rootMargin: '-10% 0px -45% 0px', 
-    threshold: [0, 0.1, 0.2] // Multiple thresholds help with fast scrolling
-  };
+useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '-10% 0px -45% 0px', // Updated for better mobile detection
+      threshold: 0 
+    };
 
-  const observerCallback = (entries) => {
-    entries.forEach((entry) => {
-      // If the section is entering the top half of the screen
-      if (entry.isIntersecting) {
-        setActiveSection(entry.target.id);
-      }
-    });
-  };
-
-  const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-  sections.forEach((s) => {
-    const el = document.getElementById(s.id);
-    if (el) observer.observe(el);
-  });
-
-  return () => observer.disconnect();
-}, []);
+    const observerCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    }; // <--- MAKE SURE THIS BRACE IS HERE
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
 
@@ -60,7 +47,7 @@ const scrollTo = (id) => {
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, []); // <--- THIS IS LINE 63 WHERE THE ERROR IS TRIGGERED
   return (
     <>
      
