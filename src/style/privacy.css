@@ -647,3 +647,17 @@ body {
     color: black;
   }
 }
+/* Add a wrapper class in your JSX or target the table directly */
+.pp-table {
+  display: block;
+  width: 100%;
+  overflow-x: auto; /* Enable horizontal scroll */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  white-space: nowrap; /* Prevents text from wrapping into tiny columns */
+}
+
+/* Allow text to wrap only within specific cells to maintain some structure */
+.pp-table td {
+  white-space: normal; 
+  min-width: 140px; /* Ensures columns don't get too thin */
+}
