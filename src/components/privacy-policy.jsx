@@ -18,25 +18,36 @@ const sections = [
 export default function PrivacyPolicy() {
 const [activeSection, setActiveSection] = useState("introduction");
 const scrollTo = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
+  const el = document.getElementById(id);
+  if (el) {
+    // Calculate the position manually to account for any sticky headers
+    const offset = 80; // Adjust this based on your mobile header height
+    const bodyRect = document.body.getBoundingClientRect().top;
+    const elementRect = el.getBoundingClientRect().top;
+    const elementPosition = elementRect - bodyRect;
+    const offsetPosition = elementPosition - offset;
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth"
+    });
+  }
+};
 
 useEffect(() => {
   const observerOptions = {
     root: null,
-    // -15% from top and -15% from bottom creates a large 70% "active" area 
-    // in the middle of the mobile screen.
-    rootMargin: '-15% 0px -15% 0px', 
-    // Threshold [0, 0.25] tells the observer to fire when even a 
-    // tiny bit (0) or a quarter (0.25) of the section is visible.
-    threshold: [0, 0.25] 
+    /* On mobile, we want the "active" trigger to happen near the top of the screen.
+       -10% from top: triggers once the header is slightly below the top.
+       -70% from bottom: ensures we don't activate sections too far down the page.
+    */
+    rootMargin: window.innerWidth < 860 ? '-10% 0px -75% 0px' : '-15% 0px -15% 0px',
+    threshold: [0, 0.1] 
   };
 
   const observerCallback = (entries) => {
-    // We want to find the entry that is MOST visible or hitting the top
+    // We only want to update the active state for the section 
+    // that is currently entering the "top" area of the viewport.
     const visibleSection = entries.find(entry => entry.isIntersecting);
     
     if (visibleSection) {
@@ -46,12 +57,26 @@ useEffect(() => {
 
   const observer = new IntersectionObserver(observerCallback, observerOptions);
 
+  // Re-observe if the window is resized (crucial for mobile/desktop switching)
+  const handleResize = () => {
+    observer.disconnect();
+    sections.forEach((s) => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+  };
+
   sections.forEach((s) => {
     const el = document.getElementById(s.id);
     if (el) observer.observe(el);
   });
 
-  return () => observer.disconnect();
+  window.addEventListener('resize', handleResize);
+
+  return () => {
+    observer.disconnect();
+    window.removeEventListener('resize', handleResize);
+  };
 }, []);
   return (
     <>

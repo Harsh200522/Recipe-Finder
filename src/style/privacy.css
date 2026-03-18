@@ -258,6 +258,7 @@ body {
   border-bottom: 1px solid var(--border);
   scroll-margin-top: 100px; /* Increased to account for sticky header */
   animation: fadeUp 0.4s ease both;
+  scroll-margin-top: 100px;
 }
 
 .pp-section:last-child {
