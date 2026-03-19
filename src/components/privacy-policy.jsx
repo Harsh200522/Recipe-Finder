@@ -21,10 +21,12 @@ const scrollTo = (id) => {
   const el = document.getElementById(id);
   if (!el) return;
   el.scrollIntoView({ behavior: "smooth", block: "start" });
-  setActiveSection(id);
+  setActiveSection(id); // set immediately on click, don't wait for observer
 };
 
 useEffect(() => {
+  const isMobile = window.innerWidth < 860;
+
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -34,7 +36,7 @@ useEffect(() => {
       });
     },
     {
-      rootMargin: "-20% 0px -75% 0px",
+      rootMargin: isMobile ? "-5% 0px -60% 0px" : "-20% 0px -75% 0px",
       threshold: 0,
     }
   );

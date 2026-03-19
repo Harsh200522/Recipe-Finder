@@ -257,7 +257,7 @@ body {
   padding-bottom: 56px;
   border-bottom: 1px solid var(--border);
   animation: fadeUp 0.4s ease both;
-  scroll-margin-top: 100px; /* adjust this to your navbar height */
+  scroll-margin-top: 80px; /* adjust this to your navbar height */
 }
 
 .pp-section:last-child {
@@ -583,6 +583,9 @@ body {
   /* Bring back numbers if you want them visible */
   .pp-nav .nav-num {
     display: inline-block !important;
+  }
+  .pp-section {
+    scroll-margin-top: 60px;
   }
 }
 
