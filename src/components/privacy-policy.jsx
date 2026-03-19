@@ -21,32 +21,36 @@ const scrollTo = (id) => {
   const el = document.getElementById(id);
   if (!el) return;
   el.scrollIntoView({ behavior: "smooth", block: "start" });
-  setActiveSection(id); // set immediately on click, don't wait for observer
+  setActiveSection(id);
 };
 
 useEffect(() => {
-  const isMobile = window.innerWidth < 860;
+  const handleScroll = () => {
+    const sectionEls = sections
+      .map((s) => ({ id: s.id, el: document.getElementById(s.id) }))
+      .filter((s) => s.el);
 
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
-        }
-      });
-    },
-    {
-      rootMargin: isMobile ? "-5% 0px -60% 0px" : "-20% 0px -75% 0px",
-      threshold: 0,
-    }
-  );
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
 
-  sections.forEach((s) => {
-    const el = document.getElementById(s.id);
-    if (el) observer.observe(el);
-  });
+    let closest = sectionEls[0].id;
+    let minDist = Infinity;
 
-  return () => observer.disconnect();
+    sectionEls.forEach(({ id, el }) => {
+      const top = el.getBoundingClientRect().top;
+      const dist = Math.abs(top - 120); // 120 = offset from top
+      if (dist < minDist) {
+        minDist = dist;
+        closest = id;
+      }
+    });
+
+    setActiveSection(closest);
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  handleScroll(); // run once on mount
+
+  return () => window.removeEventListener("scroll", handleScroll);
 }, []);
   return (
     <>
