@@ -17,28 +17,15 @@ const sections = [
 
 export default function PrivacyPolicy() {
   const [activeSection, setActiveSection] = useState("introduction");
-  // const scrollTo = (id) => {
-  //   const el = document.getElementById(id);
-  //   if (el) {
-  //     // Offset calculation for sticky mobile headers
-  //     const offset = window.innerWidth < 860 ? 180 : 80;
-  //     const elementPosition = el.getBoundingClientRect().top;
-  //     const offsetPosition = elementPosition + window.pageYOffset - offset;
-
-  //     window.scrollTo({
-  //       top: offsetPosition,
-  //       behavior: "smooth",
-  //     });
-
-  //     setActiveSection(id);
-  //   }
-  // };
 const scrollTo = (id) => {
   const el = document.getElementById(id);
   if (el) {
-    el.scrollIntoView({
+    const yOffset = -80; // adjust for header (mobile friendly)
+    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+    window.scrollTo({
+      top: y,
       behavior: "smooth",
-      block: "start",
     });
 
     setActiveSection(id);

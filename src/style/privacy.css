@@ -521,6 +521,9 @@ body {
 
 /* ── MOBILE ── */
 @media (max-width: 860px) {
+  .pp-section {
+    scroll-margin-top:80px; /* Adjust for mobile header */
+  }
   .pp-body {
     grid-template-columns: 1fr; /* Content still stacks below sidebar */
     padding: 24px 16px;
