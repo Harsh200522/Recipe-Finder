@@ -257,7 +257,7 @@ body {
   padding-bottom: 56px;
   border-bottom: 1px solid var(--border);
   animation: fadeUp 0.4s ease both;
-  scroll-margin-top: 120px;
+  scroll-margin-top: 100px; /* adjust this to your navbar height */
 }
 
 .pp-section:last-child {
@@ -521,9 +521,6 @@ body {
 
 /* ── MOBILE ── */
 @media (max-width: 860px) {
-  .pp-section {
-    scroll-margin-top:80px; /* Adjust for mobile header */
-  }
   .pp-body {
     grid-template-columns: 1fr; /* Content still stacks below sidebar */
     padding: 24px 16px;

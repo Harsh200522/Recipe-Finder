@@ -19,42 +19,33 @@ export default function PrivacyPolicy() {
   const [activeSection, setActiveSection] = useState("introduction");
 const scrollTo = (id) => {
   const el = document.getElementById(id);
-  if (el) {
-    const yOffset = -80; // adjust for header (mobile friendly)
-    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
-
-    window.scrollTo({
-      top: y,
-      behavior: "smooth",
-    });
-
-    setActiveSection(id);
-  }
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  setActiveSection(id);
 };
-  useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: "-10% 0px -75% 0px",
-      threshold: 0,
-    };
 
-    const observerCallback = (entries) => {
+useEffect(() => {
+  const observer = new IntersectionObserver(
+    (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           setActiveSection(entry.target.id);
         }
       });
-    };
+    },
+    {
+      rootMargin: "-20% 0px -75% 0px",
+      threshold: 0,
+    }
+  );
 
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
+  sections.forEach((s) => {
+    const el = document.getElementById(s.id);
+    if (el) observer.observe(el);
+  });
 
-    sections.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, []);
+  return () => observer.disconnect();
+}, []);
   return (
     <>
 
