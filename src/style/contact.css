@@ -530,6 +530,10 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .contact-side-info {
+    display: none;
+  }
+
   .contact-hero {
     padding: 60px 24px 48px;
   }

@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import "../style/privacy.css";
 const sections = [
   { id: "introduction", title: "Introduction", num: "01" },
@@ -16,42 +17,66 @@ const sections = [
 ];
 
 export default function PrivacyPolicy() {
+  const location = useLocation();
   const [activeSection, setActiveSection] = useState("introduction");
-const scrollTo = (id) => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-  setActiveSection(id);
-};
 
-useEffect(() => {
-  const handleScroll = () => {
-    const sectionEls = sections
-      .map((s) => ({ id: s.id, el: document.getElementById(s.id) }))
-      .filter((s) => s.el);
-
-    const scrollY = window.scrollY || document.documentElement.scrollTop;
-
-    let closest = sectionEls[0].id;
-    let minDist = Infinity;
-
-    sectionEls.forEach(({ id, el }) => {
-      const top = el.getBoundingClientRect().top;
-      const dist = Math.abs(top - 120); // 120 = offset from top
-      if (dist < minDist) {
-        minDist = dist;
-        closest = id;
-      }
+  useEffect(() => {
+    setActiveSection("introduction");
+    // Multiple scroll methods to ensure it works
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Use requestAnimationFrame for backup
+    const rafId = requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     });
+    
+    return () => cancelAnimationFrame(rafId);
+  }, [location.pathname]);
 
-    setActiveSection(closest);
+  useEffect(() => {
+    // Delay scroll listener to prevent it from running during initial page load
+    const timer = setTimeout(() => {
+      const handleScroll = () => {
+        const sectionEls = sections
+          .map((s) => ({ id: s.id, el: document.getElementById(s.id) }))
+          .filter((s) => s.el);
+
+        const scrollY = window.scrollY || document.documentElement.scrollTop;
+
+        let closest = sectionEls[0].id;
+        let minDist = Infinity;
+
+        sectionEls.forEach(({ id, el }) => {
+          const top = el.getBoundingClientRect().top;
+          const dist = Math.abs(top - 120);
+          if (dist < minDist) {
+            minDist = dist;
+            closest = id;
+          }
+        });
+
+        setActiveSection(closest);
+      };
+
+      window.addEventListener("scroll", handleScroll, { passive: true });
+
+      return () => window.removeEventListener("scroll", handleScroll);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
+  const scrollTo = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActiveSection(id);
   };
 
-  window.addEventListener("scroll", handleScroll, { passive: true });
-  handleScroll(); // run once on mount
-
-  return () => window.removeEventListener("scroll", handleScroll);
-}, []);
   return (
     <>
 

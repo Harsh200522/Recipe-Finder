@@ -1,9 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import '../style/contact.css';
 import LiveChat from './LiveChat';
 import FAQModal from './FAQModal';
 
 export default function ContactUs() {
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Multiple scroll methods to ensure it works
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Use requestAnimationFrame for backup
+    const rafId = requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+    
+    return () => cancelAnimationFrame(rafId);
+  }, [location.pathname]);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',

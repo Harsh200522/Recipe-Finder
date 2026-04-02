@@ -542,6 +542,10 @@ body {
     padding: 36px 24px;
   }
 
+  .terms-sidebar {
+    display: none;
+  }
+
   .terms-hero {
     padding: 56px 24px 40px;
   }
@@ -554,16 +558,6 @@ body {
   .terms-hero-sub {
     font-size: 16px;
     margin-bottom: 18px;
-  }
-
-  .terms-sidebar {
-    position: sticky;
-    top: 0;
-    background: var(--cream);
-    padding: 16px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    z-index: 10;
   }
 
   @media (prefers-color-scheme: dark) {

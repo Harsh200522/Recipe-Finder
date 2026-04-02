@@ -522,68 +522,14 @@ body {
 /* ── MOBILE ── */
 @media (max-width: 860px) {
   .pp-body {
-    grid-template-columns: 1fr; /* Content still stacks below sidebar */
+    grid-template-columns: 1fr;
     padding: 24px 16px;
   }
 
-  /* --- CHANGE THIS SECTION --- */
   .pp-sidebar {
-    position: relative; /* Remove sticky on mobile if it blocks content */
-    max-height: none;
-    padding: 20px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 30px;
-    background: var(--parchment);
+    display: none;
   }
 
-  .pp-nav {
-    display: flex;
-    flex-direction: column; /* Force vertical list */
-    flex-wrap: nowrap;      /* Remove wrapping buttons */
-    border-left: 2px solid var(--border);
-    margin-left: 10px;
-    padding: 0;
-    gap: 0;                 /* Reset gap to use button padding */
-  }
-
-  .pp-nav li {
-    width: 100%;            /* Make buttons full width */
-  }
-
-  .pp-nav button {
-    width: 100%;
-    padding: 12px 20px;
-    border: none;           /* Remove the "button bubble" look */
-    border-radius: 0 6px 6px 0;
-    background: transparent;
-    font-size: 15px;
-    justify-content: flex-start;
-    text-align: left;
-  }
-
-  .pp-nav button.active {
-    background: linear-gradient(90deg, rgba(184, 92, 42, 0.1) 0%, transparent 100%);
-    color: var(--spice);
-    border-color: transparent;
-  }
-
-  /* Bring back the active line indicator */
-  .pp-nav button.active::before {
-    display: block !important;
-    content: '';
-    position: absolute;
-    left: -2px;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--spice);
-  }
-
-  /* Bring back numbers if you want them visible */
-  .pp-nav .nav-num {
-    display: inline-block !important;
-  }
   .pp-section {
     scroll-margin-top: 60px;
   }

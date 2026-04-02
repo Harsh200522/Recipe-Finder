@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import "../style/terms.css";
 
 const sections = [
@@ -18,27 +19,51 @@ const sections = [
 ];
 
 export default function Terms() {
+  const location = useLocation();
   const [activeSection, setActiveSection] = useState("acceptance");
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
-      const current = sections.find((s) => {
-        const el = document.getElementById(s.id);
-        if (!el) return false;
-        const rect = el.getBoundingClientRect();
-        return rect.top <= 120 && rect.bottom > 120;
-      });
-      if (current) setActiveSection(current.id);
-    };
+    setActiveSection("acceptance");
+    setScrolled(false);
+    // Multiple scroll methods to ensure it works
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Use requestAnimationFrame for backup
+    const rafId = requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+    
+    return () => cancelAnimationFrame(rafId);
+  }, [location.pathname]);
 
-    window.addEventListener("scroll", handleScroll);
-    handleScroll();
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+  useEffect(() => {
+    // Delay scroll listener to prevent it from running during initial page load
+    const timer = setTimeout(() => {
+      const handleScroll = () => {
+        setScrolled(window.scrollY > 40);
+        const current = sections.find((s) => {
+          const el = document.getElementById(s.id);
+          if (!el) return false;
+          const rect = el.getBoundingClientRect();
+          return rect.top <= 120 && rect.bottom > 120;
+        });
+        if (current) setActiveSection(current.id);
+      };
+
+      window.addEventListener("scroll", handleScroll);
+
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   const scrollTo = (id) => {
     const el = document.getElementById(id);
