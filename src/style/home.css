@@ -4,6 +4,13 @@ body {
   font-family: sans-serif;
   margin: 0;
   padding: 0;
+  /* ✅ FIXED: Reserve scrollbar space to prevent horizontal collapse when modals open */
+  scrollbar-gutter: stable;
+}
+
+/* ✅ FIXED: Hide scrollbar when modal opens */
+body.modal-open {
+  overflow: hidden;
 }
 
 .recipe-finder-container {

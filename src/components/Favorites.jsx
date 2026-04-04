@@ -1037,7 +1037,12 @@ export default function Favorites() {
                 </div>
                 {(index + 1) % 6 === 0 && (
                   <div style={{ gridColumn: "1 / -1", width: "100%" }}>
-                    <GoogleAd />
+                    {/* ✅ ADSENSE POLICY: Show ads only with recipe content */}
+                    <GoogleAd 
+                      pageHasContent={true} 
+                      isLoading={false} 
+                      hasRecipes={favorites.length} 
+                    />
                   </div>
                 )}
               </React.Fragment>
@@ -1046,7 +1051,12 @@ export default function Favorites() {
         </div>
       )}
       <div style={{ marginTop: "30px" }}>
-        <GoogleAd />
+        {/* ✅ ADSENSE POLICY: Show ads only with recipe content */}
+        <GoogleAd 
+          pageHasContent={true} 
+          isLoading={false} 
+          hasRecipes={favorites.length} 
+        />
       </div>
 
       {activeCommentMeal && (

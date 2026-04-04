@@ -56,22 +56,34 @@ body {
 
 /* ===== SUCCESS MESSAGE ===== */
 .success-message {
-  margin-bottom: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.2);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: white;
-  font-weight: 500;
-  animation: slideDown 0.3s ease-out;
+  margin-bottom: 1.5rem !important;
+
+  padding: 4px 12px !important;
+  font-size: 13.5px !important;
+  line-height: 1.2 !important;
+
+  display: flex !important;
+  align-items: center !important;   /* 🔥 vertical center */
+  gap: 6px !important;              /* 🔥 space between icon & text */
+
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.2) !important;
+
+  color: white !important;
+  font-weight: 500 !important;
+
+  animation: slideDown 0.3s ease-out !important;
 }
 
+/* Icon styling */
 .success-icon {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 50px !important;
+  height: 50px !important;
+
+  flex-shrink: 0 !important;   /* 🔥 prevents pushing text */
+  margin: 0 !important;
+  display: block !important;   /* remove inline spacing */
 }
 
 @keyframes slideDown {
@@ -627,20 +639,121 @@ body {
 
 @media (max-width: 480px) {
   .settings-container {
-    padding: 1rem 0.5rem;
+    padding: 1rem 0.5rem !important;
   }
   
   .content-area {
-    padding: 1rem;
+    padding: 1rem !important;
   }
   
   .avatar-container {
-    width: 100px;
-    height: 100px;
+    width: 100px !important;
+    height: 100px !important;
   }
   
   .btn {
-    width: 100%;
+    width: 100% !important;
+    padding: 0.75rem 1.25rem !important;
+    font-size: 0.95rem !important;
+    min-height: 44px !important;
+  }
+  
+  /* ✅ FIXED: Increase pill button size on mobile */
+  .pill-button {
+    padding: 0.75rem 1.75rem !important;
+    font-size: 1rem !important;
+    min-height: 40px !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* ✅ FIXED: Larger section titles on mobile */
+  .section-title {
+    font-size: 1.25rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .section-subtitle {
+    font-size: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  /* ✅ FIXED: Larger form labels on mobile */
+  .form-label {
+    font-size: 0.95rem !important;
+    margin-bottom: 0.75rem !important;
+    font-weight: 600 !important;
+  }
+  
+  /* ✅ FIXED: Better spacing in pills container */
+  .pills-container {
+    gap: 0.75rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  /* ✅ FIXED: Better form input size on mobile */
+  .form-input {
+    padding: 0.9rem 1.1rem !important;
+    font-size: 1rem !important;
+    min-height: 44px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: block !important;
+  }
+  
+  .form-select {
+    padding: 0.9rem 1.1rem !important;
+    font-size: 1rem !important;
+    min-height: 44px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: block !important;
+  }
+  
+  .form-textarea {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0.9rem 1.1rem !important;
+    font-size: 1rem !important;
+    min-height: 80px !important;
+  }
+  
+  .form-group {
+    width: 100% !important;
+  }
+  
+  .checkbox-label {
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  .toggle-info h4 {
+    font-size: 1.05rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .toggle-info p {
+    font-size: 0.9rem !important;
+  }
+  
+  .custom-input {
+    width: 100% !important;
+    flex-direction: column !important;
+  }
+  
+  .custom-input .form-input {
+    padding: 0.9rem 1.1rem !important;
+    font-size: 1rem !important;
+    margin-bottom: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: block !important;
+  }
+  
+  .custom-input .btn {
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+    min-height: 44px !important;
+    width: 100% !important;
   }
 }
 

@@ -405,6 +405,24 @@ export default function RecipeFinder() {
       };
 
       const result = {};
+      const CACHE_KEY = "recipe_categories_cache_v2"; // Version updated for 10 items per category
+      const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 hours
+
+      // ✅ Check localStorage cache first
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          if (Date.now() - parsed.timestamp < CACHE_DURATION) {
+            console.log("🚀 Loading from cache - instant!");
+            setCategories(parsed.data);
+            setTimeout(() => setLoading(false), 300);
+            return;
+          }
+        } catch (e) {
+          console.warn("Cache parse error, fetching fresh data");
+        }
+      }
 
       // Prevent uncaught errors and avoid bursts that trigger 429.
       const safeFetchJson = async (url) => {
@@ -418,26 +436,43 @@ export default function RecipeFinder() {
       };
 
       try {
-        for (const key in catList) {
+        // ⚡ OPTIMIZATION: Fetch all category lists in parallel (not sequential)
+        const categoryPromises = Object.entries(catList).map(async ([key, category]) => {
           const data = await safeFetchJson(
-            `https://www.themealdb.com/api/json/v1/1/filter.php?c=${catList[key]}`
+            `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`
           );
 
           if (data?.meals?.length) {
-            const detailedMeals = [];
-            for (const meal of data.meals.slice(0, 6)) {
-              const detailData = await safeFetchJson(
-                `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${meal.idMeal}`
-              );
-              if (detailData?.meals?.[0]) detailedMeals.push(detailData.meals[0]);
-            }
-            result[key] = detailedMeals;
-          } else {
-            result[key] = [];
+            // ⚡ UPDATED: 10 meals per category for better variety
+            // ⚡ Fetch all details in parallel (not sequential)
+            const mealPromises = data.meals.slice(0, 10).map((meal) =>
+              safeFetchJson(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${meal.idMeal}`)
+            );
+
+            const detailResponses = await Promise.all(mealPromises);
+            const detailedMeals = detailResponses
+              .filter((detail) => detail?.meals?.[0])
+              .map((detail) => detail.meals[0]);
+
+            return [key, detailedMeals];
           }
-        }
+          return [key, []];
+        });
+
+        // ⚡ Wait for all categories to load in parallel
+        const results = await Promise.all(categoryPromises);
+        results.forEach(([key, meals]) => {
+          result[key] = meals;
+        });
 
         setCategories(result);
+
+        // ✅ Cache the result for next visit
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({ data: result, timestamp: Date.now() })
+        );
+        console.log("✅ Recipes cached for 2 hours");
       } catch (err) {
         console.error("Error loading categories:", err);
         setCategories({ Veg: [], NonVeg: [], Dessert: [], Seafood: [] });
@@ -1975,7 +2010,12 @@ useEffect(() => {
                 </div>
                 {(index + 1) % 6 === 0 && (
                   <div style={{ gridColumn: "1 / -1" }}>
-                    <GoogleAd />
+                    {/* ✅ ADSENSE POLICY: Show ads only with recipe content and not loading */}
+                    <GoogleAd 
+                      pageHasContent={true} 
+                      isLoading={loading} 
+                      hasRecipes={recipes.length} 
+                    />
                   </div>
                 )}
               </React.Fragment>
