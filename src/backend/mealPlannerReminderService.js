@@ -215,7 +215,21 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
     const { weekday, hhmm, dateKey } = getNowForTimeZone(timeZone);
     const dayMeals = planner?.[weekday];
 
+    if (debug) {
+      console.log(`\n[DEBUG] User: ${uid}`);
+      console.log(`  - Reminder Enabled: ${reminderEnabled}`);
+      console.log(`  - TimeZone: ${timeZone}`);
+      console.log(`  - Current Time: ${hhmm} on ${weekday}`);
+      console.log(`  - Has meals for ${weekday}?: ${!!dayMeals}`);
+      if (dayMeals) {
+        console.log(`  - Meals keys: ${Object.keys(dayMeals).join(", ")}`);
+      }
+    }
+
     if (!reminderEnabled || !dayMeals) {
+      if (debug) {
+        console.log(`  → SKIPPED: ${!reminderEnabled ? "Reminders disabled" : "No meals for today"}`);
+      }
       report.summary.skipped++;
       continue;
     }
@@ -225,38 +239,78 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
       const mealTime = reminderTimes?.[mealType];
       const reminderTime = toReminderTime(mealTime);
 
+      if (debug) {
+        console.log(`    [${mealType}] mealTime=${mealTime}, reminderTime=${reminderTime}, currentTime=${hhmm}`);
+      }
+
       if (!plannedMeal || !mealTime || !reminderTime) {
+        if (debug) {
+          console.log(`      → SKIPPED: ${!plannedMeal ? "no meal" : !mealTime ? "no time" : "invalid time"}`);
+        }
         report.summary.skipped++;
         continue;
       }
 
       if (!force && reminderTime !== hhmm) {
+        if (debug) {
+          console.log(`      → SKIPPED: time mismatch (${reminderTime} !== ${hhmm})`);
+        }
         report.summary.skipped++;
         continue;
       }
 
       report.summary.matches++;
+      if (debug) {
+        console.log(`      ✅ MATCH FOUND!`);
+      }
 
       const logId = `${uid}_${dateKey}_${mealType}`;
       const logRef = doc(db, "mealReminderLogs", logId);
 
-      const logSnap = await getDoc(logRef);
-      if (!force && logSnap.exists()) {
-        report.summary.skipped++;
-        continue;
+      try {
+        const logSnap = await getDoc(logRef);
+        if (!force && logSnap.exists()) {
+          if (debug) {
+            console.log(`      ⏭️  ALREADY SENT: Log exists (${logId})`);
+          }
+          report.summary.skipped++;
+          continue;
+        }
+        if (debug && !logSnap.exists()) {
+          console.log(`      📝 New log entry needed (${logId})`);
+        }
+      } catch (logError) {
+        if (debug) {
+          console.log(`      ⚠️  Log check failed: ${logError.message}`);
+        }
       }
 
       const toEmail = await getUserEmail(uid, data);
       if (!toEmail) {
+        if (debug) {
+          console.log(`      ❌ NO EMAIL FOUND for user ${uid}`);
+          console.log(`         - ownerEmail: ${data.ownerEmail || "not set"}`);
+        }
         report.summary.skipped++;
         continue;
+      }
+      if (debug) {
+        console.log(`      📧 Email found: ${toEmail}`);
       }
 
       const mealName = getMealName(plannedMeal);
 
-      if (dryRun) continue;
+      if (dryRun) {
+        if (debug) {
+          console.log(`      🔄 DRY RUN: Would send email to ${toEmail}`);
+        }
+        continue;
+      }
 
       try {
+        if (debug) {
+          console.log(`      🚀 Sending email...`);
+        }
         const mailOptions = {
           from: `"Recipe Finder" <${process.env.EMAIL_FROM}>`,
           to: toEmail,
@@ -273,8 +327,11 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
         const info = await smtpTransporter.sendMail(mailOptions);
 
         console.log(
-          `Email sent to ${toEmail} | ${mealType} | messageId: ${info?.messageId || "N/A"}`
+          `✉️  Email sent to ${toEmail} | ${mealType} | messageId: ${info?.messageId || "N/A"}`
         );
+        if (debug) {
+          console.log(`      ✅ SUCCESS: Email delivered`);
+        }
 
         await setDoc(logRef, {
           uid,
@@ -288,7 +345,10 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 
         report.summary.sent++;
       } catch (error) {
-        console.error("Send failed:", error?.message);
+        console.error(`❌ Send FAILED to ${toEmail}:`, error?.message);
+        if (debug) {
+          console.log(`      Error details:`, error);
+        }
         report.summary.errors++;
       }
     }
