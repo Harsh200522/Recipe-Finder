@@ -5,6 +5,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../config/firbase.js';
 import '../style/login.css';
+import '../style/darkmode.css';
 import { useNavigate } from "react-router-dom";
 
 // React Icons
@@ -82,6 +83,12 @@ const Auth = () => {
 
   return (
     <div className="auth-container">
+      {/* Decorative background elements */}
+      <div className="shape-1">🍳</div>
+      <div className="shape-2">👨‍🍳</div>
+      <div className="shape-3">🥘</div>
+      <div className="shape-4">🍽️</div>
+
       <div className="auth-card">
         {/* HEADER - Different animation based on view */}
         <div className="auth-header">
@@ -179,6 +186,7 @@ const Auth = () => {
               Email Address
             </label>
             <input
+              id="auth-email"
               type="email"
               className="form-control"
               value={email}
@@ -195,6 +203,7 @@ const Auth = () => {
               Password
             </label>
             <input
+              id="auth-password"
               type="password"
               className="form-control"
               value={password}

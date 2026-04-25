@@ -18,6 +18,12 @@ import PrivacyPolicy from "./components/privacy-policy.jsx";
 import Terms from "./components/Terms.jsx";
 import ContactUs from "./components/ContactUs.jsx";
 import NotFound from "./components/NotFound.jsx";
+import Blog from "./components/Blog.jsx";
+import BlogDetail from "./components/BlogDetail.jsx";
+import BlogCategory from "./components/BlogCategory.jsx";
+import LandingPage from "./components/LandingPage.jsx";
+import Footer from "./components/Footer.jsx";
+import ScrollToTop from "./components/ScrollToTop.jsx";
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,11 +56,28 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <div className="app">
-        {user && <Header />}
+        {user && <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />}
         <main>
           <Routes>
             {/* ========== PUBLIC ROUTES (No Auth Required) ========== */}
+            <Route
+              path="/"
+              element={!user ? <LandingPage /> : <Home />}
+            />
+            <Route
+              path="/blog"
+              element={<Blog />}
+            />
+            <Route
+              path="/blog/:slug"
+              element={<BlogDetail />}
+            />
+            <Route
+              path="/category/:name"
+              element={<BlogCategory />}
+            />
             <Route
               path="/auth"
               element={!user ? <Auth /> : <Navigate to="/" />}
@@ -71,12 +94,16 @@ function App() {
               path="/terms"
               element={<Terms />}
             />
+            <Route
+              path="/about"
+              element={<About />}
+            />
+            <Route
+              path="/contact"
+              element={<ContactUs />}
+            />
 
             {/* ========== PROTECTED ROUTES (Auth Required) ========== */}
-            <Route
-              path="/"
-              element={user ? <Home /> : <Navigate to="/auth" />}
-            />
             <Route
               path="/favorites"
               element={user ? <Favorites /> : <Navigate to="/auth" />}
@@ -86,16 +113,8 @@ function App() {
               element={user ? <MealPlanner /> : <Navigate to="/auth" />}
             />
             <Route
-              path="/about"
-              element={user ? <About /> : <Navigate to="/auth" />}
-            />
-            <Route
               path="/community"
               element={user ? <CommunityRecipes /> : <Navigate to="/auth" />}
-            />
-            <Route
-              path="/contact"
-              element={user ? <ContactUs /> : <Navigate to="/auth" />}
             />
             <Route
               path="/profile"
@@ -106,6 +125,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <Footer />
       </div>
     </Router>
   );

@@ -1,0 +1,306 @@
+/* src/style/footer.css - Footer Styles */
+
+.app-footer {
+  background: #1a1a1a;
+  color: #f0f0f0;
+  margin-top: 80px;
+  border-top: 4px solid #667eea;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 50px 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 40px;
+}
+
+.footer-section h3,
+.footer-section h4 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: white;
+}
+
+.footer-section p {
+  color: #b0b0b0;
+  line-height: 1.6;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-section li {
+  margin-bottom: 10px;
+}
+
+.footer-section a {
+  color: #b0b0b0;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.footer-section a:hover {
+  color: #667eea;
+  padding-left: 5px;
+}
+
+/* Social Links */
+.social-links {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.social-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #333;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.social-links a:hover {
+  background: #667eea;
+  transform: translateY(-3px);
+}
+
+/* Newsletter Form */
+.newsletter-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.newsletter-form input {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: white;
+  border: 1px solid #333;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.newsletter-form input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: #333;
+}
+
+.newsletter-form input::placeholder {
+  color: #666;
+}
+
+.newsletter-form button {
+  padding: 12px 25px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.newsletter-form button:hover {
+  background: #764ba2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Footer Bottom */
+.footer-bottom {
+  background: #0d0d0d;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #2a2a2a;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footer-credits,
+.footer-info {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.footer-credits a,
+.footer-info a {
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-credits a:hover,
+.footer-info a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.heart {
+  display: inline-block;
+  animation: heartbeat 1.5s ease-in-out infinite;
+  margin: 0 3px;
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    padding: 35px 20px;
+    gap: 30px;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .newsletter-form {
+    width: 100%;
+  }
+
+  .newsletter-form input {
+    min-width: 150px;
+  }
+
+  .footer-section h3,
+  .footer-section h4 {
+    text-align: left;
+  }
+}
+
+
+/* =====================================================
+   DARK MODE — footer.css
+   Activated by body.dark-mode
+===================================================== */
+
+/* ── Main Footer ── */
+body.dark-mode .app-footer {
+  background: #0d0d12 !important;
+  border-top: 4px solid #667eea !important;
+  color: #e2e8ff !important;
+}
+
+/* ── Footer Content ── */
+body.dark-mode .footer-section h3,
+body.dark-mode .footer-section h4 {
+  color: #ffffff !important;
+}
+
+body.dark-mode .footer-section p {
+  color: #9aa0b8 !important;
+}
+
+body.dark-mode .footer-section a {
+  color: #9aa0b8 !important;
+}
+
+body.dark-mode .footer-section a:hover {
+  color: #8899ee !important;
+  padding-left: 5px;
+}
+
+/* ── Social Links ── */
+body.dark-mode .social-links a {
+  background: #1e1e2a !important;
+  border: 1px solid #2c2c3a !important;
+  color: #9aa0b8 !important;
+}
+
+body.dark-mode .social-links a:hover {
+  background: #667eea !important;
+  color: #ffffff !important;
+  border-color: #667eea !important;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35) !important;
+  transform: translateY(-3px);
+}
+
+/* ── Newsletter Form ── */
+body.dark-mode .newsletter-form input {
+  background: #1a1a23 !important;
+  border-color: #2c2c3a !important;
+  color: #e2e8ff !important;
+}
+
+body.dark-mode .newsletter-form input::placeholder {
+  color: #4a4a5a !important;
+}
+
+body.dark-mode .newsletter-form input:hover {
+  border-color: #667eea !important;
+  background: #1e1e2a !important;
+}
+
+body.dark-mode .newsletter-form input:focus {
+  background: #1e1e2a !important;
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .newsletter-form button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25) !important;
+}
+
+body.dark-mode .newsletter-form button:hover {
+  background: linear-gradient(135deg, #7c8ff5 0%, #8b5bb5 100%) !important;
+  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4) !important;
+  transform: translateY(-2px);
+}
+
+/* ── Footer Bottom ── */
+body.dark-mode .footer-bottom {
+  background: #080810 !important;
+  border-top-color: #1c1c2a !important;
+}
+
+body.dark-mode .footer-credits,
+body.dark-mode .footer-info {
+  color: #5a5a7a !important;
+}
+
+body.dark-mode .footer-credits a,
+body.dark-mode .footer-info a {
+  color: #8899ee !important;
+}
+
+body.dark-mode .footer-credits a:hover,
+body.dark-mode .footer-info a:hover {
+  color: #aab4f0 !important;
+  text-decoration: underline;
+}

@@ -108,11 +108,27 @@ export default function Header() {
           </NavLink>
 
           <NavLink
+            to="/blog"
+            onClick={() => setIsNavCollapsed(true)}
+            className={({ isActive }) => isActive ? "active" : ""}
+          >
+            Blog
+          </NavLink>
+
+          <NavLink
             to="/about"
             onClick={() => setIsNavCollapsed(true)}
             className={({ isActive }) => isActive ? "active" : ""}
           >
             About
+          </NavLink>
+
+          <NavLink
+            to="/contact"
+            onClick={() => setIsNavCollapsed(true)}
+            className={({ isActive }) => isActive ? "active" : ""}
+          >
+            Contact
           </NavLink>
 
           {/* Profile Dropdown - New */}

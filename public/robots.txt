@@ -1,0 +1,33 @@
+# robots.txt - Recipe Finder SEO Configuration
+# This file helps search engines understand how to crawl and index your site
+
+User-agent: *
+Allow: /
+Allow: /blog
+Allow: /category/
+Disallow: /auth
+Disallow: /profile
+Disallow: /meal-planner
+Disallow: /favorites
+Disallow: /community
+Disallow: /contact (comment this out if you want search engines to index contact page)
+
+# Specific search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# Crawl delay (time in seconds between requests)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://recipefinder.com/sitemap.xml
+Sitemap: https://recipefinder.com/sitemap-articles.xml

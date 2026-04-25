@@ -3412,9 +3412,9 @@ body.dark-mode .insta-comment-actions .action-heart:hover {
 /* ================= FORCE LIGHT MODE COLORS IN DARK MODE ================= */
 
 /* 1. Main Background Gradient */
-body.dark-mode .auth-container {
+/* body.dark-mode .auth-container {
     background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%) !important;
-}
+} */
 
 /* 2. The Main Card (White with Blur) */
 body.dark-mode .auth-card {

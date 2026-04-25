@@ -239,6 +239,9 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
       const mealTime = reminderTimes?.[mealType];
       const reminderTime = toReminderTime(mealTime);
 
+      console.log("NOW TIME:", hhmm);
+      console.log("REMINDER TIME:", reminderTime);
+      console.log("MEAL TYPE:", mealType);
       if (debug) {
         console.log(`    [${mealType}] mealTime=${mealTime}, reminderTime=${reminderTime}, currentTime=${hhmm}`);
       }
@@ -251,17 +254,23 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
         continue;
       }
 
-      if (!force && reminderTime !== hhmm) {
-        if (debug) {
-          console.log(`      → SKIPPED: time mismatch (${reminderTime} !== ${hhmm})`);
-        }
-        report.summary.skipped++;
-        continue;
-      }
+      const isWithinWindow = (target, current) => {
+      const [th, tm] = target.split(":").map(Number);
+      const [ch, cm] = current.split(":").map(Number);
+
+      const targetMin = th * 60 + tm;
+      const currentMin = ch * 60 + cm;
+
+      return Math.abs(currentMin - targetMin) <= 1; // 1 min window
+    };
+
+    if (!force && !isWithinWindow(reminderTime, hhmm)) {
+      continue;
+    }
 
       report.summary.matches++;
       if (debug) {
-        console.log(`      ✅ MATCH FOUND!`);
+        console.log(`✅ MATCH FOUND!`);
       }
 
       const logId = `${uid}_${dateKey}_${mealType}`;
@@ -359,40 +368,91 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 };
 
 /* ==============================
-   AUTO RUNNER
+   AUTO RUNNER - DIRECT SEND AT EXACT TIME
 ============================== */
 
-// FIX 3: Align interval to the top of the minute so hhmm comparisons always match.
-// Old code fired at arbitrary seconds (e.g. 05:06:36, 05:07:36) and never hit 07:30 exactly.
-// New code waits until the next clean :00 second, then ticks every 60s from there.
-export const initMealPlannerReminderService = () => {
-  let isRunning = false;
-
-  const run = async () => {
-    if (isRunning) return;
-    isRunning = true;
-    try {
-      await checkAndSendMealPlannerReminders();
-    } catch (error) {
-      console.error("Reminder error:", error);
-    } finally {
-      isRunning = false;
-    }
-  };
-
-  // Calculate ms remaining until the next whole minute
+// Helper function to calculate milliseconds until next reminder
+const getNextReminderSchedule = (timeZone = "UTC") => {
   const now = new Date();
-  const msUntilNextMinute =
-    (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+
+  // Get current time in user's timezone
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone,
+  });
+
+  const currentTimeStr = formatter.format(now);
+  const [currentHours, currentMinutes] = currentTimeStr.split(":").map(Number);
+  const currentTotalMinutes = currentHours * 60 + currentMinutes;
+
+  // All reminder times in minutes from midnight
+  const reminderTimesMinutes = [
+    7 * 60,      // 7:00 AM (Breakfast)
+    12 * 60,     // 12:00 PM (Lunch)
+    19 * 60,     // 7:00 PM (Dinner)
+  ];
+
+  // Find next reminder time today
+  for (const reminderMinutes of reminderTimesMinutes) {
+    if (reminderMinutes > currentTotalMinutes) {
+      const msUntilReminder = (reminderMinutes - currentTotalMinutes) * 60 * 1000;
+      return {
+        msUntilReminder,
+        scheduledTime: new Date(now.getTime() + msUntilReminder),
+      };
+    }
+  }
+
+  // If no reminder today, schedule for first reminder tomorrow (7:00 AM)
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(7, 0, 0, 0);
+
+  const msUntilTomorrow = tomorrow.getTime() - now.getTime();
+  return {
+    msUntilReminder: msUntilTomorrow,
+    scheduledTime: tomorrow,
+  };
+};
+
+// Schedule next reminder check
+const scheduleNextReminder = () => {
+  // For simplicity, use UTC or user's default timezone
+  const { msUntilReminder, scheduledTime } = getNextReminderSchedule("UTC");
 
   console.log(
-    `Reminder service: first run in ${(msUntilNextMinute / 1000).toFixed(1)}s (aligning to minute boundary)`
+    `⏰ Next reminder scheduled for: ${scheduledTime.toLocaleString()} (in ${(msUntilReminder / 1000 / 60).toFixed(1)} minutes)`
   );
 
   setTimeout(() => {
-    run(); // Fire exactly at the top of the minute
-    setInterval(run, 60 * 1000); // Then every 60s, always aligned
-  }, msUntilNextMinute);
+    console.log(`🚀 Triggering reminder check at ${new Date().toLocaleString()}`);
+    checkAndSendMealPlannerReminders().then(() => {
+      // Schedule the next reminder after this one completes
+      scheduleNextReminder();
+    }).catch((error) => {
+      console.error("Reminder check failed:", error);
+      // Even if error, schedule next check
+      scheduleNextReminder();
+    });
+  }, msUntilReminder);
+};
 
-  console.log("Reminder service started. Aligned to minute boundary.");
+export const initMealPlannerReminderService = () => {
+  console.log("🍽️ Meal Planner Reminder Service started");
+
+  setInterval(async () => {
+    console.log("⏱️ Checking reminders...");
+
+    try {
+      const result = await checkAndSendMealPlannerReminders({
+        debug: false,
+      });
+
+      console.log("📊 Summary:", result.summary);
+    } catch (err) {
+      console.error(err);
+    }
+  }, 60 * 1000);
 };
