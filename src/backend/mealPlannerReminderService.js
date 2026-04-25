@@ -54,7 +54,7 @@ const createSmtpTransporter = () => {
    TIME HELPERS
 ============================== */
 
-const getNowForTimeZone = (timeZone = "UTC") => {
+const getNowForTimeZone = (timeZone = "Asia/Kolkata") => {
   const now = new Date();
 
   const weekday = new Intl.DateTimeFormat("en-US", {
@@ -206,7 +206,7 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 
     report.summary.usersChecked++;
 
-    const timeZone = data.timeZone || "UTC";
+    const timeZone = data.timeZone || "Asia/Kolkata";
     const reminderTimes = {
       ...DEFAULT_REMINDER_TIMES,
       ...(data.reminderTimes || {}),
@@ -254,14 +254,14 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
         continue;
       }
 
-      const isWithinWindow = (target, current) => {
+      const isWithinWindow = (target, current, windowMin = 3) => {
       const [th, tm] = target.split(":").map(Number);
       const [ch, cm] = current.split(":").map(Number);
 
       const targetMin = th * 60 + tm;
       const currentMin = ch * 60 + cm;
 
-      return Math.abs(currentMin - targetMin) <= 1; // 1 min window
+      return Math.abs(currentMin - targetMin) <= windowMin;
     };
 
     if (!force && !isWithinWindow(reminderTime, hhmm)) {
@@ -372,7 +372,7 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 ============================== */
 
 // Helper function to calculate milliseconds until next reminder
-const getNextReminderSchedule = (timeZone = "UTC") => {
+const getNextReminderSchedule = (timeZone = "Asia/Kolkata") => {
   const now = new Date();
 
   // Get current time in user's timezone
@@ -420,7 +420,7 @@ const getNextReminderSchedule = (timeZone = "UTC") => {
 // Schedule next reminder check
 const scheduleNextReminder = () => {
   // For simplicity, use UTC or user's default timezone
-  const { msUntilReminder, scheduledTime } = getNextReminderSchedule("UTC");
+  const { msUntilReminder, scheduledTime } = getNextReminderSchedule("Asia/Kolkata");
 
   console.log(
     `⏰ Next reminder scheduled for: ${scheduledTime.toLocaleString()} (in ${(msUntilReminder / 1000 / 60).toFixed(1)} minutes)`
