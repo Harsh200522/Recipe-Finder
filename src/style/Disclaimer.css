@@ -1,0 +1,240 @@
+/* src/style/disclaimer.css - Disclaimer Page Styles */
+
+.disclaimer-container {
+  min-height: 100vh;
+  background: #f3f4f6;
+  padding-bottom: 60px;
+}
+
+/* =====================================================
+   HERO
+===================================================== */
+
+.disclaimer-hero {
+  background: #ff7043;
+  color: white;
+  text-align: center;
+  padding: 60px 20px;
+  margin-bottom: 40px;
+}
+
+body.dark-mode .disclaimer-hero {
+  background: #c63d12;
+  border-bottom: 1px solid #2a1a10;
+}
+
+.disclaimer-hero .hero-content h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #ffffff;
+}
+
+.disclaimer-hero .hero-content p {
+  font-size: 1.2rem;
+  opacity: 0.95;
+}
+
+/* =====================================================
+   WRAPPER
+===================================================== */
+
+.disclaimer-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* =====================================================
+   INTRO BOX
+===================================================== */
+
+.disclaimer-intro {
+  background: white;
+  border-radius: 10px;
+  padding: 25px 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #ff7043;
+}
+
+.disclaimer-intro p {
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.disclaimer-intro strong {
+  color: #333;
+}
+
+body.dark-mode .disclaimer-intro {
+  background: #1a1a23;
+  border: 1px solid #2c2c3a;
+  border-left: 4px solid #ff7043;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .disclaimer-intro p {
+  color: #9aa0b8;
+}
+
+body.dark-mode .disclaimer-intro strong {
+  color: #e2e8ff;
+}
+
+/* =====================================================
+   CARDS GRID
+===================================================== */
+
+.disclaimer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+.disclaimer-card {
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.disclaimer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.disclaimer-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #ff7043;
+}
+
+.disclaimer-icon {
+  font-size: 1.2rem;
+}
+
+.disclaimer-card p {
+  font-size: 0.92rem;
+  color: #666;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* =====================================================
+   FOOTER NOTE
+===================================================== */
+
+.disclaimer-note {
+  background: white;
+  border-radius: 10px;
+  padding: 25px 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.disclaimer-note p {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.disclaimer-note a {
+  color: #ff7043;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.disclaimer-note a:hover {
+  color: #e64a19;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 768px) {
+  .disclaimer-hero .hero-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .disclaimer-hero .hero-content p {
+    font-size: 1rem;
+  }
+
+  .disclaimer-intro,
+  .disclaimer-note {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .disclaimer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .disclaimer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* =====================================================
+   DARK MODE
+===================================================== */
+
+body.dark-mode .disclaimer-container {
+  background: #0f0f11;
+}
+
+body.dark-mode .disclaimer-card {
+  background: #1a1a23;
+  border: 1px solid #2c2c3a;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .disclaimer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(255, 112, 67, 0.15);
+  border-color: #ff7043;
+}
+
+body.dark-mode .disclaimer-card h3 {
+  color: #e2e8ff;
+  border-bottom-color: #ff7043;
+}
+
+body.dark-mode .disclaimer-card p {
+  color: #9aa0b8;
+}
+
+body.dark-mode .disclaimer-note {
+  background: #1a1a23;
+  border: 1px solid #2c2c3a;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .disclaimer-note p {
+  color: #9aa0b8;
+}
+
+body.dark-mode .disclaimer-note a {
+  color: #ff7043;
+}
+
+body.dark-mode .disclaimer-note a:hover {
+  color: #e64a19;
+}

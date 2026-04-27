@@ -24,6 +24,8 @@ import BlogCategory from "./components/BlogCategory.jsx";
 import LandingPage from "./components/LandingPage.jsx";
 import Footer from "./components/Footer.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
+import Sitemap from "./components/Sitemap.jsx";
+import Disclaimer from "./components/Disclaimer.jsx";
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,6 +67,14 @@ function App() {
             <Route
               path="/"
               element={!user ? <LandingPage /> : <Home />}
+            />
+            <Route
+              path="/sitemap"
+              element={<Sitemap/>}
+            />
+            <Route
+              path="/disclaimer"
+              element={<Disclaimer/>}
             />
             <Route
               path="/blog"

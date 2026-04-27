@@ -1,0 +1,178 @@
+/* src/style/sitemap.css - Sitemap Page Styles */
+
+.sitemap-container {
+  min-height: 100vh;
+  background: #f3f4f6;
+  padding-bottom: 40px;
+}
+
+/* =====================================================
+   HERO
+===================================================== */
+
+.sitemap-hero {
+  background: #ff7043;
+  color: white;
+  text-align: center;
+  padding: 60px 20px;
+  margin-bottom: 40px;
+}
+
+body.dark-mode .sitemap-hero {
+  background: #c63d12;
+  border-bottom: 1px solid #2a1a10;
+}
+
+.sitemap-hero .hero-content h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #ffffff;
+}
+
+.sitemap-hero .hero-content p {
+  font-size: 1.2rem;
+  opacity: 0.95;
+}
+
+/* =====================================================
+   WRAPPER & GRID
+===================================================== */
+
+.sitemap-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+}
+
+.sitemap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 24px;
+}
+
+/* =====================================================
+   CARDS
+===================================================== */
+
+.sitemap-card {
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sitemap-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.sitemap-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #ff7043;
+}
+
+.sitemap-icon {
+  font-size: 1.2rem;
+}
+
+.sitemap-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sitemap-card ul li a {
+  color: #555;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sitemap-card ul li a::before {
+  content: "→";
+  color: #ff7043;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease;
+}
+
+.sitemap-card ul li a:hover {
+  color: #ff7043;
+}
+
+.sitemap-card ul li a:hover::before {
+  transform: translateX(4px);
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 768px) {
+  .sitemap-hero .hero-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .sitemap-hero .hero-content p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sitemap-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .sitemap-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* =====================================================
+   DARK MODE
+===================================================== */
+
+body.dark-mode .sitemap-container {
+  background: #0f0f11;
+}
+
+body.dark-mode .sitemap-card {
+  background: #1a1a23;
+  border: 1px solid #2c2c3a;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .sitemap-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(255, 112, 67, 0.15);
+  border-color: #ff7043;
+}
+
+body.dark-mode .sitemap-card h3 {
+  color: #e2e8ff;
+  border-bottom-color: #ff7043;
+}
+
+body.dark-mode .sitemap-card ul li a {
+  color: #9aa0b8;
+}
+
+body.dark-mode .sitemap-card ul li a:hover {
+  color: #ff7043;
+}

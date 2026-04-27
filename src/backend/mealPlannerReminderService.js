@@ -17,7 +17,11 @@ const DEFAULT_REMINDER_TIMES = {
   Dinner: "20:00",
 };
 
+// How many minutes BEFORE meal time to send the reminder
 const REMINDER_LEAD_MINUTES = 30;
+
+// How many minutes either side of reminder time to still send (cron window)
+const WINDOW_MINUTES = 4; // Must be >= 1 to survive the 60s polling interval
 
 /* ==============================
    SMTP EMAIL CLIENT
@@ -25,7 +29,7 @@ const REMINDER_LEAD_MINUTES = 30;
 
 const createSmtpTransporter = () => {
   if (!process.env.EMAIL_FROM) {
-    throw new Error("EMAIL_FROM is missing. Please set it in environment variables.");
+    throw new Error("EMAIL_FROM is missing in environment variables.");
   }
 
   const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
@@ -35,7 +39,7 @@ const createSmtpTransporter = () => {
 
   if (!smtpUser || !smtpPass) {
     throw new Error(
-      "SMTP credentials are missing. Set SMTP_USER/SMTP_PASS or EMAIL_USER/EMAIL_PASS."
+      "SMTP credentials missing. Set SMTP_USER/SMTP_PASS or EMAIL_USER/EMAIL_PASS."
     );
   }
 
@@ -43,10 +47,7 @@ const createSmtpTransporter = () => {
     host: smtpHost,
     port: smtpPort,
     secure: smtpPort === 465,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
+    auth: { user: smtpUser, pass: smtpPass },
   });
 };
 
@@ -79,8 +80,6 @@ const getNowForTimeZone = (timeZone = "Asia/Kolkata") => {
   return { weekday, hhmm, dateKey };
 };
 
-// FIX 1: Updated regex to allow single-digit hours (e.g. "8:00")
-// FIX 2: Use global isNaN() instead of Number.isNaN() for better string coercion handling
 const toReminderTime = (mealTime, leadMinutes = REMINDER_LEAD_MINUTES) => {
   const match = String(mealTime ?? "").match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return null;
@@ -94,37 +93,68 @@ const toReminderTime = (mealTime, leadMinutes = REMINDER_LEAD_MINUTES) => {
 
   const hh = String(Math.floor(normalized / 60)).padStart(2, "0");
   const mm = String(normalized % 60).padStart(2, "0");
-
   return `${hh}:${mm}`;
+};
+
+// Check if current time is within ±WINDOW_MINUTES of the target reminder time
+// Compares only HH:MM — seconds are intentionally ignored
+const isWithinWindow = (target, current, windowMin = WINDOW_MINUTES) => {
+  const parseMinutes = (str) => {
+    // Take only first two colon-separated parts (HH and MM), ignore seconds
+    const parts = String(str).trim().split(":");
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+  };
+  const targetMin = parseMinutes(target);
+  const currentMin = parseMinutes(current);
+  if (targetMin === null || currentMin === null) return false;
+  return Math.abs(currentMin - targetMin) <= windowMin;
 };
 
 /* ==============================
    EMAIL HELPERS
 ============================== */
 
+/**
+ * Get user email — tries multiple paths in order:
+ * 1. ownerEmail field on the planner doc
+ * 2. users/{uid} → email field
+ * 3. users/{uid} → profile.email
+ */
 const getUserEmail = async (uid, plannerDocData) => {
-  if (plannerDocData?.ownerEmail && plannerDocData.ownerEmail.includes("@")) {
+  // Path 1: ownerEmail stored directly on planner doc (most reliable)
+  if (plannerDocData?.ownerEmail?.includes("@")) {
     return plannerDocData.ownerEmail;
   }
 
+  // Path 2 & 3: Look up users collection
   try {
     const userSnap = await getDoc(doc(db, "users", uid));
     if (!userSnap.exists()) {
-      console.warn(`No user document found for uid: ${uid}`);
+      console.warn(`[EMAIL] No users doc for uid: ${uid}`);
       return null;
     }
+    const d = userSnap.data() || {};
+    const email =
+      d.email ||
+      d.profile?.email ||
+      d.auth?.email ||
+      null;
 
-    const userData = userSnap.data() || {};
-    const email = userData.email || userData.profile?.email || userData.auth?.email || null;
+    if (email?.includes("@")) return email;
 
-    return email && email.includes("@") ? email : null;
+    console.warn(`[EMAIL] No valid email field found for uid: ${uid}`, Object.keys(d));
+    return null;
   } catch (error) {
-    console.error(`Email lookup error for uid ${uid}:`, error.message);
+    console.error(`[EMAIL] Lookup error for uid ${uid}:`, error.message);
     return null;
   }
 };
 
-const getMealName = (meal) => meal?.strMeal || meal?.title || meal?.name || "Planned Recipe";
+const getMealName = (meal) =>
+  meal?.strMeal || meal?.title || meal?.name || "Planned Recipe";
 
 /* ==============================
    EMAIL TEMPLATE
@@ -133,22 +163,22 @@ const getMealName = (meal) => meal?.strMeal || meal?.title || meal?.name || "Pla
 const buildReminderHtml = ({ mealName, mealType, weekday, timeLabel }) => `
 <!DOCTYPE html>
 <html>
-  <body style="margin:0;padding:20px;background:#f4f7fb;font-family:Arial;">
-    <div style="max-width:600px;margin:auto;background:#fff;border-radius:12px;padding:24px;border:1px solid #eee;">
-      <h2 style="color:#f97316;margin-top:0;">It's Time To Cook</h2>
-      <p>Reminder for your <b>${mealType}</b> on <b>${weekday}</b>.</p>
-      <div style="background:#fff7ed;padding:14px;border-radius:8px;margin:16px 0;">
+  <body style="margin:0;padding:20px;background:#f4f7fb;font-family:Arial,sans-serif;">
+    <div style="max-width:600px;margin:auto;background:#fff;border-radius:12px;padding:28px;border:1px solid #eee;">
+      <h2 style="color:#ff7043;margin-top:0;">🍽️ Meal Reminder</h2>
+      <p style="color:#555;">Time to prepare your <b>${mealType}</b> for <b>${weekday}</b>!</p>
+      <div style="background:#fff7ed;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #ff7043;">
         <h3 style="margin:0;color:#9a3412;">${mealName}</h3>
-        <p style="margin:6px 0 0;font-size:14px;color:#7c2d12;">
-          Reminder time: ${timeLabel}
+        <p style="margin:8px 0 0;font-size:14px;color:#7c2d12;">
+          ⏰ Reminder sent at: ${timeLabel}
         </p>
       </div>
       <p style="font-size:14px;color:#555;">
-        Open Recipe Finder and start preparing your meal.
+        Open Recipe Finder and start preparing — your meal is coming up soon!
       </p>
-      <hr />
-      <p style="font-size:12px;color:#999;">
-        Sent automatically from your planner settings.
+      <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
+      <p style="font-size:12px;color:#aaa;">
+        You are receiving this because you have meal reminders enabled in Recipe Finder.
       </p>
     </div>
   </body>
@@ -165,38 +195,35 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
   const report = {
     runAt: new Date().toISOString(),
     options: { debug, dryRun, force, leadMinutes: REMINDER_LEAD_MINUTES },
-    users: [],
-    summary: {
-      usersChecked: 0,
-      matches: 0,
-      sent: 0,
-      skipped: 0,
-      errors: 0,
-    },
+    summary: { usersChecked: 0, matches: 0, sent: 0, skipped: 0, errors: 0 },
   };
 
+  // ── SMTP setup ──
   let smtpTransporter;
   try {
     smtpTransporter = createSmtpTransporter();
-    console.log("SMTP email client ready");
+    if (debug) console.log("[SMTP] Transporter ready");
   } catch (err) {
-    console.error("SMTP client failed:", err.message);
+    console.error("[SMTP] Setup failed:", err.message);
     report.summary.errors++;
     return report;
   }
 
+  // ── Fetch all planner docs ──
   let plannerSnap;
   try {
     plannerSnap = await getDocs(collection(db, "MealPlanner"));
   } catch (error) {
-    console.error("Failed to fetch MealPlanner collection:", error.message);
+    console.error("[DB] Failed to fetch MealPlanner:", error.message);
     return report;
   }
 
   if (plannerSnap.empty) {
-    console.log("No MealPlanner documents found.");
+    console.log("[DB] No MealPlanner documents found.");
     return report;
   }
+
+  console.log(`[RUN] Checking ${plannerSnap.docs.length} planner docs...`);
 
   for (const plannerDoc of plannerSnap.docs) {
     const uid = plannerDoc.id;
@@ -207,6 +234,8 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
     report.summary.usersChecked++;
 
     const timeZone = data.timeZone || "Asia/Kolkata";
+
+    // Merge user custom times with defaults
     const reminderTimes = {
       ...DEFAULT_REMINDER_TIMES,
       ...(data.reminderTimes || {}),
@@ -216,20 +245,21 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
     const dayMeals = planner?.[weekday];
 
     if (debug) {
-      console.log(`\n[DEBUG] User: ${uid}`);
-      console.log(`  - Reminder Enabled: ${reminderEnabled}`);
-      console.log(`  - TimeZone: ${timeZone}`);
-      console.log(`  - Current Time: ${hhmm} on ${weekday}`);
-      console.log(`  - Has meals for ${weekday}?: ${!!dayMeals}`);
-      if (dayMeals) {
-        console.log(`  - Meals keys: ${Object.keys(dayMeals).join(", ")}`);
-      }
+      console.log(`\n[USER] uid=${uid}`);
+      console.log(`  reminderEnabled=${reminderEnabled}, timeZone=${timeZone}`);
+      console.log(`  currentTime=${hhmm}, weekday=${weekday}, dateKey=${dateKey}`);
+      console.log(`  hasMealsToday=${!!dayMeals}`);
+      if (dayMeals) console.log(`  mealKeys=${Object.keys(dayMeals).join(", ")}`);
     }
 
-    if (!reminderEnabled || !dayMeals) {
-      if (debug) {
-        console.log(`  → SKIPPED: ${!reminderEnabled ? "Reminders disabled" : "No meals for today"}`);
-      }
+    if (!reminderEnabled) {
+      if (debug) console.log(`  → SKIP: reminders disabled`);
+      report.summary.skipped++;
+      continue;
+    }
+
+    if (!dayMeals) {
+      if (debug) console.log(`  → SKIP: no meals planned for ${weekday}`);
       report.summary.skipped++;
       continue;
     }
@@ -239,109 +269,82 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
       const mealTime = reminderTimes?.[mealType];
       const reminderTime = toReminderTime(mealTime);
 
-      console.log("NOW TIME:", hhmm);
-      console.log("REMINDER TIME:", reminderTime);
-      console.log("MEAL TYPE:", mealType);
       if (debug) {
-        console.log(`    [${mealType}] mealTime=${mealTime}, reminderTime=${reminderTime}, currentTime=${hhmm}`);
+        console.log(`\n  [MEAL] ${mealType}`);
+        console.log(`    mealTime=${mealTime} → reminderTime=${reminderTime}, now=${hhmm}`);
+        console.log(`    hasMeal=${!!plannedMeal}`);
       }
 
-      if (!plannedMeal || !mealTime || !reminderTime) {
-        if (debug) {
-          console.log(`      → SKIPPED: ${!plannedMeal ? "no meal" : !mealTime ? "no time" : "invalid time"}`);
-        }
+      if (!plannedMeal) {
+        if (debug) console.log(`    → SKIP: no meal planned`);
         report.summary.skipped++;
         continue;
       }
 
-      const isWithinWindow = (target, current, windowMin = 3) => {
-      const [th, tm] = target.split(":").map(Number);
-      const [ch, cm] = current.split(":").map(Number);
-
-      const targetMin = th * 60 + tm;
-      const currentMin = ch * 60 + cm;
-
-      return Math.abs(currentMin - targetMin) <= windowMin;
-    };
-
-    if (!force && !isWithinWindow(reminderTime, hhmm)) {
-      continue;
-    }
-
-      report.summary.matches++;
-      if (debug) {
-        console.log(`✅ MATCH FOUND!`);
+      if (!mealTime || !reminderTime) {
+        if (debug) console.log(`    → SKIP: invalid time config`);
+        report.summary.skipped++;
+        continue;
       }
 
+      // Time window check
+      if (!force && !isWithinWindow(reminderTime, hhmm)) {
+        if (debug) console.log(`    → SKIP: not in window (need ${reminderTime} ± ${WINDOW_MINUTES}min, got ${hhmm})`);
+        continue;
+      }
+
+      report.summary.matches++;
+      if (debug) console.log(`    ✅ TIME MATCH`);
+
+      // Dedup check — don't send twice for same user+date+meal
       const logId = `${uid}_${dateKey}_${mealType}`;
       const logRef = doc(db, "mealReminderLogs", logId);
 
       try {
         const logSnap = await getDoc(logRef);
         if (!force && logSnap.exists()) {
-          if (debug) {
-            console.log(`      ⏭️  ALREADY SENT: Log exists (${logId})`);
-          }
+          if (debug) console.log(`    → SKIP: already sent (logId=${logId})`);
           report.summary.skipped++;
           continue;
         }
-        if (debug && !logSnap.exists()) {
-          console.log(`      📝 New log entry needed (${logId})`);
-        }
       } catch (logError) {
-        if (debug) {
-          console.log(`      ⚠️  Log check failed: ${logError.message}`);
-        }
+        console.warn(`    [LOG] Check failed (will proceed): ${logError.message}`);
       }
 
+      // Get email
       const toEmail = await getUserEmail(uid, data);
       if (!toEmail) {
-        if (debug) {
-          console.log(`      ❌ NO EMAIL FOUND for user ${uid}`);
-          console.log(`         - ownerEmail: ${data.ownerEmail || "not set"}`);
-        }
+        console.warn(`    [EMAIL] No email for uid=${uid} — skipping`);
         report.summary.skipped++;
         continue;
-      }
-      if (debug) {
-        console.log(`      📧 Email found: ${toEmail}`);
       }
 
       const mealName = getMealName(plannedMeal);
 
       if (dryRun) {
-        if (debug) {
-          console.log(`      🔄 DRY RUN: Would send email to ${toEmail}`);
-        }
+        console.log(`    [DRY RUN] Would send "${mealName}" reminder to ${toEmail}`);
+        report.summary.sent++;
         continue;
       }
 
+      // Send email
       try {
-        if (debug) {
-          console.log(`      🚀 Sending email...`);
-        }
-        const mailOptions = {
+        const info = await smtpTransporter.sendMail({
           from: `"Recipe Finder" <${process.env.EMAIL_FROM}>`,
           to: toEmail,
-          subject: `Time to cook: ${mealName}`,
-          text: `Reminder: ${mealType} (${mealName}) at ${mealTime}.`,
+          subject: `⏰ ${mealType} Reminder: ${mealName}`,
+          text: `Reminder: Your ${mealType} (${mealName}) is coming up at ${mealTime}.`,
           html: buildReminderHtml({
             mealName,
             mealType,
             weekday,
             timeLabel: `${reminderTime} (meal at ${mealTime})`,
           }),
-        };
+        });
 
-        const info = await smtpTransporter.sendMail(mailOptions);
+        console.log(`✉️  Sent to ${toEmail} | ${mealType} | ${mealName} | id=${info?.messageId}`);
 
-        console.log(
-          `✉️  Email sent to ${toEmail} | ${mealType} | messageId: ${info?.messageId || "N/A"}`
-        );
-        if (debug) {
-          console.log(`      ✅ SUCCESS: Email delivered`);
-        }
-
+        // Save dedup log
         await setDoc(logRef, {
           uid,
           dateKey,
@@ -354,105 +357,34 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 
         report.summary.sent++;
       } catch (error) {
-        console.error(`❌ Send FAILED to ${toEmail}:`, error?.message);
-        if (debug) {
-          console.log(`      Error details:`, error);
-        }
+        console.error(`❌ Send failed to ${toEmail}:`, error?.message);
         report.summary.errors++;
       }
     }
   }
 
-  console.log("Run complete:", report.summary);
+  console.log("\n[DONE] Summary:", report.summary);
   return report;
 };
 
 /* ==============================
-   AUTO RUNNER - DIRECT SEND AT EXACT TIME
+   INIT — runs every 60 seconds
 ============================== */
 
-// Helper function to calculate milliseconds until next reminder
-const getNextReminderSchedule = (timeZone = "Asia/Kolkata") => {
-  const now = new Date();
-
-  // Get current time in user's timezone
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone,
-  });
-
-  const currentTimeStr = formatter.format(now);
-  const [currentHours, currentMinutes] = currentTimeStr.split(":").map(Number);
-  const currentTotalMinutes = currentHours * 60 + currentMinutes;
-
-  // All reminder times in minutes from midnight
-  const reminderTimesMinutes = [
-    7 * 60,      // 7:00 AM (Breakfast)
-    12 * 60,     // 12:00 PM (Lunch)
-    19 * 60,     // 7:00 PM (Dinner)
-  ];
-
-  // Find next reminder time today
-  for (const reminderMinutes of reminderTimesMinutes) {
-    if (reminderMinutes > currentTotalMinutes) {
-      const msUntilReminder = (reminderMinutes - currentTotalMinutes) * 60 * 1000;
-      return {
-        msUntilReminder,
-        scheduledTime: new Date(now.getTime() + msUntilReminder),
-      };
-    }
-  }
-
-  // If no reminder today, schedule for first reminder tomorrow (7:00 AM)
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(7, 0, 0, 0);
-
-  const msUntilTomorrow = tomorrow.getTime() - now.getTime();
-  return {
-    msUntilReminder: msUntilTomorrow,
-    scheduledTime: tomorrow,
-  };
-};
-
-// Schedule next reminder check
-const scheduleNextReminder = () => {
-  // For simplicity, use UTC or user's default timezone
-  const { msUntilReminder, scheduledTime } = getNextReminderSchedule("Asia/Kolkata");
-
-  console.log(
-    `⏰ Next reminder scheduled for: ${scheduledTime.toLocaleString()} (in ${(msUntilReminder / 1000 / 60).toFixed(1)} minutes)`
-  );
-
-  setTimeout(() => {
-    console.log(`🚀 Triggering reminder check at ${new Date().toLocaleString()}`);
-    checkAndSendMealPlannerReminders().then(() => {
-      // Schedule the next reminder after this one completes
-      scheduleNextReminder();
-    }).catch((error) => {
-      console.error("Reminder check failed:", error);
-      // Even if error, schedule next check
-      scheduleNextReminder();
-    });
-  }, msUntilReminder);
-};
-
 export const initMealPlannerReminderService = () => {
-  console.log("🍽️ Meal Planner Reminder Service started");
+  console.log("🍽️  Meal Planner Reminder Service started");
+  console.log(`   Reminder times: Breakfast 07:30 | Lunch 12:30 | Dinner 19:30`);
+  console.log(`   (${REMINDER_LEAD_MINUTES} min before meal, checking every 60s within ±${WINDOW_MINUTES}min window)`);
 
+  // Run once immediately on startup (useful for debugging)
+  checkAndSendMealPlannerReminders({ debug: true }).catch(console.error);
+
+  // Then run every 60 seconds
   setInterval(async () => {
-    console.log("⏱️ Checking reminders...");
-
     try {
-      const result = await checkAndSendMealPlannerReminders({
-        debug: false,
-      });
-
-      console.log("📊 Summary:", result.summary);
+      await checkAndSendMealPlannerReminders({ debug: false });
     } catch (err) {
-      console.error(err);
+      console.error("[INTERVAL] Error:", err);
     }
   }, 60 * 1000);
 };
