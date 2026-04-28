@@ -1,6 +1,7 @@
 // src/services/mealPlannerReminderService.js
 
 import dotenv from "dotenv";
+import http from "http";
 import nodemailer from "nodemailer";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { db } from "../config/firbase.js";
@@ -21,7 +22,7 @@ const DEFAULT_REMINDER_TIMES = {
 const REMINDER_LEAD_MINUTES = 30;
 
 // How many minutes either side of reminder time to still send (cron window)
-const WINDOW_MINUTES = 4; // Must be >= 1 to survive the 60s polling interval
+const WINDOW_MINUTES = 4;
 
 /* ==============================
    SMTP EMAIL CLIENT
@@ -96,11 +97,8 @@ const toReminderTime = (mealTime, leadMinutes = REMINDER_LEAD_MINUTES) => {
   return `${hh}:${mm}`;
 };
 
-// Check if current time is within ±WINDOW_MINUTES of the target reminder time
-// Compares only HH:MM — seconds are intentionally ignored
 const isWithinWindow = (target, current, windowMin = WINDOW_MINUTES) => {
   const parseMinutes = (str) => {
-    // Take only first two colon-separated parts (HH and MM), ignore seconds
     const parts = String(str).trim().split(":");
     const h = parseInt(parts[0], 10);
     const m = parseInt(parts[1], 10);
@@ -117,19 +115,11 @@ const isWithinWindow = (target, current, windowMin = WINDOW_MINUTES) => {
    EMAIL HELPERS
 ============================== */
 
-/**
- * Get user email — tries multiple paths in order:
- * 1. ownerEmail field on the planner doc
- * 2. users/{uid} → email field
- * 3. users/{uid} → profile.email
- */
 const getUserEmail = async (uid, plannerDocData) => {
-  // Path 1: ownerEmail stored directly on planner doc (most reliable)
   if (plannerDocData?.ownerEmail?.includes("@")) {
     return plannerDocData.ownerEmail;
   }
 
-  // Path 2 & 3: Look up users collection
   try {
     const userSnap = await getDoc(doc(db, "users", uid));
     if (!userSnap.exists()) {
@@ -137,11 +127,7 @@ const getUserEmail = async (uid, plannerDocData) => {
       return null;
     }
     const d = userSnap.data() || {};
-    const email =
-      d.email ||
-      d.profile?.email ||
-      d.auth?.email ||
-      null;
+    const email = d.email || d.profile?.email || d.auth?.email || null;
 
     if (email?.includes("@")) return email;
 
@@ -176,6 +162,28 @@ const buildReminderHtml = ({ mealName, mealType, weekday, timeLabel }) => `
       <p style="font-size:14px;color:#555;">
         Open Recipe Finder and start preparing — your meal is coming up soon!
       </p>
+
+      <!-- ✅ Added app button -->
+      <div style="text-align:center;margin:24px 0;">
+        
+          href="https://recipe-finder-fmn8.vercel.app"
+          target="_blank"
+          style="
+            display:inline-block;
+            background:#ff7043;
+            color:#fff;
+            text-decoration:none;
+            padding:12px 28px;
+            border-radius:8px;
+            font-size:15px;
+            font-weight:bold;
+            letter-spacing:0.3px;
+          "
+        >
+          🍳 Open Recipe Finder
+        </a>
+      </div>
+
       <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
       <p style="font-size:12px;color:#aaa;">
         You are receiving this because you have meal reminders enabled in Recipe Finder.
@@ -235,7 +243,6 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 
     const timeZone = data.timeZone || "Asia/Kolkata";
 
-    // Merge user custom times with defaults
     const reminderTimes = {
       ...DEFAULT_REMINDER_TIMES,
       ...(data.reminderTimes || {}),
@@ -296,16 +303,16 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
       report.summary.matches++;
       if (debug) console.log(`    ✅ TIME MATCH`);
 
-      // Dedup check — don't send twice for same user+date+meal
+      // ✅ FIX 1: Dedup check — always enforced regardless of force flag
       const logId = `${uid}_${dateKey}_${mealType}`;
       const logRef = doc(db, "mealReminderLogs", logId);
 
       try {
         const logSnap = await getDoc(logRef);
-        if (!force && logSnap.exists()) {
+        if (logSnap.exists()) {
           if (debug) console.log(`    → SKIP: already sent (logId=${logId})`);
           report.summary.skipped++;
-          continue;
+          continue; // ← always skip if already sent, force or not
         }
       } catch (logError) {
         console.warn(`    [LOG] Check failed (will proceed): ${logError.message}`);
@@ -344,7 +351,7 @@ export const checkAndSendMealPlannerReminders = async (options = {}) => {
 
         console.log(`✉️  Sent to ${toEmail} | ${mealType} | ${mealName} | id=${info?.messageId}`);
 
-        // Save dedup log
+        // ✅ FIX 2: Always write dedup log after a successful send
         await setDoc(logRef, {
           uid,
           dateKey,
@@ -376,10 +383,21 @@ export const initMealPlannerReminderService = () => {
   console.log(`   Reminder times: Breakfast 07:30 | Lunch 12:30 | Dinner 19:30`);
   console.log(`   (${REMINDER_LEAD_MINUTES} min before meal, checking every 60s within ±${WINDOW_MINUTES}min window)`);
 
-  // Run once immediately on startup (useful for debugging)
-  checkAndSendMealPlannerReminders({ debug: true }).catch(console.error);
+  // ✅ FIX 3: Render keep-alive HTTP server — required so Render doesn't kill the process
+  const PORT = process.env.PORT || 3000;
+  http
+    .createServer((req, res) => {
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.end("Meal Reminder Service is running\n");
+    })
+    .listen(PORT, () => {
+      console.log(`🌐 Keep-alive server listening on port ${PORT}`);
+    });
 
-  // Then run every 60 seconds
+  // ✅ FIX 4: No longer runs immediately with debug/force on startup — clean production start
+  checkAndSendMealPlannerReminders({ debug: false }).catch(console.error);
+
+  // Poll every 60 seconds
   setInterval(async () => {
     try {
       await checkAndSendMealPlannerReminders({ debug: false });
