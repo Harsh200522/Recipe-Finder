@@ -1,7 +1,7 @@
 // src/components/Disclaimer.jsx
 import React from "react";
 import { Link } from "react-router-dom";
-import "../style/disclaimer.css";
+import "../style/Disclaimer.css";
 
 const sections = [
   {
