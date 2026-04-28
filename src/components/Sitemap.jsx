@@ -1,7 +1,7 @@
 // src/components/Sitemap.jsx
 import React from "react";
 import { Link } from "react-router-dom";
-import "../style/sitemap.css";
+import "../style/Sitemap.css";
 
 const sitemapData = [
   {
