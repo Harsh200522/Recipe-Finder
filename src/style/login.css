@@ -1468,3 +1468,61 @@ body.dark-mode .auth-container .shape-4 {
     display: none;
   }
 }
+/* White mode - food icons transparent background */
+.auth-container .shape-1,
+.auth-container .shape-2,
+.auth-container .shape-3,
+.auth-container .shape-4 {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1;
+  background: transparent;
+  opacity: 0.15;
+}
+
+.auth-container .shape-1 {
+  font-size: 180px;
+  top: 10%;
+  left: 5%;
+  animation: float-shape 6s ease-in-out infinite;
+}
+
+.auth-container .shape-2 {
+  font-size: 220px;
+  top: 60%;
+  right: 8%;
+  animation: float-shape 8s ease-in-out infinite reverse;
+}
+
+.auth-container .shape-3 {
+  font-size: 200px;
+  bottom: 10%;
+  left: 10%;
+  animation: float-shape 7s ease-in-out infinite;
+}
+
+.auth-container .shape-4 {
+  font-size: 170px;
+  top: 20%;
+  right: 15%;
+  animation: float-shape 9s ease-in-out infinite reverse;
+}
+
+@media (max-width: 1023px) {
+  .auth-container .shape-1,
+  .auth-container .shape-2,
+  .auth-container .shape-3,
+  .auth-container .shape-4 {
+    display: none;
+  }
+}
+/* In your login.css */
+.auth-subtitle {
+  opacity: 1;
+  margin: 8px 0 0 0;
+  font-size: 1rem;
+  font-weight: 400;
+  position: relative;
+  color: #ffffff;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}

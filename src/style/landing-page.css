@@ -712,3 +712,64 @@ body.dark-mode .benefit-card p {
 body.dark-mode .benefit-author {
   color: #8899ee !important;
 }
+/* Hero content paragraph - white with good opacity */
+.hero-content p {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 35px;
+  line-height: 1.6;
+}
+
+/* Primary button - white bg with purple text */
+.btn-primary {
+  background: white;
+  color: #667eea;
+}
+
+.btn-primary:hover {
+  background: #f0f2ff;
+  color: #5a6fd6;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Secondary button - transparent with white border */
+.btn-secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+}
+
+.btn-secondary:hover {
+  background: white;
+  color: #667eea;
+  border-color: white;
+}
+.cta-section h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+.cta-section p {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 40px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Also fix the button inside CTA */
+.cta-section .btn-primary {
+  background: white;
+  color: #667eea;
+}
+
+.cta-section .btn-primary:hover {
+  background: #f0f2ff;
+  color: #5a6fd6;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
