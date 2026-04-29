@@ -1,6 +1,6 @@
 // /api/reminder.js
 
-import { checkAndSendMealPlannerReminders } from "../src/services/mealPlannerReminderService.js";
+import { checkAndSendMealPlannerReminders } from "../src/backend/mealPlannerReminderService.js";
 
 export default async function handler(req, res) {
   // 🔒 SECURITY: protect your endpoint
