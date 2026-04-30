@@ -200,14 +200,14 @@ export default function ContactUs() {
           <div className="contact-card">
             <div className="card-icon">📧</div>
             <h3>Email Us</h3>
-            <p>support@recipefinder.com</p>
+            <p>infolivesta@gmail.com</p>
             <p className="card-note">We reply within 24 hours</p>
           </div>
 
           <div className="contact-card">
             <div className="card-icon">📞</div>
             <h3>Call Us</h3>
-            <p>+1 (555) 123-4567</p>
+            <p>+91 88498 60553</p>
             <p className="card-note">Mon-Fri, 9am-5pm EST</p>
           </div>
 
@@ -221,8 +221,8 @@ export default function ContactUs() {
           <div className="contact-card">
             <div className="card-icon">📍</div>
             <h3>Visit Us</h3>
-            <p>123 Culinary Lane</p>
-            <p>Foodie City, FC 12345</p>
+            <p>108, Swapana Siddh Appartment </p>
+            <p>Surat, Gujarat - 395003</p>
           </div>
         </div>
 
@@ -409,8 +409,8 @@ export default function ContactUs() {
             {/* Replace with actual Google Maps embed or image */}
             <div className="map-placeholder">
               <div className="map-marker">📍</div>
-              <p>123 Culinary Lane, Foodie City, FC 12345</p>
-              <button className="directions-button">Get Directions</button>
+              <p>108, Swapana Siddh appartment, Surat, Gujarat - 395003</p>
+              <button className="directions-button" onClick={() => window.open('https://maps.app.goo.gl/Vf5LL5aSUVnJ1Zxs7', '_blank')}>Get Directions</button>
             </div>
           </div>
         </div>

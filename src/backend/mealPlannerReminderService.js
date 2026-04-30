@@ -15,7 +15,7 @@ const DEFAULT_REMINDER_TIMES = {
 };
 
 const REMINDER_LEAD_MINUTES = 30;
-const WINDOW_MINUTES = 1;
+const WINDOW_MINUTES = 2;
 
 /* ==============================
    SMTP EMAIL CLIENT
