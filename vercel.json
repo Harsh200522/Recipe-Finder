@@ -1,8 +1,8 @@
 {
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "^/(?!@vite|src|node_modules).*$",
+      "dest": "/index.html"
     }
   ]
 }

@@ -127,7 +127,7 @@ const getMealImage = (meal) =>
 const getMealIngredients = (meal) => {
   if (!meal) return [];
 
-  // MealDB API format
+  // 1. MealDB API format
   if (meal.strIngredient1 !== undefined) {
     const list = [];
     for (let i = 1; i <= 20; i++) {
@@ -138,18 +138,28 @@ const getMealIngredients = (meal) => {
     return list;
   }
 
-  // Already an array
+  // 2. Array format
   if (Array.isArray(meal.ingredients)) {
     return meal.ingredients.map((ing) =>
       typeof ing === "string"
         ? { name: ing, measure: "" }
-        : { name: ing.name || ing.ingredient || "", measure: ing.measure || ing.amount || "" }
+        : {
+            name: ing.name || ing.ingredient || ing.title || "",
+            measure: ing.measure || ing.amount || ing.qty || "",
+          }
     );
+  }
+
+  // 3. 🔥 Object format (THIS WAS MISSING)
+  if (meal.ingredients && typeof meal.ingredients === "object") {
+    return Object.entries(meal.ingredients).map(([key, value]) => ({
+      name: key,
+      measure: value,
+    }));
   }
 
   return [];
 };
-
 /* ==============================
    EMAIL TEMPLATE
 ============================== */
