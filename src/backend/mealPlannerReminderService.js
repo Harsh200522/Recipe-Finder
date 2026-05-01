@@ -6,7 +6,6 @@ import { db } from "../config/firbase.js";
 
 /* ==============================
    CONFIG
-   These must match defaultReminderTimes in MealPlanner.jsx exactly
 ============================== */
 
 const DEFAULT_REMINDER_TIMES = {
@@ -15,11 +14,7 @@ const DEFAULT_REMINDER_TIMES = {
   Dinner: "20:00",
 };
 
-// How many minutes before meal time to send reminder
 const REMINDER_LEAD_MINUTES = 30;
-
-// How many minutes either side of reminder time to still fire it
-// (cron jobs don't always fire at exact second)
 const WINDOW_MINUTES = 2;
 
 /* ==============================
@@ -52,15 +47,9 @@ const createSmtpTransporter = () => {
    TIME HELPERS
 ============================== */
 
-/**
- * Returns current weekday name, HH:MM, and YYYY-MM-DD date key
- * in the user's stored timeZone (saved by MealPlanner.jsx savePlanner).
- * Falls back to Asia/Kolkata if no timeZone stored.
- */
 const getNowForTimeZone = (timeZone = "Asia/Kolkata") => {
   const now = new Date();
 
-  // "Monday", "Tuesday" … must match the days array in MealPlanner.jsx exactly
   const weekday = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     timeZone,
@@ -73,7 +62,6 @@ const getNowForTimeZone = (timeZone = "Asia/Kolkata") => {
     timeZone,
   }).format(now);
 
-  // Used as part of log doc ID to prevent duplicate emails on same day
   const dateKey = new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",
@@ -84,10 +72,6 @@ const getNowForTimeZone = (timeZone = "Asia/Kolkata") => {
   return { weekday, hhmm, dateKey };
 };
 
-/**
- * Subtracts leadMinutes from a HH:MM string to get reminder fire time.
- * e.g. mealTime="08:00", lead=30 → "07:30"
- */
 const toReminderTime = (mealTime, leadMinutes = REMINDER_LEAD_MINUTES) => {
   const match = String(mealTime ?? "").match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return null;
@@ -106,15 +90,12 @@ const isWithinWindow = (target, current, windowMin = WINDOW_MINUTES) => {
     return h * 60 + m;
   };
   let diff = Math.abs(toMin(current) - toMin(target));
-  diff = Math.min(diff, 1440 - diff); // handle midnight wraparound
+  diff = Math.min(diff, 1440 - diff);
   return diff <= windowMin;
 };
 
 /* ==============================
    MEAL DATA HELPERS
-   These match the shape saved by MealPlanner.jsx exactly:
-   - API meals:       { strMeal, strMealThumb, strIngredient1..20, strMeasure1..20, source:"api" }
-   - Community meals: { strMeal, strMealThumb, ingredients: string[]|object, source:"community" }
 ============================== */
 
 const getMealName = (meal) =>
@@ -123,16 +104,9 @@ const getMealName = (meal) =>
 const getMealImage = (meal) =>
   meal?.strMealThumb || meal?.image || meal?.thumbnail || null;
 
-/**
- * Handles all three ingredient shapes that MealPlanner.jsx can produce:
- * 1. MealDB API format  → strIngredient1/strMeasure1 … strIngredient20/strMeasure20
- * 2. Array format       → ["ing (measure)", ...] or [{name, measure}, ...]
- * 3. Object format      → { ingredientName: measure, ... }
- */
 const getMealIngredients = (meal) => {
   if (!meal) return [];
 
-  // 1. MealDB API format (saved directly from fetchApiMeals in MealPlanner.jsx)
   if (meal.strIngredient1 !== undefined) {
     const list = [];
     for (let i = 1; i <= 20; i++) {
@@ -143,11 +117,9 @@ const getMealIngredients = (meal) => {
     return list;
   }
 
-  // 2. Array format (from fetchPublishedCommunityMeals / normalizeIngredientList)
   if (Array.isArray(meal.ingredients)) {
     return meal.ingredients.map((ing) => {
       if (typeof ing === "string") {
-        // "Chicken (200g)" → split into name + measure
         const parenMatch = ing.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
         if (parenMatch) {
           return { name: parenMatch[1].trim(), measure: parenMatch[2].trim() };
@@ -161,7 +133,6 @@ const getMealIngredients = (meal) => {
     });
   }
 
-  // 3. Object format  { "Chicken": "200g", "Salt": "1 tsp" }
   if (meal.ingredients && typeof meal.ingredients === "object") {
     return Object.entries(meal.ingredients).map(([key, value]) => ({
       name: key,
@@ -171,10 +142,6 @@ const getMealIngredients = (meal) => {
 
   return [];
 };
-
-/* ==============================
-   EMOJI HELPER
-============================== */
 
 const getMealEmoji = (type) =>
   ({ Breakfast: "🌅", Lunch: "☀️", Dinner: "🌙" }[type] || "🍽️");
@@ -193,6 +160,7 @@ const buildReminderHtml = ({
   ownerName,
 }) => {
   const emoji = getMealEmoji(mealType);
+  const greeting = ownerName ? `Hi ${ownerName},` : "Hi there,";
 
   const ingredientRows =
     Array.isArray(ingredients) && ingredients.length
@@ -216,9 +184,6 @@ const buildReminderHtml = ({
            </td>
          </tr>`;
 
-  // Greeting uses ownerName saved by MealPlanner.jsx savePlanner()
-  const greeting = ownerName ? `Hi ${ownerName},` : "Hi there,";
-
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -237,12 +202,11 @@ const buildReminderHtml = ({
              style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;
                     overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.10);">
 
-        <!-- ── BANNER ── -->
+        <!-- BANNER -->
         <tr>
           <td style="background:linear-gradient(135deg,#f97316 0%,#fb923c 100%);
                      padding:30px 32px;text-align:center;">
-            <p style="margin:0 0 4px;font-size:13px;color:rgba(255,255,255,0.85);
-                      font-weight:500;">
+            <p style="margin:0 0 4px;font-size:13px;color:rgba(255,255,255,0.85);font-weight:500;">
               ${greeting}
             </p>
             <p style="margin:0 0 6px;font-size:11px;color:rgba(255,255,255,0.8);
@@ -258,20 +222,17 @@ const buildReminderHtml = ({
           </td>
         </tr>
 
-        <!-- ── RECIPE IMAGE ── -->
-        ${
-          image
-            ? `<tr>
-                 <td style="padding:0;line-height:0;">
-                   <img src="${image}" alt="${mealName}"
-                        width="600"
-                        style="width:100%;max-height:300px;object-fit:cover;display:block;"/>
-                 </td>
-               </tr>`
-            : ""
-        }
+        <!-- RECIPE IMAGE -->
+        ${image
+          ? `<tr>
+               <td style="padding:0;line-height:0;">
+                 <img src="${image}" alt="${mealName}" width="600"
+                      style="width:100%;max-height:300px;object-fit:cover;display:block;"/>
+               </td>
+             </tr>`
+          : ""}
 
-        <!-- ── RECIPE NAME ── -->
+        <!-- RECIPE NAME -->
         <tr>
           <td style="padding:26px 32px 6px;">
             <p style="margin:0 0 5px;font-size:11px;color:#f97316;font-weight:700;
@@ -284,14 +245,14 @@ const buildReminderHtml = ({
           </td>
         </tr>
 
-        <!-- ── DIVIDER ── -->
+        <!-- DIVIDER -->
         <tr>
           <td style="padding:0 32px;">
             <hr style="border:none;border-top:2px solid #fde8d8;margin:14px 0;"/>
           </td>
         </tr>
 
-        <!-- ── INGREDIENTS ── -->
+        <!-- INGREDIENTS -->
         <tr>
           <td style="padding:4px 32px 28px;">
             <p style="margin:0 0 12px;font-size:11px;color:#f97316;font-weight:700;
@@ -304,24 +265,18 @@ const buildReminderHtml = ({
                 <tr style="background:#fff7ed;">
                   <th style="padding:9px 12px;font-size:11px;color:#f97316;text-align:left;
                              font-weight:700;letter-spacing:1px;text-transform:uppercase;
-                             border-bottom:1px solid #fde8d8;">
-                    Ingredient
-                  </th>
+                             border-bottom:1px solid #fde8d8;">Ingredient</th>
                   <th style="padding:9px 12px;font-size:11px;color:#f97316;text-align:right;
                              font-weight:700;letter-spacing:1px;text-transform:uppercase;
-                             border-bottom:1px solid #fde8d8;">
-                    Amount
-                  </th>
+                             border-bottom:1px solid #fde8d8;">Amount</th>
                 </tr>
               </thead>
-              <tbody>
-                ${ingredientRows}
-              </tbody>
+              <tbody>${ingredientRows}</tbody>
             </table>
           </td>
         </tr>
 
-        <!-- ── CTA BUTTON ── -->
+        <!-- CTA -->
         <tr>
           <td style="padding:0 32px 36px;text-align:center;">
             <a href="https://recipe-finder-fmn8.vercel.app/meal-planner"
@@ -330,8 +285,7 @@ const buildReminderHtml = ({
                       background:linear-gradient(135deg,#f97316 0%,#fb923c 100%);
                       color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;
                       padding:14px 40px;border-radius:50px;
-                      box-shadow:0 4px 16px rgba(249,115,22,0.38);
-                      letter-spacing:0.4px;">
+                      box-shadow:0 4px 16px rgba(249,115,22,0.38);letter-spacing:0.4px;">
               🍳&nbsp;View My Meal Planner
             </a>
             <p style="margin:10px 0 0;font-size:12px;color:#bbb;">
@@ -340,7 +294,7 @@ const buildReminderHtml = ({
           </td>
         </tr>
 
-        <!-- ── FOOTER ── -->
+        <!-- FOOTER -->
         <tr>
           <td style="background:#fff7ed;padding:16px 32px;text-align:center;
                      border-top:1px solid #fde8d8;">
@@ -365,7 +319,7 @@ const buildReminderHtml = ({
 
 export const checkAndSendMealPlannerReminders = async () => {
   const start = Date.now();
-  const MAX_TIME = 8000; // bail out before serverless timeout
+  const MAX_TIME = 8000;
 
   const report = {
     usersChecked: 0,
@@ -374,7 +328,6 @@ export const checkAndSendMealPlannerReminders = async () => {
     errors: 0,
   };
 
-  // --- 1. Create transporter ---
   let transporter;
   try {
     transporter = createSmtpTransporter();
@@ -383,7 +336,6 @@ export const checkAndSendMealPlannerReminders = async () => {
     return report;
   }
 
-  // --- 2. Load all MealPlanner docs (one per user, keyed by uid) ---
   let snap;
   try {
     snap = await getDocs(collection(db, "MealPlanner"));
@@ -392,49 +344,57 @@ export const checkAndSendMealPlannerReminders = async () => {
     return report;
   }
 
-  if (snap.empty) return report;
+  if (snap.empty) {
+    console.log("[MealReminder] MealPlanner collection is empty.");
+    return report;
+  }
 
-  // --- 3. Process each user ---
+  console.log(`[MealReminder] Found ${snap.docs.length} MealPlanner doc(s).`);
+
   for (const docSnap of snap.docs) {
     if (Date.now() - start > MAX_TIME) break;
 
-    // plannerDoc fields written by MealPlanner.jsx → savePlanner()
     const uid = docSnap.id;
     const plannerDoc = docSnap.data();
     report.usersChecked++;
 
-    // ✅ STEP A: Fetch user preferences from users/{uid}
-    // This is where ProfileSettings saves mealReminder + emailNotifications
+    console.log(`\n[MealReminder] ── Processing uid: ${uid} ──`);
+
+    // STEP A: Fetch user preferences
     let userData = null;
     try {
       const userSnap = await getDoc(doc(db, "users", uid));
       if (!userSnap.exists()) {
+        console.log(`[MealReminder] SKIP uid=${uid} → no users/{uid} doc found`);
         report.skipped++;
         continue;
       }
       userData = userSnap.data();
+      console.log(`[MealReminder] User preferences:`, {
+        emailNotifications: userData?.preferences?.emailNotifications,
+        mealReminder: userData?.preferences?.mealReminder,
+      });
     } catch (err) {
-      console.error(`[MealReminder] Failed to fetch user doc for uid ${uid}:`, err.message);
+      console.error(`[MealReminder] ERROR fetching user doc uid=${uid}:`, err.message);
       report.errors++;
       continue;
     }
 
-    // ✅ STEP B: Check emailNotifications preference
-    // Saved by ProfileSettings.jsx → handleSave() → preferences.emailNotifications
+    // STEP B: Check emailNotifications
     if (userData?.preferences?.emailNotifications === false) {
+      console.log(`[MealReminder] SKIP uid=${uid} → emailNotifications is false`);
       report.skipped++;
       continue;
     }
 
-    // ✅ STEP C: Check mealReminder preference
-    // Saved by ProfileSettings.jsx → handleSave() → preferences.mealReminder
+    // STEP C: Check mealReminder
     if (userData?.preferences?.mealReminder === false) {
+      console.log(`[MealReminder] SKIP uid=${uid} → mealReminder is false`);
       report.skipped++;
       continue;
     }
 
-    // ✅ STEP D: Resolve email
-    // Priority: plannerDoc.ownerEmail (saved by savePlanner) → users doc email → profile email
+    // STEP D: Resolve email
     const email =
       plannerDoc.ownerEmail ||
       userData?.email ||
@@ -442,14 +402,15 @@ export const checkAndSendMealPlannerReminders = async () => {
       userData?.auth?.email ||
       null;
 
+    console.log(`[MealReminder] Email resolved: "${email}"`);
+
     if (!email || !email.includes("@")) {
-      console.warn(`[MealReminder] No valid email for uid ${uid}`);
+      console.log(`[MealReminder] SKIP uid=${uid} → no valid email found`);
       report.skipped++;
       continue;
     }
 
-    // ✅ STEP E: Resolve display name
-    // plannerDoc.ownerName is saved by savePlanner() in MealPlanner.jsx
+    // STEP E: Resolve display name
     const ownerName =
       plannerDoc.ownerName ||
       userData?.profile?.name ||
@@ -457,53 +418,71 @@ export const checkAndSendMealPlannerReminders = async () => {
       email.split("@")[0] ||
       "there";
 
-    // ✅ STEP F: Get current time in user's timezone
-    // plannerDoc.timeZone is saved by savePlanner() using Intl.DateTimeFormat().resolvedOptions().timeZone
-    const { weekday, hhmm, dateKey } = getNowForTimeZone(
-      plannerDoc.timeZone || "Asia/Kolkata"
-    );
+    // STEP F: Time in user's timezone
+    const timeZone = plannerDoc.timeZone || "Asia/Kolkata";
+    const { weekday, hhmm, dateKey } = getNowForTimeZone(timeZone);
 
-    // ✅ STEP G: Get today's meals from planner[weekday]
-    // planner shape from MealPlanner.jsx:
-    // { Monday: { Breakfast: mealObj|null, Lunch: mealObj|null, Dinner: mealObj|null }, ... }
+    console.log(`[MealReminder] Time info: timeZone="${timeZone}", weekday="${weekday}", now="${hhmm}", dateKey="${dateKey}"`);
+
+    // STEP G: Today's meals
     const todaysMeals = plannerDoc.planner?.[weekday];
-    if (!todaysMeals) continue;
+    console.log(`[MealReminder] planner["${weekday}"] =`, JSON.stringify(todaysMeals));
 
-    // ✅ STEP H: Loop Breakfast / Lunch / Dinner
+    if (!todaysMeals) {
+      console.log(`[MealReminder] SKIP uid=${uid} → no meals found for "${weekday}"`);
+      continue;
+    }
+
+    // STEP H: Loop each meal type
     for (const mealType of Object.keys(DEFAULT_REMINDER_TIMES)) {
       const meal = todaysMeals[mealType];
 
-      // Skip if no meal assigned for this slot
-      if (!meal) continue;
+      console.log(`[MealReminder]   ${mealType}: meal=${meal ? `"${getMealName(meal)}"` : "null"}`);
 
-      // ✅ STEP I: Resolve reminder fire time
-      // plannerDoc.reminderTimes saved by savePlanner: { Breakfast:"08:00", Lunch:"13:00", Dinner:"20:00" }
+      if (!meal) {
+        console.log(`[MealReminder]   SKIP ${mealType} → not assigned`);
+        continue;
+      }
+
+      // STEP I: Reminder fire time
       const rawMealTime =
         plannerDoc.reminderTimes?.[mealType] || DEFAULT_REMINDER_TIMES[mealType];
-
       const reminderTime = toReminderTime(rawMealTime);
-      if (!reminderTime) continue;
 
-      // Is it time to fire the reminder?
-      if (!isWithinWindow(reminderTime, hhmm)) continue;
+      console.log(`[MealReminder]   ${mealType}: rawMealTime="${rawMealTime}", reminderTime="${reminderTime}", currentTime="${hhmm}", window=±${WINDOW_MINUTES}min`);
 
-      // ✅ STEP J: Dedup — don't send twice for same user + date + meal type
+      if (!reminderTime) {
+        console.log(`[MealReminder]   SKIP ${mealType} → could not parse reminderTime`);
+        continue;
+      }
+
+      if (!isWithinWindow(reminderTime, hhmm)) {
+        console.log(`[MealReminder]   SKIP ${mealType} → not in time window (reminder="${reminderTime}", now="${hhmm}")`);
+        continue;
+      }
+
+      // STEP J: Dedup check
       const logId = `${uid}_${dateKey}_${mealType}`;
       const logRef = doc(db, "mealReminderLogs", logId);
 
       try {
         const logSnap = await getDoc(logRef);
-        if (logSnap.exists()) continue; // already sent today
+        if (logSnap.exists()) {
+          console.log(`[MealReminder]   SKIP ${mealType} → already sent today (logId=${logId})`);
+          continue;
+        }
       } catch (err) {
-        console.error(`[MealReminder] Failed to check log ${logId}:`, err.message);
+        console.error(`[MealReminder]   ERROR checking log ${logId}:`, err.message);
         continue;
       }
 
-      // ✅ STEP K: Build and send email
+      // STEP K: Send email
       const mealEmoji = getMealEmoji(mealType);
       const mealName = getMealName(meal);
       const mealImage = getMealImage(meal);
       const ingredients = getMealIngredients(meal);
+
+      console.log(`[MealReminder]   SENDING to ${email}: ${mealType} — ${mealName}`);
 
       try {
         await transporter.sendMail({
@@ -521,7 +500,6 @@ export const checkAndSendMealPlannerReminders = async () => {
           }),
         });
 
-        // Mark as sent so we don't send again today
         await setDoc(logRef, {
           sentAt: new Date(),
           uid,
@@ -533,19 +511,14 @@ export const checkAndSendMealPlannerReminders = async () => {
         });
 
         report.sent++;
-        console.log(
-          `[MealReminder] ✅ Sent ${mealType} reminder to ${email} (${mealName})`
-        );
+        console.log(`[MealReminder]   ✅ Sent ${mealType} reminder to ${email}`);
       } catch (err) {
-        console.error(
-          `[MealReminder] ❌ Failed to send to ${email}:`,
-          err.message
-        );
+        console.error(`[MealReminder]   ❌ Failed to send to ${email}:`, err.message);
         report.errors++;
       }
     }
   }
 
-  console.log("[MealReminder] Report:", report);
+  console.log("\n[MealReminder] Final Report:", report);
   return report;
 };
