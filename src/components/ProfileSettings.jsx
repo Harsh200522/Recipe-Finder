@@ -55,12 +55,16 @@ const defaultPreferencesState = {
     allergies: [],
     measurementUnit: '',
     language: '',
-    emailNotifications: false,
-    pushNotifications: false,
+    emailNotifications: true,
+    pushNotifications: true,
     darkMode: false,
-    saveHistory: false
+    saveHistory: false,
+    mealReminder: true,
+    newRecipes: true,
+    weeklyMealPlans: true,
+    cookingTips: true,
+    communityUpdates: true
 };
-
 
 const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -75,6 +79,19 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
     const leaveDialogOpenRef = useRef(false);
     const navigate = useNavigate();
     const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+    // const [notificationTypes, setNotificationTypes] = useState({
+    //     "New Recipes": true,
+    //     "Weekly Meal Plans": true,
+    //     "Cooking Tips": true,
+    //     "Community Updates": true
+    // });
+
+    const handleNotificationTypeChange = (key) => {
+        setPreferences(prev => ({
+            ...prev,
+            [key]: !prev[key]
+        }));
+    };
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -447,6 +464,7 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
                 preferences,
                 updatedAt: new Date()
             }, { merge: true });
+
 
             initialProfileRef.current = profile;
             initialPreferencesRef.current = preferences;
@@ -935,10 +953,20 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
                                 <div className="notifications-section">
                                     <h4 className="section-subtitle">Notification Preferences</h4>
                                     <div className="checkbox-group">
-                                        {['New Recipes', 'Weekly Meal Plans', 'Cooking Tips', 'Community Updates'].map((item) => (
-                                            <label key={item} className="checkbox-item">
-                                                <input type="checkbox" className="checkbox-input" />
-                                                <span className="checkbox-label">{item}</span>
+                                        {[
+                                            { key: "newRecipes", label: "New Recipes" },
+                                            { key: "weeklyMealPlans", label: "Weekly Meal Plans" },
+                                            { key: "cookingTips", label: "Cooking Tips" },
+                                            { key: "communityUpdates", label: "Community Updates" }
+                                        ].map((item) => (
+                                            <label key={item.key} className="checkbox-item">
+                                                <input
+                                                    type="checkbox"
+                                                    className="checkbox-input"
+                                                    checked={preferences[item.key]}
+                                                    onChange={() => handleNotificationTypeChange(item.key)}
+                                                />
+                                                <span className="checkbox-label">{item.label}</span>
                                             </label>
                                         ))}
                                     </div>
@@ -982,8 +1010,46 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
                             onClick={async () => {
                                 const user = auth.currentUser;
                                 if (!user) return;
-                                await deleteUser(user);
-                                alert("Account deleted");
+
+                                const result = await Swal.fire({
+                                    title: "Are you sure?",
+                                    text: "This action will permanently delete your account!",
+                                    icon: "warning",
+                                    showCancelButton: true,
+                                    confirmButtonColor: "#d33",
+                                    cancelButtonColor: "#3085d6",
+                                    confirmButtonText: "Yes, delete it",
+                                    cancelButtonText: "No, cancel"
+                                });
+
+                                if (result.isConfirmed) {
+                                    try {
+                                        await deleteUser(user);
+
+                                        await Swal.fire({
+                                            icon: "success",
+                                            title: "Deleted!",
+                                            text: "Your account has been deleted.",
+                                            timer: 2000,
+                                            showConfirmButton: false
+                                        });
+
+                                        // Optional: redirect after delete
+                                        window.location.href = "/";
+                                    } catch (error) {
+                                        let message = "Failed to delete account";
+
+                                        if (error.code === "auth/requires-recent-login") {
+                                            message = "Please login again before deleting account";
+                                        }
+
+                                        Swal.fire({
+                                            icon: "error",
+                                            title: "Error",
+                                            text: message
+                                        });
+                                    }
+                                }
                             }}
                         >
                             Delete Account
