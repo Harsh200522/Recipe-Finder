@@ -16,6 +16,7 @@ const DEFAULT_REMINDER_TIMES = {
 
 const REMINDER_LEAD_MINUTES = 30;
 const WINDOW_MINUTES = 2;
+const DEFAULT_SERVINGS = 2;
 
 /* ==============================
    SMTP EMAIL CLIENT
@@ -104,9 +105,21 @@ const getMealName = (meal) =>
 const getMealImage = (meal) =>
   meal?.strMealThumb || meal?.image || meal?.thumbnail || null;
 
+const getMealYoutube = (meal) =>
+  meal?.strYoutube || meal?.youtube || meal?.video || null;
+
+/**
+ * Unified ingredient extractor.
+ * Handles 3 formats:
+ *  1. TheMealDB API  →  strIngredient1..20 + strMeasure1..20
+ *  2. Array of strings  →  "Flour (2 cups)" or plain "Flour"
+ *  3. Array of objects  →  { name, measure }  /  { ingredient, amount }
+ *  4. Plain object map  →  { "Flour": "2 cups" }
+ */
 const getMealIngredients = (meal) => {
   if (!meal) return [];
 
+  // Format 1: TheMealDB strIngredient fields
   if (meal.strIngredient1 !== undefined) {
     const list = [];
     for (let i = 1; i <= 20; i++) {
@@ -117,22 +130,28 @@ const getMealIngredients = (meal) => {
     return list;
   }
 
+  // Format 2 & 3: Array
   if (Array.isArray(meal.ingredients)) {
-    return meal.ingredients.map((ing) => {
-      if (typeof ing === "string") {
-        const parenMatch = ing.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
-        if (parenMatch) {
-          return { name: parenMatch[1].trim(), measure: parenMatch[2].trim() };
+    return meal.ingredients
+      .map((ing) => {
+        if (typeof ing === "string") {
+          // "Dried Figs (200g)"  →  { name: "Dried Figs", measure: "200g" }
+          const parenMatch = ing.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+          if (parenMatch) {
+            return { name: parenMatch[1].trim(), measure: parenMatch[2].trim() };
+          }
+          return { name: ing.trim(), measure: "" };
         }
-        return { name: ing.trim(), measure: "" };
-      }
-      return {
-        name: ing.name || ing.ingredient || ing.title || "",
-        measure: ing.measure || ing.amount || ing.qty || "",
-      };
-    });
+        // Object shape
+        return {
+          name: ing.name || ing.ingredient || ing.title || "",
+          measure: ing.measure || ing.amount || ing.qty || "",
+        };
+      })
+      .filter((ing) => ing.name);
   }
 
+  // Format 4: Plain object map
   if (meal.ingredients && typeof meal.ingredients === "object") {
     return Object.entries(meal.ingredients).map(([key, value]) => ({
       name: key,
@@ -143,13 +162,82 @@ const getMealIngredients = (meal) => {
   return [];
 };
 
+/**
+ * Fetch fresh ingredients from TheMealDB when the stored meal
+ * is missing them (e.g. saved before full hydration).
+ */
+const fetchIngredientsFromApi = async (mealId) => {
+  try {
+    const res = await fetch(
+      `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${encodeURIComponent(mealId)}`
+    );
+    const data = await res.json();
+    const found = data?.meals?.[0];
+    if (!found) return [];
+    return getMealIngredients(found);
+  } catch (err) {
+    console.warn(`[MealReminder] Could not fetch API ingredients for ${mealId}:`, err.message);
+    return [];
+  }
+};
+
 const getMealEmoji = (type) =>
   ({ Breakfast: "🌅", Lunch: "☀️", Dinner: "🌙" }[type] || "🍽️");
+
+/* ==============================
+   SERVING SCALE HELPER
+============================== */
+
+/**
+ * Parses a measure string and scales it by a multiplier.
+ * Returns the scaled string, or the original if it can't parse a number.
+ * Examples:
+ *   scaleMeasure("200g", 2)    → "400g"
+ *   scaleMeasure("1/2 cup", 2) → "1 cup"
+ *   scaleMeasure("to taste", 2)→ "to taste"
+ */
+const scaleMeasure = (measure, multiplier) => {
+  if (!measure || multiplier === 1) return measure;
+
+  // Handle fractions like "1/2", "3/4"
+  const fracMatch = measure.match(/^(\d+)\/(\d+)(.*)/);
+  if (fracMatch) {
+    const val = Number(fracMatch[1]) / Number(fracMatch[2]) * multiplier;
+    const suffix = fracMatch[3].trim();
+    // Format nicely: if whole number, no decimal; else 1 decimal
+    const formatted = Number.isInteger(val) ? String(val) : val.toFixed(1).replace(/\.0$/, "");
+    return `${formatted}${suffix ? " " + suffix : ""}`;
+  }
+
+  // Handle leading number like "200g", "1.5 cup", "2 tbsp"
+  const numMatch = measure.match(/^(\d+(?:\.\d+)?)(.*)/);
+  if (numMatch) {
+    const val = Number(numMatch[1]) * multiplier;
+    const suffix = numMatch[2].trim();
+    const formatted = Number.isInteger(val) ? String(val) : val.toFixed(1).replace(/\.0$/, "");
+    return `${formatted}${suffix ? " " + suffix : ""}`;
+  }
+
+  // Can't parse — return as-is
+  return measure;
+};
 
 /* ==============================
    EMAIL TEMPLATE
 ============================== */
 
+/**
+ * Builds the reminder HTML email.
+ *
+ * Interactive serving selector uses the CSS radio-button trick:
+ * hidden <input type="radio"> elements + <label> buttons control
+ * which set of ingredient rows is shown via sibling CSS selectors.
+ * This works in Gmail (web), Apple Mail, and most modern clients
+ * without any JavaScript.
+ *
+ * For clients that strip <style> (Outlook), the default serving
+ * rows (baseServings) are always shown as a fallback.
+ */
 const buildReminderHtml = ({
   mealName,
   mealType,
@@ -158,31 +246,122 @@ const buildReminderHtml = ({
   image,
   ingredients,
   ownerName,
+  youtubeUrl,
+  baseServings = DEFAULT_SERVINGS,
 }) => {
   const emoji = getMealEmoji(mealType);
   const greeting = ownerName ? `Hi ${ownerName},` : "Hi there,";
+  const maxServings = 8;
+  const servingOptions = [1, 2, 3, 4, 6, 8];
 
-  const ingredientRows =
-    Array.isArray(ingredients) && ingredients.length
-      ? ingredients
-          .map(
-            (ing) => `
-          <tr>
-            <td style="padding:7px 12px;border-bottom:1px solid #fde8d8;font-size:14px;color:#444;">
-              ${ing.name || ing}
-            </td>
-            <td style="padding:7px 12px;border-bottom:1px solid #fde8d8;font-size:14px;
-                       color:#888;text-align:right;white-space:nowrap;">
-              ${ing.measure || ""}
-            </td>
-          </tr>`
-          )
-          .join("")
-      : `<tr>
-           <td colspan="2" style="padding:10px 12px;font-size:14px;color:#bbb;text-align:center;">
-             No ingredients listed
-           </td>
-         </tr>`;
+  // ── Pre-compute scaled ingredient rows for every serving option ──
+  const buildIngredientRows = (servings) => {
+    if (!Array.isArray(ingredients) || !ingredients.length) {
+      return `<tr>
+        <td colspan="2" style="padding:10px 12px;font-size:14px;color:#bbb;text-align:center;">
+          No ingredients listed
+        </td>
+      </tr>`;
+    }
+
+    const multiplier = servings / baseServings;
+
+    return ingredients
+      .map((ing) => {
+        const scaledMeasure = scaleMeasure(ing.measure, multiplier);
+        return `
+        <tr>
+          <td style="padding:7px 12px;border-bottom:1px solid #fde8d8;font-size:14px;color:#444;">
+            ${ing.name || ing}
+          </td>
+          <td style="padding:7px 12px;border-bottom:1px solid #fde8d8;font-size:14px;
+                     color:#f97316;font-weight:600;text-align:right;white-space:nowrap;">
+            ${scaledMeasure || "—"}
+          </td>
+        </tr>`;
+      })
+      .join("");
+  };
+
+  // ── CSS: show/hide ingredient blocks per selected radio ──
+  // Each serving option has a radio input with id="srv-N"
+  // When checked, we show the table with class "ing-N" and hide others.
+  const servingCss = servingOptions
+    .map(
+      (s) => `
+  #srv-${s}:checked ~ * .ing-block { display: none !important; }
+  #srv-${s}:checked ~ * .ing-${s}  { display: table !important; }`
+    )
+    .join("");
+
+  // ── Radio inputs (outside visible table flow) ──
+  const radioInputs = servingOptions
+    .map(
+      (s) =>
+        `<input type="radio" name="servings" id="srv-${s}"
+               style="position:absolute;opacity:0;pointer-events:none;"
+               ${s === baseServings ? "checked" : ""}/>`
+    )
+    .join("\n");
+
+  // ── Serving selector label buttons ──
+  const servingLabels = servingOptions
+    .map(
+      (s) => `
+    <label for="srv-${s}"
+           style="display:inline-block;padding:5px 13px;margin:3px;border-radius:20px;
+                  font-size:13px;font-weight:700;cursor:pointer;
+                  border:2px solid #f97316;color:#f97316;background:#fff;
+                  transition:all 0.2s;">
+      ${s}
+    </label>`
+    )
+    .join("");
+
+  // ── Ingredient table blocks (one per serving option) ──
+  const ingredientBlocks = servingOptions
+    .map(
+      (s) => `
+  <table class="ing-block ing-${s}" width="100%" cellpadding="0" cellspacing="0"
+         style="border-radius:10px;overflow:hidden;border:1px solid #fde8d8;
+                ${s === baseServings ? "" : "display:none !important;"}">
+    <thead>
+      <tr style="background:#fff7ed;">
+        <th style="padding:9px 12px;font-size:11px;color:#f97316;text-align:left;
+                   font-weight:700;letter-spacing:1px;text-transform:uppercase;
+                   border-bottom:1px solid #fde8d8;">Ingredient</th>
+        <th style="padding:9px 12px;font-size:11px;color:#f97316;text-align:right;
+                   font-weight:700;letter-spacing:1px;text-transform:uppercase;
+                   border-bottom:1px solid #fde8d8;">Amount</th>
+      </tr>
+    </thead>
+    <tbody>${buildIngredientRows(s)}</tbody>
+  </table>`
+    )
+    .join("\n");
+
+  // ── YouTube button ──
+  const videoButton = youtubeUrl
+    ? `
+  <tr>
+    <td style="padding:0 32px 18px;text-align:center;">
+      <a href="${youtubeUrl}"
+         target="_blank"
+         style="display:inline-block;
+                background:#ffffff;
+                color:#f97316;
+                text-decoration:none;
+                font-size:14px;
+                font-weight:700;
+                padding:12px 32px;
+                border-radius:50px;
+                border:2px solid #f97316;
+                letter-spacing:0.3px;">
+        ▶&nbsp;&nbsp;Watch Recipe Video
+      </a>
+    </td>
+  </tr>`
+    : "";
 
   return `
 <!DOCTYPE html>
@@ -191,18 +370,46 @@ const buildReminderHtml = ({
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>${mealType} Reminder</title>
+  <style>
+    /* ── Serving selector active state ── */
+    ${servingOptions
+      .map(
+        (s) => `
+    #srv-${s}:checked ~ * label[for="srv-${s}"] {
+      background: #f97316 !important;
+      color: #fff !important;
+    }`
+      )
+      .join("")}
+
+    /* ── Serving block visibility ── */
+    ${servingCss}
+
+    /* ── Hover on serving labels ── */
+    label[for^="srv-"]:hover {
+      background: #fff7ed !important;
+    }
+
+    /* ── Mobile ── */
+    @media only screen and (max-width: 600px) {
+      .email-wrap { padding: 16px 8px !important; }
+      .email-card { border-radius: 14px !important; }
+    }
+  </style>
 </head>
 <body style="margin:0;padding:0;background:#f4f0eb;font-family:'Segoe UI',Arial,sans-serif;">
 
-  <table width="100%" cellpadding="0" cellspacing="0"
+  ${radioInputs}
+
+  <table class="email-wrap" width="100%" cellpadding="0" cellspacing="0"
          style="background:#f4f0eb;padding:32px 16px;">
     <tr><td align="center">
 
-      <table width="600" cellpadding="0" cellspacing="0"
+      <table class="email-card" width="600" cellpadding="0" cellspacing="0"
              style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;
                     overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.10);">
 
-        <!-- BANNER -->
+        <!-- ═══ BANNER ═══ -->
         <tr>
           <td style="background:linear-gradient(135deg,#f97316 0%,#fb923c 100%);
                      padding:30px 32px;text-align:center;">
@@ -222,17 +429,19 @@ const buildReminderHtml = ({
           </td>
         </tr>
 
-        <!-- RECIPE IMAGE -->
-        ${image
-          ? `<tr>
+        <!-- ═══ RECIPE IMAGE ═══ -->
+        ${
+          image
+            ? `<tr>
                <td style="padding:0;line-height:0;">
                  <img src="${image}" alt="${mealName}" width="600"
                       style="width:100%;max-height:300px;object-fit:cover;display:block;"/>
                </td>
              </tr>`
-          : ""}
+            : ""
+        }
 
-        <!-- RECIPE NAME -->
+        <!-- ═══ RECIPE NAME ═══ -->
         <tr>
           <td style="padding:26px 32px 6px;">
             <p style="margin:0 0 5px;font-size:11px;color:#f97316;font-weight:700;
@@ -245,38 +454,44 @@ const buildReminderHtml = ({
           </td>
         </tr>
 
-        <!-- DIVIDER -->
+        <!-- ═══ DIVIDER ═══ -->
         <tr>
           <td style="padding:0 32px;">
             <hr style="border:none;border-top:2px solid #fde8d8;margin:14px 0;"/>
           </td>
         </tr>
 
-        <!-- INGREDIENTS -->
+        <!-- ═══ SERVING SELECTOR ═══ -->
+        <tr>
+          <td style="padding:4px 32px 16px;">
+            <p style="margin:0 0 10px;font-size:11px;color:#f97316;font-weight:700;
+                      letter-spacing:2px;text-transform:uppercase;">
+              👥&nbsp;Servings
+            </p>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
+              ${servingLabels}
+            </div>
+            <p style="margin:8px 0 0;font-size:11px;color:#bbb;">
+              Tap a number to scale ingredient amounts automatically
+            </p>
+          </td>
+        </tr>
+
+        <!-- ═══ INGREDIENTS ═══ -->
         <tr>
           <td style="padding:4px 32px 28px;">
             <p style="margin:0 0 12px;font-size:11px;color:#f97316;font-weight:700;
                       letter-spacing:2px;text-transform:uppercase;">
               🧾&nbsp;Ingredients
             </p>
-            <table width="100%" cellpadding="0" cellspacing="0"
-                   style="border-radius:10px;overflow:hidden;border:1px solid #fde8d8;">
-              <thead>
-                <tr style="background:#fff7ed;">
-                  <th style="padding:9px 12px;font-size:11px;color:#f97316;text-align:left;
-                             font-weight:700;letter-spacing:1px;text-transform:uppercase;
-                             border-bottom:1px solid #fde8d8;">Ingredient</th>
-                  <th style="padding:9px 12px;font-size:11px;color:#f97316;text-align:right;
-                             font-weight:700;letter-spacing:1px;text-transform:uppercase;
-                             border-bottom:1px solid #fde8d8;">Amount</th>
-                </tr>
-              </thead>
-              <tbody>${ingredientRows}</tbody>
-            </table>
+            ${ingredientBlocks}
           </td>
         </tr>
 
-        <!-- CTA -->
+        <!-- ═══ VIDEO BUTTON ═══ -->
+        ${videoButton}
+
+        <!-- ═══ CTA ═══ -->
         <tr>
           <td style="padding:0 32px 36px;text-align:center;">
             <a href="https://recipe-finder-fmn8.vercel.app/meal-planner"
@@ -294,7 +509,7 @@ const buildReminderHtml = ({
           </td>
         </tr>
 
-        <!-- FOOTER -->
+        <!-- ═══ FOOTER ═══ -->
         <tr>
           <td style="background:#fff7ed;padding:16px 32px;text-align:center;
                      border-top:1px solid #fde8d8;">
@@ -422,7 +637,9 @@ export const checkAndSendMealPlannerReminders = async () => {
     const timeZone = plannerDoc.timeZone || "Asia/Kolkata";
     const { weekday, hhmm, dateKey } = getNowForTimeZone(timeZone);
 
-    console.log(`[MealReminder] Time info: timeZone="${timeZone}", weekday="${weekday}", now="${hhmm}", dateKey="${dateKey}"`);
+    console.log(
+      `[MealReminder] Time info: timeZone="${timeZone}", weekday="${weekday}", now="${hhmm}", dateKey="${dateKey}"`
+    );
 
     // STEP G: Today's meals
     const todaysMeals = plannerDoc.planner?.[weekday];
@@ -437,7 +654,9 @@ export const checkAndSendMealPlannerReminders = async () => {
     for (const mealType of Object.keys(DEFAULT_REMINDER_TIMES)) {
       const meal = todaysMeals[mealType];
 
-      console.log(`[MealReminder]   ${mealType}: meal=${meal ? `"${getMealName(meal)}"` : "null"}`);
+      console.log(
+        `[MealReminder]   ${mealType}: meal=${meal ? `"${getMealName(meal)}"` : "null"}`
+      );
 
       if (!meal) {
         console.log(`[MealReminder]   SKIP ${mealType} → not assigned`);
@@ -449,7 +668,9 @@ export const checkAndSendMealPlannerReminders = async () => {
         plannerDoc.reminderTimes?.[mealType] || DEFAULT_REMINDER_TIMES[mealType];
       const reminderTime = toReminderTime(rawMealTime);
 
-      console.log(`[MealReminder]   ${mealType}: rawMealTime="${rawMealTime}", reminderTime="${reminderTime}", currentTime="${hhmm}", window=±${WINDOW_MINUTES}min`);
+      console.log(
+        `[MealReminder]   ${mealType}: rawMealTime="${rawMealTime}", reminderTime="${reminderTime}", currentTime="${hhmm}", window=±${WINDOW_MINUTES}min`
+      );
 
       if (!reminderTime) {
         console.log(`[MealReminder]   SKIP ${mealType} → could not parse reminderTime`);
@@ -457,7 +678,9 @@ export const checkAndSendMealPlannerReminders = async () => {
       }
 
       if (!isWithinWindow(reminderTime, hhmm)) {
-        console.log(`[MealReminder]   SKIP ${mealType} → not in time window (reminder="${reminderTime}", now="${hhmm}")`);
+        console.log(
+          `[MealReminder]   SKIP ${mealType} → not in time window (reminder="${reminderTime}", now="${hhmm}")`
+        );
         continue;
       }
 
@@ -468,7 +691,9 @@ export const checkAndSendMealPlannerReminders = async () => {
       try {
         const logSnap = await getDoc(logRef);
         if (logSnap.exists()) {
-          console.log(`[MealReminder]   SKIP ${mealType} → already sent today (logId=${logId})`);
+          console.log(
+            `[MealReminder]   SKIP ${mealType} → already sent today (logId=${logId})`
+          );
           continue;
         }
       } catch (err) {
@@ -476,14 +701,34 @@ export const checkAndSendMealPlannerReminders = async () => {
         continue;
       }
 
-      // STEP K: Send email
+      // STEP K: Resolve ingredients (with live API fallback for API meals)
       const mealEmoji = getMealEmoji(mealType);
       const mealName = getMealName(meal);
       const mealImage = getMealImage(meal);
-      const ingredients = getMealIngredients(meal);
+      const youtubeUrl = getMealYoutube(meal);
 
-      console.log(`[MealReminder]   SENDING to ${email}: ${mealType} — ${mealName}`);
+      let ingredients = getMealIngredients(meal);
 
+      // Fallback: fetch from TheMealDB if stored meal has no ingredients
+      const isCommunityMeal = String(meal.idMeal || "").startsWith("community_");
+      if (!ingredients.length && meal.idMeal && !isCommunityMeal) {
+        console.log(
+          `[MealReminder]   Ingredients missing for API meal "${mealName}", fetching from TheMealDB...`
+        );
+        ingredients = await fetchIngredientsFromApi(meal.idMeal);
+      }
+
+      // Resolve base servings (saved per-meal in planner, or fall back to default)
+      const baseServings =
+        typeof meal.servings === "number" && meal.servings > 0
+          ? meal.servings
+          : DEFAULT_SERVINGS;
+
+      console.log(
+        `[MealReminder]   SENDING to ${email}: ${mealType} — ${mealName} (${ingredients.length} ingredients, baseServings=${baseServings}, youtube=${youtubeUrl ? "yes" : "no"})`
+      );
+
+      // STEP L: Send email
       try {
         await transporter.sendMail({
           from: process.env.EMAIL_FROM,
@@ -497,6 +742,8 @@ export const checkAndSendMealPlannerReminders = async () => {
             image: mealImage,
             ingredients,
             ownerName,
+            youtubeUrl,
+            baseServings,
           }),
         });
 

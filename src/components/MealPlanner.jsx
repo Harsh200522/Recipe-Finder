@@ -47,6 +47,8 @@ const defaultReminderTimes = {
   Dinner: "20:00",
 };
 
+const DEFAULT_SERVINGS = 2;
+
 /* ---------- Helper: create empty planner ---------- */
 const createEmptyPlanner = () => {
   const obj = {};
@@ -71,7 +73,7 @@ const getIngredientsFromApiMeal = (meal) => {
     const ing = meal[`strIngredient${i}`];
     const measure = meal[`strMeasure${i}`];
     if (ing && ing.trim()) {
-      items.push(`${ing}${measure && measure.trim() ? ` (${measure})` : ""}`);
+      items.push(`${ing}${measure && measure.trim() ? ` (${measure.trim()})` : ""}`);
     }
   }
   return items;
@@ -99,6 +101,39 @@ const getYoutubeEmbedUrl = (url) => {
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/)([^&?/]+)/
   );
   return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+};
+
+/* ---------- Serving scale helper ---------- */
+/**
+ * Parses "Flour (2 cups)" style strings and scales the measure.
+ * Returns the full scaled string.
+ */
+const scaleIngredientString = (ingredientStr, fromServings, toServings) => {
+  if (!ingredientStr || fromServings === toServings) return ingredientStr;
+  const multiplier = toServings / fromServings;
+
+  return ingredientStr.replace(/\(([^)]+)\)/, (_, inner) => {
+    // Try to find a leading number in the measure
+    const fracMatch = inner.match(/^(\d+)\/(\d+)(.*)/);
+    if (fracMatch) {
+      const val = (Number(fracMatch[1]) / Number(fracMatch[2])) * multiplier;
+      const suffix = fracMatch[3].trim();
+      const formatted = Number.isInteger(val)
+        ? String(val)
+        : val.toFixed(1).replace(/\.0$/, "");
+      return `(${formatted}${suffix ? " " + suffix : ""})`;
+    }
+    const numMatch = inner.match(/^(\d+(?:\.\d+)?)(.*)/);
+    if (numMatch) {
+      const val = Number(numMatch[1]) * multiplier;
+      const suffix = numMatch[2].trim();
+      const formatted = Number.isInteger(val)
+        ? String(val)
+        : val.toFixed(1).replace(/\.0$/, "");
+      return `(${formatted}${suffix ? " " + suffix : ""})`;
+    }
+    return `(${inner})`;
+  });
 };
 
 const fetchPublishedCommunityMeals = async (searchText) => {
@@ -134,7 +169,6 @@ const fetchPublishedCommunityMeals = async (searchText) => {
 };
 
 const fetchApiMeals = async (searchText) => {
-  // ✅ FIX #1: Encode the search text to prevent broken URLs with special characters
   const res = await fetch(
     `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchText)}`
   );
@@ -234,7 +268,6 @@ export default function MealPlanner() {
     }
 
     if (meal.idMeal) {
-      // ✅ FIX #2: Encode meal ID in lookup URL
       const res = await fetch(
         `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${encodeURIComponent(meal.idMeal)}`
       );
@@ -272,27 +305,53 @@ export default function MealPlanner() {
       details = meal;
     }
 
-    const ingredientItems = normalizeIngredientList(details.ingredients);
-    const ingredientsHtml = ingredientItems.length
-      ? ingredientItems.map((item) => `<li>${escapeHtml(item)}</li>`).join("")
-      : "<li>N/A</li>";
+    // Current servings for this meal slot (default = DEFAULT_SERVINGS)
+    const currentServings =
+      typeof details.servings === "number" && details.servings > 0
+        ? details.servings
+        : DEFAULT_SERVINGS;
 
-    const infoHtml = `
+    const buildIngredientListHtml = (servings) => {
+      const ingredientItems = normalizeIngredientList(details.ingredients);
+      if (!ingredientItems.length) return "<li>N/A</li>";
+      return ingredientItems
+        .map(
+          (item) =>
+            `<li>${escapeHtml(scaleIngredientString(item, DEFAULT_SERVINGS, servings))}</li>`
+        )
+        .join("");
+    };
+
+    const buildInfoHtml = (servings) => `
       <div style="text-align:left;">
         <p><b>Category:</b> ${escapeHtml(details.category || "N/A")}</p>
         <p><b>Chef:</b> ${escapeHtml(details.chefName || "System")}</p>
         <p><b>Country:</b> ${escapeHtml(details.country || "N/A")}</p>
-        <p><b>Ingredients:</b></p>
-        <ul style="margin:0 0 10px 18px;max-height:140px;overflow:auto;">${ingredientsHtml}</ul>
+        <p style="margin-bottom:4px;"><b>Ingredients (${servings} serving${servings > 1 ? "s" : ""}):</b></p>
+        <ul style="margin:0 0 10px 18px;max-height:140px;overflow:auto;">
+          ${buildIngredientListHtml(servings)}
+        </ul>
       </div>
     `;
 
-    const likeOutlineIcon = renderToStaticMarkup(<FaRegThumbsUp style={{ fontSize: "20px" }} />);
-    const likeFilledIcon = renderToStaticMarkup(<FaThumbsUp style={{ color: "green", fontSize: "20px" }} />);
-    const unlikeOutlineIcon = renderToStaticMarkup(<FaRegThumbsDown style={{ fontSize: "20px" }} />);
-    const unlikeFilledIcon = renderToStaticMarkup(<FaThumbsDown style={{ color: "red", fontSize: "20px" }} />);
-    const heartOutlineIcon = renderToStaticMarkup(<FaRegHeart style={{ fontSize: "20px" }} />);
-    const heartFilledIcon = renderToStaticMarkup(<FaHeart style={{ color: "crimson", fontSize: "20px" }} />);
+    const likeOutlineIcon = renderToStaticMarkup(
+      <FaRegThumbsUp style={{ fontSize: "20px" }} />
+    );
+    const likeFilledIcon = renderToStaticMarkup(
+      <FaThumbsUp style={{ color: "green", fontSize: "20px" }} />
+    );
+    const unlikeOutlineIcon = renderToStaticMarkup(
+      <FaRegThumbsDown style={{ fontSize: "20px" }} />
+    );
+    const unlikeFilledIcon = renderToStaticMarkup(
+      <FaThumbsDown style={{ color: "red", fontSize: "20px" }} />
+    );
+    const heartOutlineIcon = renderToStaticMarkup(
+      <FaRegHeart style={{ fontSize: "20px" }} />
+    );
+    const heartFilledIcon = renderToStaticMarkup(
+      <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
+    );
 
     Swal.fire({
       title: escapeHtml(details.strMeal || "Meal Details"),
@@ -301,7 +360,34 @@ export default function MealPlanner() {
       imageHeight: 180,
       imageAlt: details.strMeal || "Meal",
       html: `
-        ${infoHtml}
+        <div id="swal-info-block">
+          ${buildInfoHtml(currentServings)}
+        </div>
+
+        <!-- Serving controls -->
+        <div style="display:flex;align-items:center;justify-content:center;
+                    gap:10px;margin:10px 0 14px;padding:8px 16px;
+                    background:#fff7ed;border-radius:12px;border:1px solid #fde8d8;">
+          <span style="font-size:13px;font-weight:600;color:#f97316;">Servings:</span>
+          <button id="swal-srv-dec" type="button"
+                  style="width:30px;height:30px;border-radius:50%;border:2px solid #f97316;
+                         background:#fff;color:#f97316;font-size:18px;font-weight:700;
+                         cursor:pointer;display:flex;align-items:center;justify-content:center;
+                         line-height:1;">−</button>
+          <span id="swal-srv-count"
+                style="font-size:18px;font-weight:800;color:#f97316;min-width:24px;text-align:center;">
+            ${currentServings}
+          </span>
+          <button id="swal-srv-inc" type="button"
+                  style="width:30px;height:30px;border-radius:50%;border:2px solid #f97316;
+                         background:#fff;color:#f97316;font-size:18px;font-weight:700;
+                         cursor:pointer;display:flex;align-items:center;justify-content:center;
+                         line-height:1;">+</button>
+          <span style="font-size:11px;color:#bbb;margin-left:4px;">
+            (saves with planner)
+          </span>
+        </div>
+
         <div class="meal-alert-actions">
           <button id="swal-video-btn" type="button" class="watch-video-btn">▶ Watch Video</button>
           <div class="reaction-buttons">
@@ -318,21 +404,77 @@ export default function MealPlanner() {
         const unlikeBtn = document.getElementById("swal-unlike-btn");
         const favBtn = document.getElementById("swal-fav-btn");
         const videoBtn = document.getElementById("swal-video-btn");
+        const decBtn = document.getElementById("swal-srv-dec");
+        const incBtn = document.getElementById("swal-srv-inc");
+        const srvCount = document.getElementById("swal-srv-count");
+        const infoBlock = document.getElementById("swal-info-block");
 
+        let servings = currentServings;
+
+        const refreshIngredients = () => {
+          srvCount.textContent = servings;
+          infoBlock.innerHTML = buildInfoHtml(servings);
+        };
+
+        decBtn?.addEventListener("click", () => {
+          if (servings <= 1) return;
+          servings--;
+          refreshIngredients();
+          // Update planner state so the new servings count is saved
+          if (day && mealType) {
+            setPlanner((prev) => ({
+              ...prev,
+              [day]: {
+                ...prev[day],
+                [mealType]: { ...prev[day][mealType], servings },
+              },
+            }));
+          }
+        });
+
+        incBtn?.addEventListener("click", () => {
+          if (servings >= 20) return;
+          servings++;
+          refreshIngredients();
+          if (day && mealType) {
+            setPlanner((prev) => ({
+              ...prev,
+              [day]: {
+                ...prev[day],
+                [mealType]: { ...prev[day][mealType], servings },
+              },
+            }));
+          }
+        });
+
+        // ── Load action state (reactions + favorites) ──
         const loadActionState = async () => {
           const reactionId = getReactionDocId(details);
-          const defaultState = { likes: 0, unlikes: 0, userReaction: "none", favorite: false, favoriteDocId: null };
+          const defaultState = {
+            likes: 0,
+            unlikes: 0,
+            userReaction: "none",
+            favorite: false,
+            favoriteDocId: null,
+          };
           if (!reactionId) return defaultState;
 
-          // ✅ FIX #3: Wrap Firestore reads in try/catch so UI doesn't crash if read fails
           try {
             const reactionSnap = await getDoc(doc(db, "recipeReactions", reactionId));
             const reactionData = reactionSnap.exists() ? reactionSnap.data() : {};
-            const likes = Number.isFinite(reactionData.likeCount) ? reactionData.likeCount : 0;
-            const unlikes = Number.isFinite(reactionData.unlikeCount) ? reactionData.unlikeCount : 0;
+            const likes = Number.isFinite(reactionData.likeCount)
+              ? reactionData.likeCount
+              : 0;
+            const unlikes = Number.isFinite(reactionData.unlikeCount)
+              ? reactionData.unlikeCount
+              : 0;
 
-            const likedBy = Array.isArray(reactionData.likedBy) ? reactionData.likedBy : [];
-            const unlikedBy = Array.isArray(reactionData.unlikedBy) ? reactionData.unlikedBy : [];
+            const likedBy = Array.isArray(reactionData.likedBy)
+              ? reactionData.likedBy
+              : [];
+            const unlikedBy = Array.isArray(reactionData.unlikedBy)
+              ? reactionData.unlikedBy
+              : [];
             const userReaction = user?.uid
               ? likedBy.includes(user.uid)
                 ? "like"
@@ -346,7 +488,9 @@ export default function MealPlanner() {
             if (user?.uid) {
               const candidateIds = getFavoriteDocIds(details);
               for (const favId of candidateIds) {
-                const favSnap = await getDoc(doc(db, "users", user.uid, "favorites", favId));
+                const favSnap = await getDoc(
+                  doc(db, "users", user.uid, "favorites", favId)
+                );
                 if (favSnap.exists()) {
                   favorite = true;
                   favoriteDocId = favId;
@@ -364,12 +508,19 @@ export default function MealPlanner() {
 
         const renderActionState = (state) => {
           if (likeBtn) {
-            likeBtn.innerHTML = `${state.userReaction === "like" ? likeFilledIcon : likeOutlineIcon}<span id="swal-like-count"> ${state.likes}</span>`;
+            likeBtn.innerHTML = `${
+              state.userReaction === "like" ? likeFilledIcon : likeOutlineIcon
+            }<span id="swal-like-count"> ${state.likes}</span>`;
             likeBtn.classList.toggle("active", state.userReaction === "like");
           }
           if (unlikeBtn) {
-            unlikeBtn.innerHTML = `${state.userReaction === "unlike" ? unlikeFilledIcon : unlikeOutlineIcon}<span id="swal-unlike-count"> ${state.unlikes}</span>`;
-            unlikeBtn.classList.toggle("active", state.userReaction === "unlike");
+            unlikeBtn.innerHTML = `${
+              state.userReaction === "unlike" ? unlikeFilledIcon : unlikeOutlineIcon
+            }<span id="swal-unlike-count"> ${state.unlikes}</span>`;
+            unlikeBtn.classList.toggle(
+              "active",
+              state.userReaction === "unlike"
+            );
           }
           if (favBtn) {
             favBtn.innerHTML = state.favorite ? heartFilledIcon : heartOutlineIcon;
@@ -404,9 +555,18 @@ export default function MealPlanner() {
           runTapAnimation(likeBtn);
 
           if (state.userReaction === "like") {
-            state = { ...state, userReaction: "none", likes: Math.max(0, state.likes - 1) };
+            state = {
+              ...state,
+              userReaction: "none",
+              likes: Math.max(0, state.likes - 1),
+            };
           } else if (state.userReaction === "unlike") {
-            state = { ...state, userReaction: "like", unlikes: Math.max(0, state.unlikes - 1), likes: state.likes + 1 };
+            state = {
+              ...state,
+              userReaction: "like",
+              unlikes: Math.max(0, state.unlikes - 1),
+              likes: state.likes + 1,
+            };
           } else {
             state = { ...state, userReaction: "like", likes: state.likes + 1 };
           }
@@ -431,16 +591,32 @@ export default function MealPlanner() {
           runTapAnimation(unlikeBtn);
 
           if (state.userReaction === "unlike") {
-            state = { ...state, userReaction: "none", unlikes: Math.max(0, state.unlikes - 1) };
+            state = {
+              ...state,
+              userReaction: "none",
+              unlikes: Math.max(0, state.unlikes - 1),
+            };
           } else if (state.userReaction === "like") {
-            state = { ...state, userReaction: "unlike", likes: Math.max(0, state.likes - 1), unlikes: state.unlikes + 1 };
+            state = {
+              ...state,
+              userReaction: "unlike",
+              likes: Math.max(0, state.likes - 1),
+              unlikes: state.unlikes + 1,
+            };
           } else {
-            state = { ...state, userReaction: "unlike", unlikes: state.unlikes + 1 };
+            state = {
+              ...state,
+              userReaction: "unlike",
+              unlikes: state.unlikes + 1,
+            };
           }
           renderActionState(state);
 
           try {
-            await applyUnlikeReaction({ recipeId: reactionId, userId: user.uid });
+            await applyUnlikeReaction({
+              recipeId: reactionId,
+              userId: user.uid,
+            });
           } catch {
             state = prevState;
             renderActionState(state);
@@ -455,8 +631,14 @@ export default function MealPlanner() {
           runTapAnimation(favBtn);
           const prevState = { ...state };
           const nextFavorite = !state.favorite;
-          const nextFavoriteDocId = nextFavorite ? getPreferredFavoriteDocId(details) : null;
-          state = { ...state, favorite: nextFavorite, favoriteDocId: nextFavoriteDocId };
+          const nextFavoriteDocId = nextFavorite
+            ? getPreferredFavoriteDocId(details)
+            : null;
+          state = {
+            ...state,
+            favorite: nextFavorite,
+            favoriteDocId: nextFavoriteDocId,
+          };
           renderActionState(state);
 
           const favId = nextFavorite
@@ -557,7 +739,6 @@ export default function MealPlanner() {
         const snap = await getDoc(docRef);
 
         if (snap.exists()) {
-          // ✅ FIX #4: Guard against missing planner key in Firestore doc
           const fetchedPlanner = snap.data().planner || createEmptyPlanner();
           setPlanner(fetchedPlanner);
           initialPlannerRef.current = JSON.parse(JSON.stringify(fetchedPlanner));
@@ -595,12 +776,12 @@ export default function MealPlanner() {
     setIsSaving(true);
 
     try {
-      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const userTimeZone =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
       const plannerRef = doc(db, "MealPlanner", user.uid);
       const existingSnap = await getDoc(plannerRef);
       const existingData = existingSnap.exists() ? existingSnap.data() : {};
 
-      // ✅ FIX #5: Always save ownerEmail from user.email so reminder service can find it
       await setDoc(plannerRef, {
         planner,
         uid: user.uid,
@@ -635,7 +816,6 @@ export default function MealPlanner() {
         showConfirmButton: false,
       });
     } catch (err) {
-      // ✅ FIX #6: Log the actual error so you can debug save failures
       console.error("Save failed:", err);
       Swal.fire("Error", "Failed to save planner", "error");
     } finally {
@@ -660,7 +840,6 @@ export default function MealPlanner() {
         const suggestionsDiv = document.getElementById("suggestions");
         let debounceTimer;
 
-        // ✅ FIX #7: Auto-focus the search input so user can type immediately
         setTimeout(() => input?.focus(), 100);
 
         input.addEventListener("input", () => {
@@ -673,7 +852,6 @@ export default function MealPlanner() {
               return;
             }
 
-            // ✅ FIX #8: Show a loading indicator while fetching
             suggestionsDiv.innerHTML = `<p style="color:#888;padding:6px;">Searching...</p>`;
 
             try {
@@ -683,15 +861,18 @@ export default function MealPlanner() {
               ]);
 
               const seenNames = new Set();
-              const mergedMeals = [...communityMeals, ...apiMeals].filter((m) => {
-                const key = (m.strMeal || "").toLowerCase();
-                if (!key || seenNames.has(key)) return false;
-                seenNames.add(key);
-                return true;
-              });
+              const mergedMeals = [...communityMeals, ...apiMeals].filter(
+                (m) => {
+                  const key = (m.strMeal || "").toLowerCase();
+                  if (!key || seenNames.has(key)) return false;
+                  seenNames.add(key);
+                  return true;
+                }
+              );
 
               if (!mergedMeals.length) {
-                suggestionsDiv.innerHTML = "<p style='color:#888;padding:6px;'>No results found</p>";
+                suggestionsDiv.innerHTML =
+                  "<p style='color:#888;padding:6px;'>No results found</p>";
                 return;
               }
 
@@ -704,7 +885,9 @@ export default function MealPlanner() {
                   : `<div style="width:40px;height:40px;border-radius:6px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:11px;color:#666;flex-shrink:0;">N/A</div>`;
                 const sourceBadge =
                   m.source === "community"
-                    ? `<span style="margin-left:6px;padding:2px 6px;border-radius:10px;background:#16a34a;color:#fff;font-size:10px;">Chef: ${escapeHtml(m.chefName || "Unknown Chef")}</span>`
+                    ? `<span style="margin-left:6px;padding:2px 6px;border-radius:10px;background:#16a34a;color:#fff;font-size:10px;">Chef: ${escapeHtml(
+                        m.chefName || "Unknown Chef"
+                      )}</span>`
                     : "";
 
                 item.style.cssText = `
@@ -717,14 +900,18 @@ export default function MealPlanner() {
                   transition:background 0.15s;
                 `;
 
-                // ✅ FIX #9: Add hover effect on suggestion items
-                item.onmouseenter = () => (item.style.background = "#f3f4f6");
-                item.onmouseleave = () => (item.style.background = "transparent");
+                item.onmouseenter = () =>
+                  (item.style.background = "#f3f4f6");
+                item.onmouseleave = () =>
+                  (item.style.background = "transparent");
 
-                item.innerHTML = `${thumb}<span>${escapeHtml(m.strMeal)}${sourceBadge}</span>`;
+                item.innerHTML = `${thumb}<span>${escapeHtml(
+                  m.strMeal
+                )}${sourceBadge}</span>`;
 
                 item.onclick = () => {
-                  selectedMeal = { ...m };
+                  // Attach default servings when a meal is selected
+                  selectedMeal = { ...m, servings: DEFAULT_SERVINGS };
                   input.value = m.strMeal;
                   suggestionsDiv.innerHTML = "";
                 };
@@ -732,14 +919,17 @@ export default function MealPlanner() {
                 suggestionsDiv.appendChild(item);
               });
             } catch {
-              suggestionsDiv.innerHTML = "<p style='color:red;padding:6px;'>Error loading results</p>";
+              suggestionsDiv.innerHTML =
+                "<p style='color:red;padding:6px;'>Error loading results</p>";
             }
           }, 300);
         });
       },
       preConfirm: () => {
         if (!selectedMeal) {
-          Swal.showValidationMessage("Please select a meal from the suggestions");
+          Swal.showValidationMessage(
+            "Please select a meal from the suggestions"
+          );
         }
         return selectedMeal;
       },
@@ -788,17 +978,30 @@ export default function MealPlanner() {
   /* ---------- Loading ---------- */
   if (loading) {
     return (
-      // ✅ FIX #10: Better loading UI with spinner feel
-      <div className="loading" style={{ textAlign: "center", padding: "60px", fontSize: "18px", color: "#f97316" }}>
+      <div
+        className="loading"
+        style={{
+          textAlign: "center",
+          padding: "60px",
+          fontSize: "18px",
+          color: "#f97316",
+        }}
+      >
         🍽️ Loading your planner...
       </div>
     );
   }
 
-  // ✅ FIX #11: Show login prompt if user is not logged in
   if (!user) {
     return (
-      <div style={{ textAlign: "center", padding: "60px", fontSize: "18px", color: "#555" }}>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "60px",
+          fontSize: "18px",
+          color: "#555",
+        }}
+      >
         <p>🔐 Please log in to view your meal planner.</p>
       </div>
     );
@@ -864,20 +1067,46 @@ export default function MealPlanner() {
 
                   {planner[day]?.[meal] ? (
                     <div className="meal-details">
-                      {/* ✅ FIX #12: Fallback image if thumbnail fails to load */}
                       <img
                         src={planner[day][meal].strMealThumb}
                         alt={planner[day][meal].strMeal}
-                        onClick={() => openMealInfo(planner[day][meal], day, meal)}
+                        onClick={() =>
+                          openMealInfo(planner[day][meal], day, meal)
+                        }
                         style={{ cursor: "pointer" }}
-                        title="Click to view details"
+                        title="Click to view details & adjust servings"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = "https://via.placeholder.com/50x50?text=🍽️";
+                          e.target.src =
+                            "https://via.placeholder.com/50x50?text=🍽️";
                         }}
                       />
-                      <span className="meal-name">{planner[day][meal].strMeal}</span>
-                      <button className="remove-btn" onClick={() => removeMeal(day, meal)}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="meal-name">
+                          {planner[day][meal].strMeal}
+                        </div>
+                        {/* Show serving count badge */}
+                        <div
+                          style={{
+                            fontSize: "11px",
+                            color: "#f97316",
+                            fontWeight: 600,
+                            marginTop: "2px",
+                          }}
+                        >
+                          👥{" "}
+                          {planner[day][meal].servings || DEFAULT_SERVINGS}{" "}
+                          serving
+                          {(planner[day][meal].servings || DEFAULT_SERVINGS) >
+                          1
+                            ? "s"
+                            : ""}
+                        </div>
+                      </div>
+                      <button
+                        className="remove-btn"
+                        onClick={() => removeMeal(day, meal)}
+                      >
                         ✕
                       </button>
                     </div>
@@ -885,7 +1114,10 @@ export default function MealPlanner() {
                     <span className="not-set">Not set</span>
                   )}
 
-                  <button className="add-btn" onClick={() => assignMeal(day, meal)}>
+                  <button
+                    className="add-btn"
+                    onClick={() => assignMeal(day, meal)}
+                  >
                     {planner[day]?.[meal] ? "Change" : "Add"}
                   </button>
                 </div>
