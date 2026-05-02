@@ -3501,3 +3501,6 @@ body.dark-mode .form-control:focus {
     color: #5d4037 !important;
     border-color: #ff9800 !important;
 }
+body.dark-mode .meal-name {
+    color: #ffffff !important;
+}

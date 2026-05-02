@@ -104,16 +104,11 @@ const getYoutubeEmbedUrl = (url) => {
 };
 
 /* ---------- Serving scale helper ---------- */
-/**
- * Parses "Flour (2 cups)" style strings and scales the measure.
- * Returns the full scaled string.
- */
 const scaleIngredientString = (ingredientStr, fromServings, toServings) => {
   if (!ingredientStr || fromServings === toServings) return ingredientStr;
   const multiplier = toServings / fromServings;
 
   return ingredientStr.replace(/\(([^)]+)\)/, (_, inner) => {
-    // Try to find a leading number in the measure
     const fracMatch = inner.match(/^(\d+)\/(\d+)(.*)/);
     if (fracMatch) {
       const val = (Number(fracMatch[1]) / Number(fracMatch[2])) * multiplier;
@@ -203,7 +198,16 @@ export default function MealPlanner() {
     const id = String(meal.idMeal);
     return id.startsWith("community_") ? id.replace("community_", "") : null;
   };
-
+  useEffect(() => {
+  const closeDropdowns = (e) => {
+    if (!e.target.closest(".meal-menu-mobile")) {
+      document.querySelectorAll(".meal-dropdown.open")
+        .forEach((d) => d.classList.remove("open"));
+    }
+  };
+  document.addEventListener("click", closeDropdowns);
+  return () => document.removeEventListener("click", closeDropdowns);
+}, []);
   const getReactionDocId = (meal) => {
     const communityId = getCommunityRecipeId(meal);
     return communityId ? `chef_${communityId}` : meal?.idMeal;
@@ -305,7 +309,6 @@ export default function MealPlanner() {
       details = meal;
     }
 
-    // Current servings for this meal slot (default = DEFAULT_SERVINGS)
     const currentServings =
       typeof details.servings === "number" && details.servings > 0
         ? details.servings
@@ -334,66 +337,53 @@ export default function MealPlanner() {
       </div>
     `;
 
-    const likeOutlineIcon = renderToStaticMarkup(
-      <FaRegThumbsUp style={{ fontSize: "20px" }} />
-    );
-    const likeFilledIcon = renderToStaticMarkup(
-      <FaThumbsUp style={{ color: "green", fontSize: "20px" }} />
-    );
-    const unlikeOutlineIcon = renderToStaticMarkup(
-      <FaRegThumbsDown style={{ fontSize: "20px" }} />
-    );
-    const unlikeFilledIcon = renderToStaticMarkup(
-      <FaThumbsDown style={{ color: "red", fontSize: "20px" }} />
-    );
-    const heartOutlineIcon = renderToStaticMarkup(
-      <FaRegHeart style={{ fontSize: "20px" }} />
-    );
-    const heartFilledIcon = renderToStaticMarkup(
-      <FaHeart style={{ color: "crimson", fontSize: "20px" }} />
-    );
+    const likeOutlineIcon = renderToStaticMarkup(<FaRegThumbsUp style={{ fontSize: "20px" }} />);
+    const likeFilledIcon = renderToStaticMarkup(<FaThumbsUp style={{ color: "green", fontSize: "20px" }} />);
+    const unlikeOutlineIcon = renderToStaticMarkup(<FaRegThumbsDown style={{ fontSize: "20px" }} />);
+    const unlikeFilledIcon = renderToStaticMarkup(<FaThumbsDown style={{ color: "red", fontSize: "20px" }} />);
+    const heartOutlineIcon = renderToStaticMarkup(<FaRegHeart style={{ fontSize: "20px" }} />);
+    const heartFilledIcon = renderToStaticMarkup(<FaHeart style={{ color: "crimson", fontSize: "20px" }} />);
 
     Swal.fire({
+      /* ── Title is set via `title` so SweetAlert places it ABOVE the image,
+         fully visible and never overlapping any button ── */
       title: escapeHtml(details.strMeal || "Meal Details"),
       imageUrl: details.strMealThumb || "",
       imageWidth: 260,
       imageHeight: 180,
       imageAlt: details.strMeal || "Meal",
       html: `
+        <!-- Info block -->
         <div id="swal-info-block">
           ${buildInfoHtml(currentServings)}
         </div>
 
-        <!-- Serving controls -->
-        <div style="display:flex;align-items:center;justify-content:center;
-                    gap:10px;margin:10px 0 14px;padding:8px 16px;
-                    background:#fff7ed;border-radius:12px;border:1px solid #fde8d8;">
-          <span style="font-size:13px;font-weight:600;color:#f97316;">Servings:</span>
-          <button id="swal-srv-dec" type="button"
-                  style="width:30px;height:30px;border-radius:50%;border:2px solid #f97316;
-                         background:#fff;color:#f97316;font-size:18px;font-weight:700;
-                         cursor:pointer;display:flex;align-items:center;justify-content:center;
-                         line-height:1;">−</button>
-          <span id="swal-srv-count"
-                style="font-size:18px;font-weight:800;color:#f97316;min-width:24px;text-align:center;">
-            ${currentServings}
-          </span>
-          <button id="swal-srv-inc" type="button"
-                  style="width:30px;height:30px;border-radius:50%;border:2px solid #f97316;
-                         background:#fff;color:#f97316;font-size:18px;font-weight:700;
-                         cursor:pointer;display:flex;align-items:center;justify-content:center;
-                         line-height:1;">+</button>
-          <span style="font-size:11px;color:#bbb;margin-left:4px;">
-            (saves with planner)
-          </span>
+        <!-- Serving controls — uses CSS class for dark-mode styling -->
+        <div class="swal-serving-row">
+          <span class="swal-serving-label">👥 Servings:</span>
+
+          <button id="swal-srv-dec" type="button">−</button>
+
+          <span id="swal-srv-count">${currentServings}</span>
+
+          <button id="swal-srv-inc" type="button">+</button>
+
+          <span class="swal-serving-hint">(saves with planner)</span>
         </div>
 
+        <!-- Action buttons -->
         <div class="meal-alert-actions">
           <button id="swal-video-btn" type="button" class="watch-video-btn">▶ Watch Video</button>
           <div class="reaction-buttons">
-            <button id="swal-like-btn" type="button" class="like-btn">${likeOutlineIcon}<span id="swal-like-count"> 0</span></button>
-            <button id="swal-unlike-btn" type="button" class="unlike-btn">${unlikeOutlineIcon}<span id="swal-unlike-count"> 0</span></button>
-            <button id="swal-fav-btn" type="button" class="heart-btn">${heartOutlineIcon}</button>
+            <button id="swal-like-btn"   type="button" class="like-btn">
+              ${likeOutlineIcon}<span id="swal-like-count"> 0</span>
+            </button>
+            <button id="swal-unlike-btn" type="button" class="unlike-btn">
+              ${unlikeOutlineIcon}<span id="swal-unlike-count"> 0</span>
+            </button>
+            <button id="swal-fav-btn"    type="button" class="heart-btn">
+              ${heartOutlineIcon}
+            </button>
           </div>
         </div>
       `,
@@ -420,7 +410,6 @@ export default function MealPlanner() {
           if (servings <= 1) return;
           servings--;
           refreshIngredients();
-          // Update planner state so the new servings count is saved
           if (day && mealType) {
             setPlanner((prev) => ({
               ...prev,
@@ -447,55 +436,35 @@ export default function MealPlanner() {
           }
         });
 
-        // ── Load action state (reactions + favorites) ──
+        /* ── Load reaction + favourite state ── */
         const loadActionState = async () => {
           const reactionId = getReactionDocId(details);
           const defaultState = {
-            likes: 0,
-            unlikes: 0,
+            likes: 0, unlikes: 0,
             userReaction: "none",
-            favorite: false,
-            favoriteDocId: null,
+            favorite: false, favoriteDocId: null,
           };
           if (!reactionId) return defaultState;
 
           try {
             const reactionSnap = await getDoc(doc(db, "recipeReactions", reactionId));
             const reactionData = reactionSnap.exists() ? reactionSnap.data() : {};
-            const likes = Number.isFinite(reactionData.likeCount)
-              ? reactionData.likeCount
-              : 0;
-            const unlikes = Number.isFinite(reactionData.unlikeCount)
-              ? reactionData.unlikeCount
-              : 0;
-
-            const likedBy = Array.isArray(reactionData.likedBy)
-              ? reactionData.likedBy
-              : [];
-            const unlikedBy = Array.isArray(reactionData.unlikedBy)
-              ? reactionData.unlikedBy
-              : [];
+            const likes = Number.isFinite(reactionData.likeCount) ? reactionData.likeCount : 0;
+            const unlikes = Number.isFinite(reactionData.unlikeCount) ? reactionData.unlikeCount : 0;
+            const likedBy = Array.isArray(reactionData.likedBy) ? reactionData.likedBy : [];
+            const unlikedBy = Array.isArray(reactionData.unlikedBy) ? reactionData.unlikedBy : [];
             const userReaction = user?.uid
-              ? likedBy.includes(user.uid)
-                ? "like"
-                : unlikedBy.includes(user.uid)
-                ? "unlike"
-                : "none"
+              ? likedBy.includes(user.uid) ? "like"
+                : unlikedBy.includes(user.uid) ? "unlike"
+                  : "none"
               : "none";
 
             let favorite = false;
             let favoriteDocId = null;
             if (user?.uid) {
-              const candidateIds = getFavoriteDocIds(details);
-              for (const favId of candidateIds) {
-                const favSnap = await getDoc(
-                  doc(db, "users", user.uid, "favorites", favId)
-                );
-                if (favSnap.exists()) {
-                  favorite = true;
-                  favoriteDocId = favId;
-                  break;
-                }
+              for (const favId of getFavoriteDocIds(details)) {
+                const favSnap = await getDoc(doc(db, "users", user.uid, "favorites", favId));
+                if (favSnap.exists()) { favorite = true; favoriteDocId = favId; break; }
               }
             }
 
@@ -508,19 +477,12 @@ export default function MealPlanner() {
 
         const renderActionState = (state) => {
           if (likeBtn) {
-            likeBtn.innerHTML = `${
-              state.userReaction === "like" ? likeFilledIcon : likeOutlineIcon
-            }<span id="swal-like-count"> ${state.likes}</span>`;
+            likeBtn.innerHTML = `${state.userReaction === "like" ? likeFilledIcon : likeOutlineIcon}<span id="swal-like-count"> ${state.likes}</span>`;
             likeBtn.classList.toggle("active", state.userReaction === "like");
           }
           if (unlikeBtn) {
-            unlikeBtn.innerHTML = `${
-              state.userReaction === "unlike" ? unlikeFilledIcon : unlikeOutlineIcon
-            }<span id="swal-unlike-count"> ${state.unlikes}</span>`;
-            unlikeBtn.classList.toggle(
-              "active",
-              state.userReaction === "unlike"
-            );
+            unlikeBtn.innerHTML = `${state.userReaction === "unlike" ? unlikeFilledIcon : unlikeOutlineIcon}<span id="swal-unlike-count"> ${state.unlikes}</span>`;
+            unlikeBtn.classList.toggle("active", state.userReaction === "unlike");
           }
           if (favBtn) {
             favBtn.innerHTML = state.favorite ? heartFilledIcon : heartOutlineIcon;
@@ -545,28 +507,16 @@ export default function MealPlanner() {
         renderActionState(state);
 
         likeBtn?.addEventListener("click", async () => {
-          if (!user?.uid) {
-            Swal.fire("Login Required", "Please login first", "warning");
-            return;
-          }
+          if (!user?.uid) { Swal.fire("Login Required", "Please login first", "warning"); return; }
           const reactionId = getReactionDocId(details);
           if (!reactionId) return;
           const prevState = { ...state };
           runTapAnimation(likeBtn);
 
           if (state.userReaction === "like") {
-            state = {
-              ...state,
-              userReaction: "none",
-              likes: Math.max(0, state.likes - 1),
-            };
+            state = { ...state, userReaction: "none", likes: Math.max(0, state.likes - 1) };
           } else if (state.userReaction === "unlike") {
-            state = {
-              ...state,
-              userReaction: "like",
-              unlikes: Math.max(0, state.unlikes - 1),
-              likes: state.likes + 1,
-            };
+            state = { ...state, userReaction: "like", unlikes: Math.max(0, state.unlikes - 1), likes: state.likes + 1 };
           } else {
             state = { ...state, userReaction: "like", likes: state.likes + 1 };
           }
@@ -581,42 +531,23 @@ export default function MealPlanner() {
         });
 
         unlikeBtn?.addEventListener("click", async () => {
-          if (!user?.uid) {
-            Swal.fire("Login Required", "Please login first", "warning");
-            return;
-          }
+          if (!user?.uid) { Swal.fire("Login Required", "Please login first", "warning"); return; }
           const reactionId = getReactionDocId(details);
           if (!reactionId) return;
           const prevState = { ...state };
           runTapAnimation(unlikeBtn);
 
           if (state.userReaction === "unlike") {
-            state = {
-              ...state,
-              userReaction: "none",
-              unlikes: Math.max(0, state.unlikes - 1),
-            };
+            state = { ...state, userReaction: "none", unlikes: Math.max(0, state.unlikes - 1) };
           } else if (state.userReaction === "like") {
-            state = {
-              ...state,
-              userReaction: "unlike",
-              likes: Math.max(0, state.likes - 1),
-              unlikes: state.unlikes + 1,
-            };
+            state = { ...state, userReaction: "unlike", likes: Math.max(0, state.likes - 1), unlikes: state.unlikes + 1 };
           } else {
-            state = {
-              ...state,
-              userReaction: "unlike",
-              unlikes: state.unlikes + 1,
-            };
+            state = { ...state, userReaction: "unlike", unlikes: state.unlikes + 1 };
           }
           renderActionState(state);
 
           try {
-            await applyUnlikeReaction({
-              recipeId: reactionId,
-              userId: user.uid,
-            });
+            await applyUnlikeReaction({ recipeId: reactionId, userId: user.uid });
           } catch {
             state = prevState;
             renderActionState(state);
@@ -624,21 +555,12 @@ export default function MealPlanner() {
         });
 
         favBtn?.addEventListener("click", async () => {
-          if (!user?.uid) {
-            Swal.fire("Login Required", "Please login first", "warning");
-            return;
-          }
+          if (!user?.uid) { Swal.fire("Login Required", "Please login first", "warning"); return; }
           runTapAnimation(favBtn);
           const prevState = { ...state };
           const nextFavorite = !state.favorite;
-          const nextFavoriteDocId = nextFavorite
-            ? getPreferredFavoriteDocId(details)
-            : null;
-          state = {
-            ...state,
-            favorite: nextFavorite,
-            favoriteDocId: nextFavoriteDocId,
-          };
+          const nextFavoriteDocId = nextFavorite ? getPreferredFavoriteDocId(details) : null;
+          state = { ...state, favorite: nextFavorite, favoriteDocId: nextFavoriteDocId };
           renderActionState(state);
 
           const favId = nextFavorite
@@ -647,11 +569,8 @@ export default function MealPlanner() {
           const favRef = doc(db, "users", user.uid, "favorites", favId);
 
           try {
-            if (nextFavorite) {
-              await setDoc(favRef, buildFavoritePayload(details));
-            } else {
-              await deleteDoc(favRef);
-            }
+            if (nextFavorite) { await setDoc(favRef, buildFavoritePayload(details)); }
+            else { await deleteDoc(favRef); }
           } catch {
             state = prevState;
             renderActionState(state);
@@ -661,10 +580,7 @@ export default function MealPlanner() {
         videoBtn?.addEventListener("click", () => {
           if (!details.strYoutube) return;
           const embedUrl = getYoutubeEmbedUrl(details.strYoutube);
-          if (!embedUrl) {
-            Swal.fire("Invalid Video", "Unable to load this video.", "warning");
-            return;
-          }
+          if (!embedUrl) { Swal.fire("Invalid Video", "Unable to load this video.", "warning"); return; }
           Swal.fire({
             title: escapeHtml(details.strMeal || "Recipe Video"),
             html: `
@@ -685,9 +601,7 @@ export default function MealPlanner() {
     });
   };
 
-  /* =========================================================
-     BLOCK REACT ROUTER NAVIGATION
-  ========================================================= */
+  /* ── Block React Router navigation on unsaved changes ── */
   useEffect(() => {
     const handleRouteBlock = (e) => {
       if (!hasUnsavedChanges) return;
@@ -695,21 +609,14 @@ export default function MealPlanner() {
       if (link && link.getAttribute("href")) {
         e.preventDefault();
         e.stopPropagation();
-        Swal.fire({
-          icon: "warning",
-          title: "Unsaved Changes ⚠️",
-          text: "Please save your planner before leaving.",
-          confirmButtonText: "OK",
-        });
+        Swal.fire({ icon: "warning", title: "Unsaved Changes ⚠️", text: "Please save your planner before leaving.", confirmButtonText: "OK" });
       }
     };
     document.addEventListener("click", handleRouteBlock, true);
     return () => document.removeEventListener("click", handleRouteBlock, true);
   }, [hasUnsavedChanges]);
 
-  /* =========================================================
-     BLOCK REFRESH / CLOSE TAB
-  ========================================================= */
+  /* ── Block refresh / tab close ── */
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (!hasUnsavedChanges) return;
@@ -720,24 +627,19 @@ export default function MealPlanner() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  /* ---------- Listen auth ---------- */
+  /* ── Auth ── */
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((u) => setUser(u));
     return () => unsubscribe();
   }, []);
 
-  /* ---------- Fetch planner ---------- */
+  /* ── Fetch planner ── */
   useEffect(() => {
     const fetchPlanner = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
+      if (!user) { setLoading(false); return; }
       try {
         const docRef = doc(db, "MealPlanner", user.uid);
         const snap = await getDoc(docRef);
-
         if (snap.exists()) {
           const fetchedPlanner = snap.data().planner || createEmptyPlanner();
           setPlanner(fetchedPlanner);
@@ -751,33 +653,25 @@ export default function MealPlanner() {
         console.error("Failed to fetch planner:", err);
         Swal.fire("Error", "Failed to load planner", "error");
       }
-
       setLoading(false);
     };
-
     fetchPlanner();
   }, [user]);
 
-  /* ---------- Check for unsaved changes ---------- */
+  /* ── Unsaved change detection ── */
   useEffect(() => {
     if (!initialPlannerRef.current) return;
-    const currentPlannerStr = JSON.stringify(planner);
-    const initialPlannerStr = JSON.stringify(initialPlannerRef.current);
-    setHasUnsavedChanges(currentPlannerStr !== initialPlannerStr);
+    setHasUnsavedChanges(
+      JSON.stringify(planner) !== JSON.stringify(initialPlannerRef.current)
+    );
   }, [planner]);
 
-  /* ---------- Save planner ---------- */
+  /* ── Save ── */
   const savePlanner = async () => {
-    if (!user) {
-      Swal.fire("Login Required", "Please login first", "warning");
-      return;
-    }
-
+    if (!user) { Swal.fire("Login Required", "Please login first", "warning"); return; }
     setIsSaving(true);
-
     try {
-      const userTimeZone =
-        Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
       const plannerRef = doc(db, "MealPlanner", user.uid);
       const existingSnap = await getDoc(plannerRef);
       const existingData = existingSnap.exists() ? existingSnap.data() : {};
@@ -793,13 +687,10 @@ export default function MealPlanner() {
           "User",
         reminderEnabled:
           typeof existingData.reminderEnabled === "boolean"
-            ? existingData.reminderEnabled
-            : true,
+            ? existingData.reminderEnabled : true,
         reminderTimes:
-          existingData.reminderTimes &&
-          typeof existingData.reminderTimes === "object"
-            ? existingData.reminderTimes
-            : defaultReminderTimes,
+          existingData.reminderTimes && typeof existingData.reminderTimes === "object"
+            ? existingData.reminderTimes : defaultReminderTimes,
         timeZone: existingData.timeZone || userTimeZone,
         updatedAt: new Date(),
       });
@@ -808,13 +699,7 @@ export default function MealPlanner() {
       setHasUnsavedChanges(false);
       setLastSavedTime(new Date());
 
-      Swal.fire({
-        title: "Saved Successfully! ✅",
-        text: "Your meal plan has been saved.",
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-      });
+      Swal.fire({ title: "Saved Successfully! ✅", text: "Your meal plan has been saved.", icon: "success", timer: 2000, showConfirmButton: false });
     } catch (err) {
       console.error("Save failed:", err);
       Swal.fire("Error", "Failed to save planner", "error");
@@ -823,7 +708,7 @@ export default function MealPlanner() {
     }
   };
 
-  /* ---------- Add / Change meal ---------- */
+  /* ── Add / Change meal ── */
   const assignMeal = async (day, meal) => {
     let selectedMeal = null;
 
@@ -847,11 +732,7 @@ export default function MealPlanner() {
           clearTimeout(debounceTimer);
 
           debounceTimer = setTimeout(async () => {
-            if (!query) {
-              suggestionsDiv.innerHTML = "";
-              return;
-            }
-
+            if (!query) { suggestionsDiv.innerHTML = ""; return; }
             suggestionsDiv.innerHTML = `<p style="color:#888;padding:6px;">Searching...</p>`;
 
             try {
@@ -861,18 +742,15 @@ export default function MealPlanner() {
               ]);
 
               const seenNames = new Set();
-              const mergedMeals = [...communityMeals, ...apiMeals].filter(
-                (m) => {
-                  const key = (m.strMeal || "").toLowerCase();
-                  if (!key || seenNames.has(key)) return false;
-                  seenNames.add(key);
-                  return true;
-                }
-              );
+              const mergedMeals = [...communityMeals, ...apiMeals].filter((m) => {
+                const key = (m.strMeal || "").toLowerCase();
+                if (!key || seenNames.has(key)) return false;
+                seenNames.add(key);
+                return true;
+              });
 
               if (!mergedMeals.length) {
-                suggestionsDiv.innerHTML =
-                  "<p style='color:#888;padding:6px;'>No results found</p>";
+                suggestionsDiv.innerHTML = "<p style='color:#888;padding:6px;'>No results found</p>";
                 return;
               }
 
@@ -883,34 +761,16 @@ export default function MealPlanner() {
                 const thumb = m.strMealThumb
                   ? `<img src="${m.strMealThumb}" width="40" height="40" style="border-radius:6px;object-fit:cover;flex-shrink:0;"/>`
                   : `<div style="width:40px;height:40px;border-radius:6px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:11px;color:#666;flex-shrink:0;">N/A</div>`;
-                const sourceBadge =
-                  m.source === "community"
-                    ? `<span style="margin-left:6px;padding:2px 6px;border-radius:10px;background:#16a34a;color:#fff;font-size:10px;">Chef: ${escapeHtml(
-                        m.chefName || "Unknown Chef"
-                      )}</span>`
-                    : "";
+                const sourceBadge = m.source === "community"
+                  ? `<span style="margin-left:6px;padding:2px 6px;border-radius:10px;background:#16a34a;color:#fff;font-size:10px;">Chef: ${escapeHtml(m.chefName || "Unknown Chef")}</span>`
+                  : "";
 
-                item.style.cssText = `
-                  display:flex;
-                  align-items:center;
-                  gap:10px;
-                  padding:6px;
-                  cursor:pointer;
-                  border-radius:6px;
-                  transition:background 0.15s;
-                `;
-
-                item.onmouseenter = () =>
-                  (item.style.background = "#f3f4f6");
-                item.onmouseleave = () =>
-                  (item.style.background = "transparent");
-
-                item.innerHTML = `${thumb}<span>${escapeHtml(
-                  m.strMeal
-                )}${sourceBadge}</span>`;
+                item.style.cssText = `display:flex;align-items:center;gap:10px;padding:6px;cursor:pointer;border-radius:6px;transition:background 0.15s;`;
+                item.onmouseenter = () => (item.style.background = "#f3f4f6");
+                item.onmouseleave = () => (item.style.background = "transparent");
+                item.innerHTML = `${thumb}<span>${escapeHtml(m.strMeal)}${sourceBadge}</span>`;
 
                 item.onclick = () => {
-                  // Attach default servings when a meal is selected
                   selectedMeal = { ...m, servings: DEFAULT_SERVINGS };
                   input.value = m.strMeal;
                   suggestionsDiv.innerHTML = "";
@@ -919,74 +779,50 @@ export default function MealPlanner() {
                 suggestionsDiv.appendChild(item);
               });
             } catch {
-              suggestionsDiv.innerHTML =
-                "<p style='color:red;padding:6px;'>Error loading results</p>";
+              suggestionsDiv.innerHTML = "<p style='color:red;padding:6px;'>Error loading results</p>";
             }
           }, 300);
         });
       },
       preConfirm: () => {
         if (!selectedMeal) {
-          Swal.showValidationMessage(
-            "Please select a meal from the suggestions"
-          );
+          Swal.showValidationMessage("Please select a meal from the suggestions");
         }
         return selectedMeal;
       },
     }).then((result) => {
       if (!result.isConfirmed) return;
       const m = result.value;
-      setPlanner((prev) => ({
-        ...prev,
-        [day]: { ...prev[day], [meal]: m },
-      }));
+      setPlanner((prev) => ({ ...prev, [day]: { ...prev[day], [meal]: m } }));
       Swal.fire("Added ✅", `${m.strMeal} added successfully`, "success");
     });
   };
 
-  /* ---------- Remove meal ---------- */
+  /* ── Remove meal ── */
   const removeMeal = (day, meal) => {
-    Swal.fire({
-      title: "Remove meal?",
-      icon: "warning",
-      showCancelButton: true,
-    }).then((res) => {
-      if (!res.isConfirmed) return;
-      setPlanner((prev) => ({
-        ...prev,
-        [day]: { ...prev[day], [meal]: null },
-      }));
-    });
+    Swal.fire({ title: "Remove meal?", icon: "warning", showCancelButton: true })
+      .then((res) => {
+        if (!res.isConfirmed) return;
+        setPlanner((prev) => ({ ...prev, [day]: { ...prev[day], [meal]: null } }));
+      });
   };
 
-  /* ---------- Reset all changes ---------- */
+  /* ── Reset ── */
   const resetChanges = () => {
-    Swal.fire({
-      title: "Reset all changes?",
-      text: "This will revert all unsaved changes.",
-      icon: "warning",
-      showCancelButton: true,
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setPlanner(JSON.parse(JSON.stringify(initialPlannerRef.current)));
-        setHasUnsavedChanges(false);
-        Swal.fire("Reset!", "All changes have been reverted.", "success");
-      }
-    });
+    Swal.fire({ title: "Reset all changes?", text: "This will revert all unsaved changes.", icon: "warning", showCancelButton: true })
+      .then((result) => {
+        if (result.isConfirmed) {
+          setPlanner(JSON.parse(JSON.stringify(initialPlannerRef.current)));
+          setHasUnsavedChanges(false);
+          Swal.fire("Reset!", "All changes have been reverted.", "success");
+        }
+      });
   };
 
-  /* ---------- Loading ---------- */
+  /* ── Loading / auth guards ── */
   if (loading) {
     return (
-      <div
-        className="loading"
-        style={{
-          textAlign: "center",
-          padding: "60px",
-          fontSize: "18px",
-          color: "#f97316",
-        }}
-      >
+      <div className="loading" style={{ textAlign: "center", padding: "60px", fontSize: "18px", color: "#f97316" }}>
         🍽️ Loading your planner...
       </div>
     );
@@ -994,19 +830,13 @@ export default function MealPlanner() {
 
   if (!user) {
     return (
-      <div
-        style={{
-          textAlign: "center",
-          padding: "60px",
-          fontSize: "18px",
-          color: "#555",
-        }}
-      >
+      <div style={{ textAlign: "center", padding: "60px", fontSize: "18px", color: "#555" }}>
         <p>🔐 Please log in to view your meal planner.</p>
       </div>
     );
   }
 
+  /* ── Render ── */
   return (
     <div className="meal-planner">
       <div className="video-banner">
@@ -1022,6 +852,7 @@ export default function MealPlanner() {
       </div>
 
       <div className="meal-content">
+        {/* Save status bar */}
         <div className="save-status-bar">
           <div className="save-status-left">
             {hasUnsavedChanges && (
@@ -1033,19 +864,14 @@ export default function MealPlanner() {
             {lastSavedTime && !hasUnsavedChanges && (
               <div className="last-saved">
                 Last saved:{" "}
-                {lastSavedTime.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {lastSavedTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </div>
             )}
           </div>
 
           <div className="save-actions">
             {hasUnsavedChanges && (
-              <button onClick={resetChanges} className="reset-btn">
-                Reset
-              </button>
+              <button onClick={resetChanges} className="reset-btn">Reset</button>
             )}
             <button
               onClick={savePlanner}
@@ -1057,71 +883,91 @@ export default function MealPlanner() {
           </div>
         </div>
 
+        {/* Day grid */}
         <div className="meal-grid">
           {days.map((day) => (
             <div key={day} className="day-card">
               <h3>{day}</h3>
-              {meals.map((meal) => (
-                <div key={meal} className="meal-row">
-                  <span className="meal-label">{meal}</span>
 
-                  {planner[day]?.[meal] ? (
-                    <div className="meal-details">
-                      <img
-                        src={planner[day][meal].strMealThumb}
-                        alt={planner[day][meal].strMeal}
-                        onClick={() =>
-                          openMealInfo(planner[day][meal], day, meal)
-                        }
-                        style={{ cursor: "pointer" }}
-                        title="Click to view details & adjust servings"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src =
-                            "https://via.placeholder.com/50x50?text=🍽️";
-                        }}
-                      />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="meal-name">
-                          {planner[day][meal].strMeal}
+              {meals.map((mealType) => {
+                const assignedMeal = planner[day]?.[mealType];
+                const servings = assignedMeal?.servings || DEFAULT_SERVINGS;
+
+                return (
+                  <div key={mealType} className="meal-row">
+                    <span className="meal-label">{mealType}</span>
+
+                    {assignedMeal ? (
+                      <div className="meal-details">
+                        <img
+                          src={assignedMeal.strMealThumb}
+                          alt={assignedMeal.strMeal}
+                          onClick={() => openMealInfo(assignedMeal, day, mealType)}
+                        />
+
+                        <div className="meal-main">
+                          <div className="meal-name" title={assignedMeal.strMeal}>
+                            {assignedMeal.strMeal}
+                          </div>
+                          <div className="meal-servings">
+                            👥 {servings} serving{servings > 1 ? "s" : ""}
+                          </div>
                         </div>
-                        {/* Show serving count badge */}
-                        <div
-                          style={{
-                            fontSize: "11px",
-                            color: "#f97316",
-                            fontWeight: 600,
-                            marginTop: "2px",
-                          }}
-                        >
-                          👥{" "}
-                          {planner[day][meal].servings || DEFAULT_SERVINGS}{" "}
-                          serving
-                          {(planner[day][meal].servings || DEFAULT_SERVINGS) >
-                          1
-                            ? "s"
-                            : ""}
+
+                        <div className="meal-actions">
+                          <button
+                            className="remove-btn"
+                            onClick={() => removeMeal(day, mealType)}
+                          >
+                            ✕
+                          </button>
+                          <button
+                            className="add-btn"
+                            onClick={() => assignMeal(day, mealType)}
+                          >
+                            Change
+                          </button>
                         </div>
+
+                        {/* Mobile 3-dot menu */}
+                        <div className="meal-menu-mobile">
+                          <button
+                            className="three-dot-btn"
+                            onClick={(e) => {
+                              const menu = e.currentTarget.nextSibling;
+                              menu.classList.toggle("open");
+                            }}
+                          >
+                            ⋮
+                          </button>
+                          <div className="meal-dropdown">
+                            <button
+                              className="dropdown-item change-item"
+                              onClick={() => assignMeal(day, mealType)}
+                            >
+                              ✏️ Change
+                            </button>
+                            <button
+                              className="dropdown-item delete-item"
+                              onClick={() => removeMeal(day, mealType)}
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        </div>
+
                       </div>
-                      <button
-                        className="remove-btn"
-                        onClick={() => removeMeal(day, meal)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="not-set">Not set</span>
-                  )}
-
-                  <button
-                    className="add-btn"
-                    onClick={() => assignMeal(day, meal)}
-                  >
-                    {planner[day]?.[meal] ? "Change" : "Add"}
-                  </button>
-                </div>
-              ))}
+                    ) : (
+                      <>
+                        <span className="not-set">Not set</span>
+                        <button className="add-btn" onClick={() => assignMeal(day, mealType)}>
+                          Add
+                        </button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>

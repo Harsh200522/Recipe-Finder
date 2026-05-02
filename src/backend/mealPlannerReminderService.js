@@ -135,14 +135,12 @@ const getMealIngredients = (meal) => {
     return meal.ingredients
       .map((ing) => {
         if (typeof ing === "string") {
-          // "Dried Figs (200g)"  →  { name: "Dried Figs", measure: "200g" }
           const parenMatch = ing.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
           if (parenMatch) {
             return { name: parenMatch[1].trim(), measure: parenMatch[2].trim() };
           }
           return { name: ing.trim(), measure: "" };
         }
-        // Object shape
         return {
           name: ing.name || ing.ingredient || ing.title || "",
           measure: ing.measure || ing.amount || ing.qty || "",
@@ -185,59 +183,9 @@ const getMealEmoji = (type) =>
   ({ Breakfast: "🌅", Lunch: "☀️", Dinner: "🌙" }[type] || "🍽️");
 
 /* ==============================
-   SERVING SCALE HELPER
-============================== */
-
-/**
- * Parses a measure string and scales it by a multiplier.
- * Returns the scaled string, or the original if it can't parse a number.
- * Examples:
- *   scaleMeasure("200g", 2)    → "400g"
- *   scaleMeasure("1/2 cup", 2) → "1 cup"
- *   scaleMeasure("to taste", 2)→ "to taste"
- */
-const scaleMeasure = (measure, multiplier) => {
-  if (!measure || multiplier === 1) return measure;
-
-  // Handle fractions like "1/2", "3/4"
-  const fracMatch = measure.match(/^(\d+)\/(\d+)(.*)/);
-  if (fracMatch) {
-    const val = Number(fracMatch[1]) / Number(fracMatch[2]) * multiplier;
-    const suffix = fracMatch[3].trim();
-    // Format nicely: if whole number, no decimal; else 1 decimal
-    const formatted = Number.isInteger(val) ? String(val) : val.toFixed(1).replace(/\.0$/, "");
-    return `${formatted}${suffix ? " " + suffix : ""}`;
-  }
-
-  // Handle leading number like "200g", "1.5 cup", "2 tbsp"
-  const numMatch = measure.match(/^(\d+(?:\.\d+)?)(.*)/);
-  if (numMatch) {
-    const val = Number(numMatch[1]) * multiplier;
-    const suffix = numMatch[2].trim();
-    const formatted = Number.isInteger(val) ? String(val) : val.toFixed(1).replace(/\.0$/, "");
-    return `${formatted}${suffix ? " " + suffix : ""}`;
-  }
-
-  // Can't parse — return as-is
-  return measure;
-};
-
-/* ==============================
    EMAIL TEMPLATE
 ============================== */
 
-/**
- * Builds the reminder HTML email.
- *
- * Interactive serving selector uses the CSS radio-button trick:
- * hidden <input type="radio"> elements + <label> buttons control
- * which set of ingredient rows is shown via sibling CSS selectors.
- * This works in Gmail (web), Apple Mail, and most modern clients
- * without any JavaScript.
- *
- * For clients that strip <style> (Outlook), the default serving
- * rows (baseServings) are always shown as a fallback.
- */
 const buildReminderHtml = ({
   mealName,
   mealType,
@@ -251,94 +199,29 @@ const buildReminderHtml = ({
 }) => {
   const emoji = getMealEmoji(mealType);
   const greeting = ownerName ? `Hi ${ownerName},` : "Hi there,";
-  const maxServings = 8;
-  const servingOptions = [1, 2, 3, 4, 6, 8];
 
-  // ── Pre-compute scaled ingredient rows for every serving option ──
-  const buildIngredientRows = (servings) => {
-    if (!Array.isArray(ingredients) || !ingredients.length) {
-      return `<tr>
-        <td colspan="2" style="padding:10px 12px;font-size:14px;color:#bbb;text-align:center;">
-          No ingredients listed
-        </td>
-      </tr>`;
-    }
-
-    const multiplier = servings / baseServings;
-
-    return ingredients
-      .map((ing) => {
-        const scaledMeasure = scaleMeasure(ing.measure, multiplier);
-        return `
+  // ── Ingredient rows at base servings ──
+  const ingredientRows =
+    Array.isArray(ingredients) && ingredients.length
+      ? ingredients
+          .map(
+            (ing) => `
         <tr>
           <td style="padding:7px 12px;border-bottom:1px solid #fde8d8;font-size:14px;color:#444;">
             ${ing.name || ing}
           </td>
           <td style="padding:7px 12px;border-bottom:1px solid #fde8d8;font-size:14px;
                      color:#f97316;font-weight:600;text-align:right;white-space:nowrap;">
-            ${scaledMeasure || "—"}
+            ${ing.measure || "—"}
+          </td>
+        </tr>`
+          )
+          .join("")
+      : `<tr>
+          <td colspan="2" style="padding:10px 12px;font-size:14px;color:#bbb;text-align:center;">
+            No ingredients listed
           </td>
         </tr>`;
-      })
-      .join("");
-  };
-
-  // ── CSS: show/hide ingredient blocks per selected radio ──
-  // Each serving option has a radio input with id="srv-N"
-  // When checked, we show the table with class "ing-N" and hide others.
-  const servingCss = servingOptions
-    .map(
-      (s) => `
-  #srv-${s}:checked ~ * .ing-block { display: none !important; }
-  #srv-${s}:checked ~ * .ing-${s}  { display: table !important; }`
-    )
-    .join("");
-
-  // ── Radio inputs (outside visible table flow) ──
-  const radioInputs = servingOptions
-    .map(
-      (s) =>
-        `<input type="radio" name="servings" id="srv-${s}"
-               style="position:absolute;opacity:0;pointer-events:none;"
-               ${s === baseServings ? "checked" : ""}/>`
-    )
-    .join("\n");
-
-  // ── Serving selector label buttons ──
-  const servingLabels = servingOptions
-    .map(
-      (s) => `
-    <label for="srv-${s}"
-           style="display:inline-block;padding:5px 13px;margin:3px;border-radius:20px;
-                  font-size:13px;font-weight:700;cursor:pointer;
-                  border:2px solid #f97316;color:#f97316;background:#fff;
-                  transition:all 0.2s;">
-      ${s}
-    </label>`
-    )
-    .join("");
-
-  // ── Ingredient table blocks (one per serving option) ──
-  const ingredientBlocks = servingOptions
-    .map(
-      (s) => `
-  <table class="ing-block ing-${s}" width="100%" cellpadding="0" cellspacing="0"
-         style="border-radius:10px;overflow:hidden;border:1px solid #fde8d8;
-                ${s === baseServings ? "" : "display:none !important;"}">
-    <thead>
-      <tr style="background:#fff7ed;">
-        <th style="padding:9px 12px;font-size:11px;color:#f97316;text-align:left;
-                   font-weight:700;letter-spacing:1px;text-transform:uppercase;
-                   border-bottom:1px solid #fde8d8;">Ingredient</th>
-        <th style="padding:9px 12px;font-size:11px;color:#f97316;text-align:right;
-                   font-weight:700;letter-spacing:1px;text-transform:uppercase;
-                   border-bottom:1px solid #fde8d8;">Amount</th>
-      </tr>
-    </thead>
-    <tbody>${buildIngredientRows(s)}</tbody>
-  </table>`
-    )
-    .join("\n");
 
   // ── YouTube button ──
   const videoButton = youtubeUrl
@@ -371,26 +254,6 @@ const buildReminderHtml = ({
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>${mealType} Reminder</title>
   <style>
-    /* ── Serving selector active state ── */
-    ${servingOptions
-      .map(
-        (s) => `
-    #srv-${s}:checked ~ * label[for="srv-${s}"] {
-      background: #f97316 !important;
-      color: #fff !important;
-    }`
-      )
-      .join("")}
-
-    /* ── Serving block visibility ── */
-    ${servingCss}
-
-    /* ── Hover on serving labels ── */
-    label[for^="srv-"]:hover {
-      background: #fff7ed !important;
-    }
-
-    /* ── Mobile ── */
     @media only screen and (max-width: 600px) {
       .email-wrap { padding: 16px 8px !important; }
       .email-card { border-radius: 14px !important; }
@@ -398,8 +261,6 @@ const buildReminderHtml = ({
   </style>
 </head>
 <body style="margin:0;padding:0;background:#f4f0eb;font-family:'Segoe UI',Arial,sans-serif;">
-
-  ${radioInputs}
 
   <table class="email-wrap" width="100%" cellpadding="0" cellspacing="0"
          style="background:#f4f0eb;padding:32px 16px;">
@@ -451,6 +312,9 @@ const buildReminderHtml = ({
             <h2 style="margin:0;font-size:22px;font-weight:800;color:#1a1a1a;line-height:1.3;">
               ${mealName}
             </h2>
+            <p style="margin:8px 0 0;font-size:13px;color:#888;">
+              👥&nbsp;Serves ${baseServings}
+            </p>
           </td>
         </tr>
 
@@ -461,22 +325,6 @@ const buildReminderHtml = ({
           </td>
         </tr>
 
-        <!-- ═══ SERVING SELECTOR ═══ -->
-        <tr>
-          <td style="padding:4px 32px 16px;">
-            <p style="margin:0 0 10px;font-size:11px;color:#f97316;font-weight:700;
-                      letter-spacing:2px;text-transform:uppercase;">
-              👥&nbsp;Servings
-            </p>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
-              ${servingLabels}
-            </div>
-            <p style="margin:8px 0 0;font-size:11px;color:#bbb;">
-              Tap a number to scale ingredient amounts automatically
-            </p>
-          </td>
-        </tr>
-
         <!-- ═══ INGREDIENTS ═══ -->
         <tr>
           <td style="padding:4px 32px 28px;">
@@ -484,7 +332,20 @@ const buildReminderHtml = ({
                       letter-spacing:2px;text-transform:uppercase;">
               🧾&nbsp;Ingredients
             </p>
-            ${ingredientBlocks}
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="border-radius:10px;overflow:hidden;border:1px solid #fde8d8;">
+              <thead>
+                <tr style="background:#fff7ed;">
+                  <th style="padding:9px 12px;font-size:11px;color:#f97316;text-align:left;
+                             font-weight:700;letter-spacing:1px;text-transform:uppercase;
+                             border-bottom:1px solid #fde8d8;">Ingredient</th>
+                  <th style="padding:9px 12px;font-size:11px;color:#f97316;text-align:right;
+                             font-weight:700;letter-spacing:1px;text-transform:uppercase;
+                             border-bottom:1px solid #fde8d8;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>${ingredientRows}</tbody>
+            </table>
           </td>
         </tr>
 
