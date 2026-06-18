@@ -1450,3 +1450,61 @@ body.dark-mode .chef-tag-single {
   display: inline-flex !important;
   margin: 0 !important;
 }
+
+/* ============================= */
+/* FOLLOW BUTTON                 */
+/* ============================= */
+
+.chef-follow-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: 2px solid #ff7a18;
+  background: transparent;
+  color: #ff7a18;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chef-follow-btn:hover {
+  background: #ff7a18;
+  color: #fff;
+  transform: scale(1.04);
+}
+
+.chef-follow-btn.following {
+  background: #ff7a18;
+  color: #fff;
+  border-color: #ff7a18;
+}
+
+.chef-follow-btn.following:hover {
+  background: transparent;
+  color: #ff7a18;
+}
+
+.chef-followers-count {
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+}
+
+body.dark-mode .chef-followers-count {
+  color: #aaa;
+}
+
+body.dark-mode .chef-follow-btn {
+  border-color: #ff9c42;
+  color: #ff9c42;
+}
+
+body.dark-mode .chef-follow-btn:hover,
+body.dark-mode .chef-follow-btn.following {
+  background: #ff9c42;
+  color: #1e1e24;
+}

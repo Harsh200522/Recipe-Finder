@@ -28,7 +28,9 @@ import {
 } from "react-icons/fa";
 import { MdClose, MdFastfood, MdOutlineRestaurantMenu } from "react-icons/md";
 import ServingCalculator from "./ServingCalculator";
-
+import { arrayRemove } from "firebase/firestore";
+import { FaUserPlus, FaUserCheck } from "react-icons/fa";
+import { sendNewRecipeNotifications } from "../backend/recipeNotificationService.js";
 const toReactionRecipeId = (recipeId) => `chef_${recipeId}`;
 const DEFAULT_AVATAR_URL =
   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUmgrBOv_cpwabmIhfJ3-PWW0XOW6fhyjqEQ&s";
@@ -41,6 +43,22 @@ export default function CommunityRecipes() {
   const [userAvatars, setUserAvatars] = useState({});
   const [visibleReplies, setVisibleReplies] = useState({});
   const [commentInputs, setCommentInputs] = useState({});
+  const [followingMap, setFollowingMap] = useState({});
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) { setFollowingMap({}); return; }
+      setCurrentUserId(user.uid);
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      const following = userSnap.exists() ? userSnap.data().following || [] : [];
+      const map = {};
+      following.forEach(id => map[id] = true);
+      setFollowingMap(map);
+    });
+    return () => unsub();
+  }, []);
 
   // --- COMMENT HELPERS ---
   const getChefRecipeDocId = (meal) => meal?.id || null;
@@ -293,107 +311,15 @@ export default function CommunityRecipes() {
   const [creatorAvatars, setCreatorAvatars] = useState({});
   const [servingRecipe, setServingRecipe] = useState(null);
   const communityRecipes = recipes;
-  const viewChefProfile = async (userId) => {
-    try {
-      const userDoc = await getDoc(doc(db, "users", userId));
-
-      if (!userDoc.exists()) {
-        Swal.fire("User not found");
-        return;
-      }
-
-      const data = userDoc.data();
-      const profile = data.profile || {};
-      const preferences = data.preferences || {};
-
-      const avatar =
-        profile.avatar ||
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUmgrBOv_cpwabmIhfJ3-PWW0XOW6fhyjqEQ&s";
-
-      const dietaryTags =
-        preferences.dietaryRestrictions?.length > 0
-          ? preferences.dietaryRestrictions
-            .map(item => `<span class="chef-tag">${item}</span>`)
-            .join("")
-          : `<span class="chef-tag-single">None specified</span>`;
-
-      const allergyTags =
-        preferences.allergies?.length > 0
-          ? preferences.allergies
-            .map(item => `<span class="chef-tag">${item}</span>`)
-            .join("")
-          : `<span class="chef-tag-single">No allergies</span>`;
-
-      Swal.fire({
-        width: 700,
-        padding: 0,
-        showCloseButton: true,
-        confirmButtonText: "Close",
-        customClass: {
-          popup: "chef-popup",
-        },
-        html: `
-        <div class="chef-card">
-
-          <!-- Header -->
-          <div class="chef-header">
-            <img src="${avatar}" class="chef-avatar"/>
-            <div>
-              <h2>${profile.name || "Unknown Chef"}</h2>
-              <p class="chef-badge">Home Chef</p>
-            </div>
-          </div>
-
-          <!-- Info -->
-          <div class="chef-section">
-            <h3>Basic Information</h3>
-            <div class="chef-grid">
-              <div><strong>Email:</strong> ${profile.email || "-"}</div>
-              <div><strong>Location:</strong> ${profile.location || "-"}</div>
-              <div><strong>Cooking Level:</strong> ${profile.cookingLevel || "-"}</div>
-              <div><strong>Favorite Cuisine:</strong> ${profile.favoriteCuisine || "-"}</div>
-            </div>
-          </div>
-
-          <!-- Bio -->
-          <div class="chef-section">
-            <h3>About Me</h3>
-            <p class="chef-bio">${profile.bio || "No bio available."}</p>
-          </div>
-
-          <!-- Preferences -->
-          <div class="chef-section">
-            <h3>Cooking Preferences</h3>
-
-            <div class="chef-preference-block">
-              <p><strong>Dietary Restrictions:</strong></p>
-              <div class="chef-tags">${dietaryTags}</div>
-            </div>
-
-            <div class="chef-preference-block">
-              <p><strong>Allergies:</strong></p>
-              <div class="chef-tags">${allergyTags}</div>
-            </div>
-
-            <div class="chef-preference-block">
-              <p><strong>Measurement Unit:</strong> ${preferences.measurementUnit || "Not specified"}</p>
-            </div>
-
-            <div class="chef-preference-block">
-              <p><strong>Language:</strong> ${preferences.language || "Not specified"}</p>
-            </div>
-
-          </div>
-
-        </div>
-      `,
-      });
-
-    } catch (error) {
-      console.error("Error viewing chef profile:", error);
-      Swal.fire("Error", "Failed to load chef profile", "error");
-    }
-  };
+/* ================= VIEW PROFILE ================= */
+const viewChefProfile = (userId) => {
+  // Direct navigation to the profile page without a popup
+  if (!userId) {
+    Swal.fire("Error", "Invalid Chef ID", "error");
+    return;
+  }
+  navigate(`/chef/${userId}`);
+};
   const [instructionRows, setInstructionRows] = useState([""]);
 
   const addInstructionRow = () => {
@@ -764,27 +690,48 @@ export default function CommunityRecipes() {
 
   const closeServingCalc = () => setServingRecipe(null);
 
-  const toggleUploadRecipe = async (recipe) => {
+const toggleUploadRecipe = async (recipe) => {
     const user = auth.currentUser;
     if (!user) return;
 
     try {
-      await updateDoc(doc(db, "recipes", recipe.id), {
-        isUploaded: !recipe.isUploaded,
-        uploadedAt: !recipe.isUploaded ? serverTimestamp() : null,
-      });
+        const nextUploadState = !recipe.isUploaded;
 
-      Swal.fire({
-        icon: "success",
-        title: recipe.isUploaded ? "Removed from Home Search" : "Uploaded to Home Search",
-        timer: 1400,
-        showConfirmButton: false,
-      });
+        // 1. Await the update first so database state is confirmed
+        await updateDoc(doc(db, "recipes", recipe.id), {
+            isUploaded: nextUploadState,
+            uploadedAt: nextUploadState ? serverTimestamp() : null,
+        });
+
+        Swal.fire({
+            icon: "success",
+            title: nextUploadState ? "Uploaded to Home Search" : "Removed from Home Search",
+            timer: 1400,
+            showConfirmButton: false,
+        });
+
+        // 2. Trigger notification engine cleanly if transitioning to published
+        if (nextUploadState) {
+            // Build a clean payload ensuring all naming conventions line up with your service
+            const notificationPayload = {
+                id: recipe.id,
+                userId: recipe.userId || user.uid, // Fallback safely to current user uid if undefined
+                title: recipe.title,
+                image: recipe.image || "",
+                createdBy: recipe.createdBy || user.displayName || "Unknown Chef"
+            };
+
+            console.log("[CommunityRecipes] Dispatching email alerts with payload:", notificationPayload);
+            
+            // Fire the notification service
+            sendNewRecipeNotifications(notificationPayload);
+        }
+
     } catch (error) {
-      console.error("Error toggling upload:", error);
-      Swal.fire("Error", "Failed to update upload status", "error");
+        console.error("Error toggling upload:", error);
+        Swal.fire("Error", "Failed to update upload status", "error");
     }
-  };
+};
 
   /* ================= LIKE ================= */
   const likeRecipe = async (id) => {
@@ -806,6 +753,30 @@ export default function CommunityRecipes() {
       await applyUnlikeReaction({ recipeId: toReactionRecipeId(id), userId: user.uid });
     } catch (error) {
       console.error("Error updating unlike:", error);
+    }
+  };
+
+  const toggleFollow = async (chefUserId) => {
+    const user = auth.currentUser;
+    if (!user) return Swal.fire("Login Required", "Please login to follow chefs", "warning");
+    if (user.uid === chefUserId) return;
+
+    const currentUserRef = doc(db, "users", user.uid);
+    const chefUserRef = doc(db, "users", chefUserId);
+    const isFollowing = followingMap[chefUserId];
+
+    try {
+      if (isFollowing) {
+        await updateDoc(currentUserRef, { following: arrayRemove(chefUserId) });
+        await updateDoc(chefUserRef, { followers: arrayRemove(user.uid) });
+        setFollowingMap(prev => { const next = { ...prev }; delete next[chefUserId]; return next; });
+      } else {
+        await updateDoc(currentUserRef, { following: arrayUnion(chefUserId) });
+        await updateDoc(chefUserRef, { followers: arrayUnion(user.uid) });
+        setFollowingMap(prev => ({ ...prev, [chefUserId]: true }));
+      }
+    } catch (err) {
+      console.error("Follow error:", err);
     }
   };
 

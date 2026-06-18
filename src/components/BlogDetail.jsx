@@ -5,6 +5,8 @@ import {
   getArticleBySlug,
   blogArticles
 } from "../data/blog-articles";
+import SEO from "./SEO";
+import { createArticleSchema } from "./StructuredData";
 import "../style/blog-detail.css";
 
 const BlogDetail = () => {
@@ -43,6 +45,9 @@ const BlogDetail = () => {
     }
   }, [slug]);
 
+  // Article schema for structured data
+  const articleSchema = article ? createArticleSchema(article) : null;
+
   // ✅ Loading state (important)
   if (article === undefined) {
     return <div className="loading">Loading article...</div>;
@@ -55,6 +60,19 @@ const BlogDetail = () => {
 
   return (
     <div className="blog-detail-container">
+      {article && (
+        <SEO
+          title={`${article.title} | Recipe Finder Blog`}
+          description={article.excerpt}
+          image={article.image}
+          url={`/blog/${article.slug}`}
+          type="article"
+          schema={articleSchema}
+          author={article.author}
+          publishedDate={article.date}
+          modifiedDate={article.modified}
+        />
+      )}
       {/* Breadcrumb */}
       <nav className="breadcrumb">
         <Link to="/" onClick={handleNavigation}>Home</Link>

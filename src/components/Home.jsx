@@ -1,5 +1,6 @@
 ﻿// src/components/RecipeFinder.jsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "../style/home.css";
 import { FaComment } from "react-icons/fa";
@@ -47,6 +48,8 @@ import { openAmazonIndiaIngredientsSearch } from "../utils/amazonAffiliate";
 
 
 export default function RecipeFinder() {
+  const navigate = useNavigate();
+
   const [query, setQuery] = useState("");
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
@@ -688,6 +691,7 @@ export default function RecipeFinder() {
   };
 
   const mapChefRecipeToHomeCard = (recipe) => {
+
     // ✅ Step 1: Split raw ingredient string into individual lines
     // Supports: newline-separated OR comma-separated entries
     const rawIngredients = (recipe.ingredients || "")
@@ -1078,111 +1082,21 @@ export default function RecipeFinder() {
       Swal.fire({ icon: "info", title: "Video Not Available", text: "Sorry, we couldn't find a video for this recipe. 🎬" });
     }
   };
-  const handleChefDetails = async (meal) => {
-    try {
-      if (!meal.userId) {
-        Swal.fire("Chef information not available");
-        return;
-      }
 
-      const userRef = doc(db, "users", meal.userId);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        Swal.fire("Chef profile not found");
-        return;
-      }
-
-      const userData = userSnap.data();
-      const profile = userData.profile || {};
-      const preferences = userData.preferences || {};
-
-      const avatar =
-        profile.avatar ||
-        "https://via.placeholder.com/100?text=Chef";
-
+/* ================= VIEW CHEF PROFILE ================= */
+  const handleChefDetails = (meal) => {
+    if (!meal.userId) {
       Swal.fire({
-        width: "650px",
-        confirmButtonText: "Close",
-        customClass: {
-          popup: "chef-popup",
-        },
-        html: `
-        <div class="chef-card">
-
-          <!-- HEADER -->
-          <div class="chef-header">
-            <img src="${avatar}" class="chef-avatar" />
-            <div>
-              <h2>${profile.name || "Chef"}</h2>
-              <span class="chef-badge">
-                ${profile.cookingLevel || "Community Chef"}
-              </span>
-            </div>
-          </div>
-
-          <!-- BASIC INFO -->
-          <div class="chef-section">
-            <h3>Chef Information</h3>
-            <div class="chef-grid">
-              <div><strong>Email:</strong> ${profile.email || "-"}</div>
-              <div><strong>Location:</strong> ${profile.location || "-"}</div>
-              <div><strong>Favorite Cuisine:</strong> ${profile.favoriteCuisine || "-"}</div>
-              <div><strong>Measurement Unit:</strong> ${preferences.measurementUnit || "-"}</div>
-            </div>
-          </div>
-
-          <!-- BIO -->
-          ${profile.bio
-            ? `
-          <div class="chef-section">
-            <h3>About Chef</h3>
-            <div class="chef-bio">
-              ${profile.bio}
-            </div>
-          </div>
-          `
-            : ""
-          }
-
-          <!-- PREFERENCES -->
-          <div class="chef-section">
-            <h3>Preferences</h3>
-
-            <div class="chef-preference-block">
-              <p>Dietary Restrictions</p>
-              <div class="chef-tags">
-                ${(preferences.dietaryRestrictions || []).length
-            ? preferences.dietaryRestrictions
-              .map(tag => `<span class="chef-tag">${tag}</span>`)
-              .join("")
-            : `<span class="chef-tag-single">None</span>`
-          }
-              </div>
-            </div>
-
-            <div class="chef-preference-block">
-              <p>Allergies</p>
-              <div class="chef-tags">
-                ${(preferences.allergies || []).length
-            ? preferences.allergies
-              .map(tag => `<span class="chef-tag">${tag}</span>`)
-              .join("")
-            : `<span class="chef-tag-single">None</span>`
-          }
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      `,
+        icon: "info",
+        title: "Profile Not Available",
+        text: "This is a system recipe. No chef profile is associated with it.",
+        timer: 2000,
+        showConfirmButton: false
       });
-
-    } catch (error) {
-      console.error(error);
-      Swal.fire("Error loading chef profile");
+      return;
     }
+    // This will now work because 'navigate' is defined above
+    navigate(`/chef/${meal.userId}`);
   };
 
   const handleLike = async (id) => {
@@ -1477,7 +1391,7 @@ export default function RecipeFinder() {
   };
   // --- REPLY ACTIONS ---
 
- const toggleReplyLike = async (meal, commentIndex, replyIndex) => {
+  const toggleReplyLike = async (meal, commentIndex, replyIndex) => {
     const user = auth.currentUser;
     if (!user) {
       Swal.fire("Please login to like replies");
@@ -1510,8 +1424,8 @@ export default function RecipeFinder() {
     try {
       // 3. Push to Firestore only. 
       // The onSnapshot listener in Step 2 will catch this change and update your screen!
-      await updateDoc(doc(db, "recipes", recipeDocId), { 
-        comments: updatedComments 
+      await updateDoc(doc(db, "recipes", recipeDocId), {
+        comments: updatedComments
       });
     } catch (err) {
       console.error("Error toggling reply like:", err);
@@ -1519,37 +1433,37 @@ export default function RecipeFinder() {
     }
   };
   // ✅ Live Sync for Comments and Replies
-useEffect(() => {
-  if (!activeCommentMeal) return;
+  useEffect(() => {
+    if (!activeCommentMeal) return;
 
-  const recipeDocId = getChefRecipeDocId(activeCommentMeal);
-  if (!recipeDocId) return;
+    const recipeDocId = getChefRecipeDocId(activeCommentMeal);
+    if (!recipeDocId) return;
 
-  // Listen for real-time changes to the specific recipe document
-  const unsub = onSnapshot(doc(db, "recipes", recipeDocId), (docSnap) => {
-    if (docSnap.exists()) {
-      const updatedData = docSnap.data();
-      const newComments = updatedData.comments || [];
+    // Listen for real-time changes to the specific recipe document
+    const unsub = onSnapshot(doc(db, "recipes", recipeDocId), (docSnap) => {
+      if (docSnap.exists()) {
+        const updatedData = docSnap.data();
+        const newComments = updatedData.comments || [];
 
-      // 1. Update the modal's current meal data so the modal refreshes
-      setActiveCommentMeal((prev) => ({
-        ...prev,
-        comments: newComments,
-      }));
+        // 1. Update the modal's current meal data so the modal refreshes
+        setActiveCommentMeal((prev) => ({
+          ...prev,
+          comments: newComments,
+        }));
 
-      // 2. Update the main recipes list so the comment count icon on the card updates
-      setRecipes((prevRecipes) =>
-        prevRecipes.map((r) =>
-          (r.idMeal || r.id) === activeCommentMeal.idMeal
-            ? { ...r, comments: newComments }
-            : r
-        )
-      );
-    }
-  });
+        // 2. Update the main recipes list so the comment count icon on the card updates
+        setRecipes((prevRecipes) =>
+          prevRecipes.map((r) =>
+            (r.idMeal || r.id) === activeCommentMeal.idMeal
+              ? { ...r, comments: newComments }
+              : r
+          )
+        );
+      }
+    });
 
-  return () => unsub(); // Detach listener when modal closes
-}, [activeCommentMeal?.idMeal]);
+    return () => unsub(); // Detach listener when modal closes
+  }, [activeCommentMeal?.idMeal]);
   const handleDeleteReply = async (meal, commentIndex, replyIndex) => {
     const confirmDelete = await Swal.fire({
       title: "Delete reply?",
@@ -1922,9 +1836,10 @@ useEffect(() => {
                       <span
                         onClick={() => handleChefDetails(meal)}
                         className="chef-name"
+                        style={{ cursor: "pointer", color: "#f97316", fontWeight: "bold" }} // Added styling hint
                       >
                         {meal.chefName || "Unknown Chef"}
-                        <span className="chef-tooltip">Click to view information</span>
+                        <span className="chef-tooltip">Click to view profile</span>
                       </span>
                     ) : (
                       "System"
@@ -2011,10 +1926,10 @@ useEffect(() => {
                 {(index + 1) % 6 === 0 && (
                   <div style={{ gridColumn: "1 / -1" }}>
                     {/* ✅ ADSENSE POLICY: Show ads only with recipe content and not loading */}
-                    <GoogleAd 
-                      pageHasContent={true} 
-                      isLoading={loading} 
-                      hasRecipes={recipes.length} 
+                    <GoogleAd
+                      pageHasContent={true}
+                      isLoading={loading}
+                      hasRecipes={recipes.length}
                     />
                   </div>
                 )}
@@ -2060,7 +1975,15 @@ useEffect(() => {
                             <h2 className="recipe-title">{meal.strMeal}</h2>
                             <p className="recipe-info">
                               <b>Category:</b> {meal.strCategory} <br />
-                              <b>Chef:</b> System <br />
+                              <b>Chef:</b>{" "}
+                              {meal.isChefRecipe ? (
+                                <span onClick={() => handleChefDetails(meal)} className="chef-name">
+                                  {meal.chefName || "Unknown Chef"}
+                                </span>
+                              ) : (
+                                "System"
+                              )}
+                              <br />
                               <b>Country:</b> {meal.strArea || "N/A"}
                             </p>
                           </div>
