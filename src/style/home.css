@@ -2489,4 +2489,55 @@ body.dark-mode .reply-item {
     width: 24px;
     height: 1px;
     background-color: #8e8e8e;
+}@media (max-width: 767px) {
+  /* 1. Change to height: auto to collapse the empty gap */
+  .main-container .category-row .recipe-card {
+    width: 45vw !important;
+    min-width: 165px !important;
+    height: auto !important; /* 🔥 Allow card to shrink to content */
+    min-height: 280px !important; /* Keep a base height for alignment */
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 10px !important;
+    justify-content: flex-start;
+  }
+
+  /* 2. Tighten up the detail section */
+  .recipe-title {
+    margin: 5px 0 2px 0 !important;
+    font-size: 0.85rem !important;
+    line-height: 1.2;
+  }
+
+  .recipe-info {
+    margin-bottom: 8px !important; /* Small gap after country info */
+    font-size: 10px !important;
+    line-height: 1.3;
+  }
+
+  /* 3. The "Gap Killer": Remove margin-top auto */
+  .watch-video-btn {
+    margin-top: 0 !important; /* 🔥 Pulls button up toward the details */
+    padding: 6px !important;
+    font-size: 10px !important;
+    width: 100%;
+  }
+
+  .reaction-buttons {
+    margin: 6px 0 !important;
+    gap: 4px !important;
+  }
+
+  /* 4. Keep only the final button pinned to bottom if desired */
+  .ingredients-button {
+    margin-top: auto !important; 
+    padding: 8px !important;
+    font-size: 10px !important;
+  }
+
+  /* 5. Scale the image back slightly for a tighter look */
+  .main-container .category-row .recipe-image {
+    height: 110px !important;
+    flex: 0 0 110px !important;
+  }
 }

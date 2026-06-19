@@ -1,0 +1,1119 @@
+/* src/style/chefprofile.css */
+
+/* ============================================
+   CSS VARIABLES (Light Mode Default)
+   ============================================ */
+:root {
+  /* Primary Colors */
+  --primary-orange: #ff7a18;
+  --primary-orange-light: #ff9c42;
+  --primary-orange-dark: #e5650a;
+  
+  /* Action Colors */
+  --green-action: #16a34a;
+  --green-action-dark: #15803d;
+  --blue-action: #2563eb;
+  --blue-action-dark: #1d4ed8;
+  
+  /* Danger Colors */
+  --danger: #e63946;
+  --danger-dark: #d11a2a;
+  
+  /* Background Colors */
+  --page-bg: #f3f4f6;
+  --card-bg: #ffffff;
+  --modal-bg: #ffffff;
+  
+  /* Text Colors */
+  --text-body: #334155;
+  --text-heading: #333333;
+  --text-muted: #6b7280;
+  
+  /* Border Colors */
+  --border: #e5e7eb;
+  --border-light: #f0f0f0;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  
+  /* Transitions */
+  --transition: all 0.2s ease;
+}
+
+/* ============================================
+   DARK MODE VARIABLES
+   ============================================ */
+body.dark-mode {
+  --primary-orange: #ff9c42;
+  --primary-orange-light: #ffb46a;
+  --primary-orange-dark: #ff7a18;
+  
+  --green-action: #22c55e;
+  --green-action-dark: #16a34a;
+  --blue-action: #3b82f6;
+  --blue-action-dark: #2563eb;
+  
+  --danger: #ef4444;
+  --danger-dark: #dc2626;
+  
+  --page-bg: #111827;
+  --card-bg: #1f2937;
+  --modal-bg: #1f2937;
+  
+  --text-body: #9ca3af;
+  --text-heading: #f3f4f6;
+  --text-muted: #6b7280;
+  
+  --border: #374151;
+  --border-light: #374151;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4);
+}
+
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+.cp-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  background-color: var(--page-bg);
+  min-height: 100vh;
+}
+
+.cp-loading {
+  text-align: center;
+  padding: 4rem;
+  color: var(--text-muted);
+  font-size: 1.125rem;
+}
+
+/* ============================================
+   PROFILE HEADER (Instagram Style)
+   ============================================ */
+.cp-header {
+  background: var(--card-bg);
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+
+.cp-header-inner {
+  display: flex;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.cp-avatar-wrap {
+  flex-shrink: 0;
+}
+
+.cp-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--primary-orange);
+  box-shadow: var(--shadow-md);
+}
+
+.cp-info {
+  flex: 1;
+  min-width: 250px;
+}
+
+.cp-name-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.cp-name {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.cp-follow-btn {
+  background: var(--blue-action);
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.cp-follow-btn:hover {
+  background: var(--blue-action-dark);
+  transform: translateY(-1px);
+}
+
+.cp-follow-btn--following {
+  background: var(--card-bg);
+  color: var(--text-body);
+  border: 1px solid var(--border);
+}
+
+.cp-follow-btn--following:hover {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+
+/* Stats Row */
+.cp-stats-row {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.cp-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.cp-stat--btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: var(--transition);
+}
+
+.cp-stat--btn:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.cp-stat-num {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.cp-stat-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* Bio with Read More functionality */
+.cp-bio-wrapper {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.cp-bio {
+  color: var(--text-body);
+  line-height: 1.5;
+  margin: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+/* Desktop - show full bio */
+@media (min-width: 769px) {
+  .cp-bio {
+    max-height: none !important;
+  }
+  
+  .cp-read-more-btn {
+    display: none;
+  }
+}
+
+/* Mobile - collapsed by default */
+@media (max-width: 768px) {
+  .cp-bio {
+    max-height: 4.5rem; /* 3 lines (1.5rem line-height × 3) */
+    position: relative;
+  }
+  
+  .cp-bio.cp-bio-expanded {
+    max-height: none;
+  }
+  
+  .cp-read-more-btn {
+    background: none;
+    border: none;
+    color: var(--blue-action);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    margin-top: 0.25rem;
+    display: inline-block;
+    transition: var(--transition);
+  }
+  
+  .cp-read-more-btn:hover {
+    color: var(--blue-action-dark);
+  }
+  
+  /* Gradient fade effect when collapsed */
+  .cp-bio:not(.cp-bio-expanded) {
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  }
+}
+
+.cp-meta-tags {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.cp-meta-tag {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  background: var(--page-bg);
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+}
+
+/* Divider */
+.cp-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 2rem 0;
+}
+
+/* Empty State */
+.cp-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--card-bg);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+}
+
+.cp-empty-icon {
+  font-size: 4rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.cp-empty h3 {
+  color: var(--text-heading);
+  margin-bottom: 0.5rem;
+}
+
+.cp-empty p {
+  color: var(--text-muted);
+}
+
+/* Index Error */
+.cp-index-error {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+body.dark-mode .cp-index-error {
+  background: #78350f;
+  color: #fef3c7;
+}
+
+/* ============================================
+   RECIPE GRID
+   ============================================ */
+.cp-recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+/* Recipe Card */
+.cp-card {
+  background: var(--card-bg);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  border: 1px solid var(--border);
+}
+
+.cp-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Card Media */
+.cp-card-media {
+  position: relative;
+  overflow: hidden;
+  background: var(--page-bg);
+}
+
+.cp-card-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.cp-card:hover .cp-card-img {
+  transform: scale(1.05);
+}
+
+.cp-card-iframe {
+  width: 100%;
+  height: 200px;
+  border: none;
+}
+
+.cp-card-no-img {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-orange), var(--primary-orange-light));
+  color: white;
+  font-size: 3rem;
+}
+
+/* Badge */
+.cp-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+}
+
+.cp-badge--easy {
+  background: var(--green-action);
+}
+
+.cp-badge--medium {
+  background: var(--primary-orange);
+}
+
+.cp-badge--hard {
+  background: var(--danger);
+}
+
+/* YouTube Link */
+.cp-yt-link {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: var(--transition);
+}
+
+.cp-yt-link:hover {
+  background: #ff0000;
+}
+
+/* Card Body */
+.cp-card-body {
+  padding: 1.25rem;
+}
+
+.cp-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.4;
+}
+
+/* Creator Row */
+.cp-creator-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.cp-creator-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.cp-creator-name {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* Card Meta */
+.cp-card-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.cp-meta-pill {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--page-bg);
+  border-radius: 1rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ============================================
+   ACTION BAR - ENHANCED FOR DESKTOP
+   ============================================ */
+.cp-action-bar {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.cp-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.cp-action-btn:hover {
+  background: var(--page-bg);
+  transform: translateY(-2px);
+}
+
+.cp-action-btn svg {
+  font-size: 1.25rem;
+}
+
+.cp-action-btn span {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* Like button - Desktop size */
+.cp-action-btn--like:hover,
+.cp-action-btn--active-like {
+  color: var(--green-action);
+}
+
+.cp-action-btn--active-like svg {
+  color: var(--green-action);
+}
+
+/* Unlike button - Desktop size */
+.cp-action-btn--unlike:hover,
+.cp-action-btn--active-unlike {
+  color: var(--danger);
+}
+
+.cp-action-btn--active-unlike svg {
+  color: var(--danger);
+}
+
+/* Comment button - Desktop size */
+.cp-action-btn--comment:hover {
+  color: var(--blue-action);
+}
+
+/* Favourite button - Desktop size */
+.cp-action-btn--fav:hover,
+.cp-action-btn--active-fav {
+  color: var(--danger);
+}
+
+.cp-action-btn--active-fav svg {
+  color: var(--danger);
+}
+
+/* ============================================
+   MOBILE RESPONSIVE - COMPACT ACTION BUTTONS
+   ============================================ */
+@media (max-width: 768px) {
+  .cp-page {
+    padding: 1rem;
+  }
+
+  .cp-header {
+    padding: 1.5rem;
+  }
+
+  .cp-header-inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+  }
+
+  .cp-name-row {
+    justify-content: center;
+  }
+
+  .cp-stats-row {
+    justify-content: center;
+  }
+
+  .cp-meta-tags {
+    justify-content: center;
+  }
+
+  .cp-avatar {
+    width: 100px;
+    height: 100px;
+  }
+
+  .cp-recipe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .cp-comment-item--reply {
+    margin-left: 1.5rem;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .cp-action-bar {
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+  }
+
+  .cp-action-btn {
+    gap: 0.3rem;
+    padding: 0.3rem 0.4rem;
+  }
+
+  .cp-action-btn svg {
+    font-size: 0.8rem;
+  }
+
+  .cp-action-btn span {
+    font-size: 0.65rem;
+  }
+}
+
+/* ============================================
+   CARD BUTTONS (Ingredients & Instructions)
+   ============================================ */
+.cp-card-btns {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.cp-btn {
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+}
+
+.cp-btn--ingredients {
+  background: var(--blue-action);
+  color: white;
+  border: none;
+}
+
+.cp-btn--ingredients:hover {
+  background: var(--blue-action-dark);
+  transform: translateY(-2px);
+}
+
+.cp-btn--instructions {
+  background: var(--primary-orange);
+  color: white;
+  border: none;
+}
+
+.cp-btn--instructions:hover {
+  background: var(--primary-orange-dark);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .cp-btn {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* ============================================
+   MODAL STYLES
+   ============================================ */
+.cp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.cp-modal {
+  background: var(--modal-bg);
+  border-radius: 1.5rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.cp-modal--list {
+  max-width: 400px;
+}
+
+.cp-modal-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0.75rem auto;
+}
+
+.cp-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.cp-modal-header h3 {
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.cp-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.cp-modal-close:hover {
+  color: var(--danger);
+}
+
+.cp-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+}
+
+/* Comments */
+.cp-comment-wrap {
+  margin-bottom: 1rem;
+}
+
+.cp-comment-item {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.cp-comment-item--reply {
+  margin-left: 3rem;
+  margin-top: 0.75rem;
+}
+
+.cp-comment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cp-comment-avatar--sm {
+  width: 28px;
+  height: 28px;
+  font-size: 0.75rem;
+}
+
+.cp-comment-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cp-comment-content {
+  flex: 1;
+}
+
+.cp-comment-user {
+  font-weight: 600;
+  color: var(--text-heading);
+  margin-right: 0.5rem;
+}
+
+.cp-comment-content p {
+  color: var(--text-body);
+  margin: 0 0 0.25rem 0;
+  line-height: 1.4;
+}
+
+.cp-comment-actions {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+}
+
+.cp-comment-heart {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.cp-comment-heart:hover {
+  color: var(--danger);
+}
+
+.cp-comment-link {
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.cp-comment-link:hover {
+  color: var(--blue-action);
+}
+
+.cp-comment-link--danger:hover {
+  color: var(--danger);
+}
+
+.cp-like-count {
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+}
+
+.cp-replies-toggle {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cp-replies-line {
+  width: 20px;
+  height: 1px;
+  background: var(--border);
+}
+
+.cp-replies-toggle:hover {
+  color: var(--blue-action);
+}
+
+.cp-no-comments {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+}
+
+/* Modal Footer */
+.cp-modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.cp-modal-footer input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 2rem;
+  background: var(--page-bg);
+  color: var(--text-body);
+  font-size: 0.875rem;
+  transition: var(--transition);
+}
+
+.cp-modal-footer input:focus {
+  outline: none;
+  border-color: var(--primary-orange);
+}
+
+.cp-modal-footer button {
+  padding: 0.5rem 1.5rem;
+  background: var(--primary-orange);
+  color: white;
+  border: none;
+  border-radius: 2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.cp-modal-footer button:hover:not(:disabled) {
+  background: var(--primary-orange-dark);
+  transform: translateY(-1px);
+}
+
+.cp-modal-footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* User List Rows */
+.cp-user-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.cp-user-row:hover {
+  background: var(--page-bg);
+}
+
+.cp-user-row-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.cp-user-row-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-heading);
+}
+
+.cp-list-loading {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 768px) {
+  .cp-page {
+    padding: 1rem;
+  }
+
+  .cp-header {
+    padding: 1.5rem;
+  }
+
+  .cp-header-inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+  }
+
+  .cp-name-row {
+    justify-content: center;
+  }
+
+  .cp-stats-row {
+    justify-content: center;
+  }
+
+  .cp-meta-tags {
+    justify-content: center;
+  }
+
+  .cp-avatar {
+    width: 100px;
+    height: 100px;
+  }
+
+  .cp-recipe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .cp-comment-item--reply {
+    margin-left: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cp-name {
+    font-size: 1.5rem;
+  }
+
+  .cp-stats-row {
+    gap: 1rem;
+  }
+  
+  .cp-stat-num {
+    font-size: 0.9rem;
+  }
+  
+  .cp-stat-label {
+    font-size: 0.7rem;
+  }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+.cp-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cp-modal-body::-webkit-scrollbar-track {
+  background: var(--border-light);
+  border-radius: 3px;
+}
+
+.cp-modal-body::-webkit-scrollbar-thumb {
+  background: var(--primary-orange);
+  border-radius: 3px;
+}
+
+.cp-modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-orange-dark);
+}
+
+/* Dark mode specific overrides for scrollbar */
+body.dark-mode .cp-modal-body::-webkit-scrollbar-track {
+  background: var(--border);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cp-card {
+  animation: fadeIn 0.5s ease-out;
+}
+/* ============================================
+   MOBILE ACTION BAR FIX
+   Add this at the VERY END of chefprofile.css
+   This overrides all previous 768px and 480px styles
+   ============================================ */
+@media (max-width: 768px) {
+  .cp-action-bar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0 !important;
+    padding: 0.65rem 0 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .cp-action-btn {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    padding: 0.45rem 0.25rem !important;
+    border-radius: 0.5rem !important;
+    font-size: 0.9rem !important;
+    min-width: 0 !important;
+  }
+
+  .cp-action-btn svg {
+    font-size: 1.4rem !important;   /* Bigger icons */
+    flex-shrink: 0 !important;
+  }
+
+  .cp-action-btn span {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .cp-action-btn svg {
+    font-size: 1.35rem !important;
+  }
+
+  .cp-action-btn span {
+    font-size: 0.75rem !important;
+  }
+}

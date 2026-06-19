@@ -1,0 +1,376 @@
+/* Nutrition & Meal Planning Guide Styles */
+
+.nutrition-guide-container,
+.meal-plan-guide-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.guide-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 60px 20px;
+  text-align: center;
+  border-radius: 8px;
+  margin-bottom: 40px;
+}
+
+.guide-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.guide-hero p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.guide-intro {
+  background: #f8f9fa;
+  padding: 30px;
+  border-radius: 8px;
+  margin-bottom: 40px;
+}
+
+.guide-intro h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.guide-intro ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.guide-intro li {
+  font-size: 1rem;
+  padding: 10px;
+  background: white;
+  border-radius: 6px;
+  border-left: 4px solid #667eea;
+}
+
+/* Tabs Navigation */
+.guide-tabs {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.tab-btn.active {
+  background-color: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+/* Content Sections */
+.guide-content {
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  margin-bottom: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.guide-content h2 {
+  font-size: 1.8rem;
+  margin: 30px 0 20px 0;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.guide-content h3 {
+  font-size: 1.3rem;
+  margin: 20px 0 15px 0;
+  color: #444;
+}
+
+.guide-content ul {
+  margin: 15px 0;
+  padding-left: 20px;
+}
+
+.guide-content li {
+  margin: 10px 0;
+  line-height: 1.6;
+}
+
+.guide-content p {
+  margin: 15px 0;
+  line-height: 1.6;
+  color: #555;
+}
+
+.guide-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.guide-content th,
+.guide-content td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.guide-content th {
+  background-color: #f0f0f0;
+  font-weight: 600;
+}
+
+/* Key Takeaways */
+.guide-takeaways {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px;
+  border-radius: 8px;
+  margin-bottom: 40px;
+}
+
+.guide-takeaways h2 {
+  color: white;
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.guide-takeaways ul {
+  list-style: none;
+  padding: 0;
+}
+
+.guide-takeaways li {
+  margin: 15px 0;
+  padding-left: 30px;
+  position: relative;
+}
+
+.guide-takeaways li:before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* Resources Section */
+.guide-resources {
+  margin-top: 40px;
+}
+
+.guide-resources h2 {
+  font-size: 1.8rem;
+  margin-bottom: 30px;
+  text-align: center;
+  color: #333;
+}
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.resource-card {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  text-decoration: none;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.resource-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
+}
+
+.resource-card h3 {
+  color: #667eea;
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+.resource-card p {
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0;
+}
+
+/* Meal Planning Steps */
+.guide-wrapper {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+.steps-sidebar {
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+}
+
+.steps-sidebar h3 {
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.step-btn {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  margin-bottom: 10px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+
+.step-btn:hover {
+  border-color: #667eea;
+  background-color: #f8f9fa;
+}
+
+.step-btn.active {
+  background-color: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.step-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.step-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.step-duration {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.step-content {
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.step-duration-header {
+  font-size: 1rem;
+  color: #667eea;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+/* Summary Cards */
+.guide-summary {
+  margin: 40px 0;
+}
+
+.guide-summary h2 {
+  text-align: center;
+  font-size: 1.8rem;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.card h3 {
+  font-size: 1.2rem;
+  margin: 0 0 10px 0;
+  color: white;
+}
+
+.card p {
+  font-size: 0.95rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .guide-wrapper {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .steps-sidebar {
+    position: relative;
+    top: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .step-btn {
+    margin-bottom: 0;
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  .guide-content {
+    padding: 20px;
+  }
+
+  .guide-hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .resources-grid {
+    grid-template-columns: 1fr;
+  }
+}

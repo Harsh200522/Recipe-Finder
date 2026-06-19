@@ -1,0 +1,40 @@
+[33mcommit 039f90ab45304458fc4ae29cf2ada103580e87c7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Harsh Gilitwala <harshgilitwala7@gmail.com>
+Date:   Thu Jun 18 14:10:24 2026 +0530
+
+    adsense according work
+
+ADSENSE_TRANSFORMATION_COMPLETE.md
+QUICK_START_ADSENSE.md
+package-lock.json
+package.json
+public/robots.txt
+src/App.jsx
+src/backend/package-lock.json
+src/backend/recipeNotificationService.js
+src/components/Blog.jsx
+src/components/BlogDetail.jsx
+src/components/ChefProfile.jsx
+src/components/CommunityRecipes.jsx
+src/components/FAQPage.jsx
+src/components/Home.jsx
+src/components/MealPlanningGuide.jsx
+src/components/NutritionGuide.jsx
+src/components/ProfileSettings.jsx
+src/components/RecipeDetail.jsx
+src/components/SEO.jsx
+src/components/StructuredData.js
+src/data/blog-articles.js
+src/data/comprehensive-blog-articles.js
+src/data/generated-blog-ideas.js
+src/style/blog-detail.css
+src/style/chefprofile.css
+src/style/communityRecipes.css
+src/style/faq-page.css
+src/style/guides.css
+src/style/home.css
+src/style/recipe-detail.css
+src/utils/IMPLEMENTATION_EXAMPLES.js
+src/utils/TRANSFORMATION_SUMMARY.js
+src/utils/adsenseApprovalGuide.js
+src/utils/sitemapAndLinkingStrategy.js

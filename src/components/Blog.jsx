@@ -2,6 +2,8 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { blogArticles, categories } from "../data/blog-articles";
+import generatedIdeas from "../data/generated-blog-ideas";
+import SEO from "./SEO";
 import "../style/blog.css";
 
 const Blog = () => {
@@ -51,6 +53,13 @@ const Blog = () => {
           <p>Expert tips, healthy recipes, and meal planning strategies</p>
         </div>
       </section>
+
+      <SEO
+        title="Blog - Recipe Finder | Nutrition, Meal Planning & Cooking Tips"
+        description="Read practical recipes, nutrition guides, and meal planning strategies to help you cook healthier and smarter."
+        keywords="recipes, meal planning, nutrition, cooking tips"
+        url="/blog"
+      />
 
       <div className="blog-wrapper">
         {/* Sidebar */}

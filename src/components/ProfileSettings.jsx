@@ -94,38 +94,67 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
     };
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const docRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(docRef);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const docRef = doc(db, "users", user.uid);
+            const docSnap = await getDoc(docRef);
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const loadedProfile = { ...defaultProfileState, ...(data.profile || {}) };
-                    const loadedPreferences = { ...defaultPreferencesState, ...(data.preferences || {}) };
+            if (docSnap.exists()) {
+                const data = docSnap.data();
 
-                    setProfile(loadedProfile);
-                    setPreferences(loadedPreferences);
-                    setTwoFAEnabled(data.twoFactorEnabled || false);
+                // Auto-fill name from displayName or email prefix if not set
+                const autoName = data.profile?.name || 
+                                 user.displayName || 
+                                 user.email?.split("@")[0] || '';
 
-                    initialProfileRef.current = loadedProfile;
-                    initialPreferencesRef.current = loadedPreferences;
-                    initialDarkModeRef.current = isDarkMode;
-                    setInitialDataLoaded(true);
-                } else {
-                    initialProfileRef.current = defaultProfileState;
-                    initialPreferencesRef.current = defaultPreferencesState;
-                    initialDarkModeRef.current = isDarkMode;
-                    setInitialDataLoaded(true);
-                }
+                // Auto-fill email from auth if not set
+                const autoEmail = data.profile?.email || user.email || '';
+
+                const loadedProfile = { 
+                    ...defaultProfileState, 
+                    ...(data.profile || {}),
+                    name: autoName,
+                    email: autoEmail,
+                };
+                const loadedPreferences = { 
+                    ...defaultPreferencesState, 
+                    ...(data.preferences || {}) 
+                };
+
+                setProfile(loadedProfile);
+                setPreferences(loadedPreferences);
+                setTwoFAEnabled(data.twoFactorEnabled || false);
+
+                initialProfileRef.current = loadedProfile;
+                initialPreferencesRef.current = loadedPreferences;
+                initialDarkModeRef.current = isDarkMode;
+                setInitialDataLoaded(true);
 
             } else {
+                // New user — no Firestore doc yet, fill from auth
+                const autoName = user.displayName || user.email?.split("@")[0] || '';
+                const autoEmail = user.email || '';
+
+                const loadedProfile = {
+                    ...defaultProfileState,
+                    name: autoName,
+                    email: autoEmail,
+                };
+
+                setProfile(loadedProfile);
+                initialProfileRef.current = loadedProfile;
+                initialPreferencesRef.current = defaultPreferencesState;
+                initialDarkModeRef.current = isDarkMode;
                 setInitialDataLoaded(true);
             }
-        });
 
-        return () => unsubscribe();
-    }, []);
+        } else {
+            setInitialDataLoaded(true);
+        }
+    });
+
+    return () => unsubscribe();
+}, []);
 
     // User profile state
     const [profile, setProfile] = useState(defaultProfileState);

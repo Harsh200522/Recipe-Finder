@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { auth } from "../config/firbase";
-import { sendPasswordResetEmail } from "firebase/auth";
 import { FaEnvelope, FaKey, FaChevronLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -10,30 +8,51 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
- const handleReset = async (e) => {
+const handleReset = async (e) => {
   e.preventDefault();
 
-  if (!email) {
-    setMessage("Please enter your email address");
+  if (!email.trim()) {
+    setMessage("❌ Please enter your email address");
     return;
   }
 
+  setLoading(true);
+  setMessage("");
+
   try {
-    await sendPasswordResetEmail(auth, email, {
-      url: window.location.origin + "/auth",
+    const response = await fetch("/api/reset-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email.trim(),
+      }),
     });
 
-    setMessage("✅ Password reset link sent! Check your email 📩");
+    const responseText = await response.text();
+    let data = {};
 
-    setTimeout(() => navigate("/auth"), 2000);
+    if (responseText) {
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        data = { error: responseText };
+      }
+    }
 
+    if (!response.ok) {
+      throw new Error(data.error || data.message || response.statusText || "Failed to send reset email");
+    }
+
+    setMessage(data.message || "✅ Password reset email sent successfully.");
   } catch (error) {
-    console.error(error.code, error.message);
-    setMessage(error.message);
+    console.error(error);
+    setMessage(`❌ ${error.message}`);
+  } finally {
+    setLoading(false);
   }
 };
-
-
 
   const handleBack = () => {
     navigate("/auth");
@@ -76,8 +95,16 @@ const ResetPassword = () => {
             />
           </div>
 
-          <button type="submit" style={styles.submitButton}>
-            Send Reset Link
+          <button
+            type="submit"
+            style={{
+              ...styles.submitButton,
+              opacity: loading ? 0.7 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+            disabled={loading}
+          >
+            {loading ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
 
