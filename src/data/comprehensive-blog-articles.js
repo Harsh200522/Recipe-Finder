@@ -1,9 +1,3 @@
-/**
- * Comprehensive SEO-Optimized Blog Articles for Google AdSense Approval
- * 30 unique articles with substantial content (800-1200+ words each)
- * Designed to satisfy Google AdSense quality guidelines
- */
-
 export const comprehensiveBlogArticles = [
   {
     id: 1,

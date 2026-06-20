@@ -20,10 +20,7 @@ import {
     updateDoc
 } from "firebase/firestore";
 import {
-    updatePassword,
-    deleteUser,
-    reauthenticateWithCredential,
-    EmailAuthProvider
+    deleteUser
 } from "firebase/auth";
 
 import { onAuthStateChanged } from "firebase/auth";
@@ -94,67 +91,66 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
     };
 
     useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const docRef = doc(db, "users", user.uid);
-            const docSnap = await getDoc(docRef);
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
 
-            if (docSnap.exists()) {
-                const data = docSnap.data();
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
 
-                // Auto-fill name from displayName or email prefix if not set
-                const autoName = data.profile?.name || 
-                                 user.displayName || 
-                                 user.email?.split("@")[0] || '';
+                    // Auto-fill name from displayName or email prefix if not set
+                    const autoName = data.profile?.name ||
+                        user.displayName ||
+                        user.email?.split("@")[0] || '';
 
-                // Auto-fill email from auth if not set
-                const autoEmail = data.profile?.email || user.email || '';
+                    // Auto-fill email from auth if not set
+                    const autoEmail = data.profile?.email || user.email || '';
 
-                const loadedProfile = { 
-                    ...defaultProfileState, 
-                    ...(data.profile || {}),
-                    name: autoName,
-                    email: autoEmail,
-                };
-                const loadedPreferences = { 
-                    ...defaultPreferencesState, 
-                    ...(data.preferences || {}) 
-                };
+                    const loadedProfile = {
+                        ...defaultProfileState,
+                        ...(data.profile || {}),
+                        name: autoName,
+                        email: autoEmail,
+                    };
+                    const loadedPreferences = {
+                        ...defaultPreferencesState,
+                        ...(data.preferences || {})
+                    };
 
-                setProfile(loadedProfile);
-                setPreferences(loadedPreferences);
-                setTwoFAEnabled(data.twoFactorEnabled || false);
+                    setProfile(loadedProfile);
+                    setPreferences(loadedPreferences);
 
-                initialProfileRef.current = loadedProfile;
-                initialPreferencesRef.current = loadedPreferences;
-                initialDarkModeRef.current = isDarkMode;
-                setInitialDataLoaded(true);
+                    initialProfileRef.current = loadedProfile;
+                    initialPreferencesRef.current = loadedPreferences;
+                    initialDarkModeRef.current = isDarkMode;
+                    setInitialDataLoaded(true);
+
+                } else {
+                    // New user — no Firestore doc yet, fill from auth
+                    const autoName = user.displayName || user.email?.split("@")[0] || '';
+                    const autoEmail = user.email || '';
+
+                    const loadedProfile = {
+                        ...defaultProfileState,
+                        name: autoName,
+                        email: autoEmail,
+                    };
+
+                    setProfile(loadedProfile);
+                    initialProfileRef.current = loadedProfile;
+                    initialPreferencesRef.current = defaultPreferencesState;
+                    initialDarkModeRef.current = isDarkMode;
+                    setInitialDataLoaded(true);
+                }
 
             } else {
-                // New user — no Firestore doc yet, fill from auth
-                const autoName = user.displayName || user.email?.split("@")[0] || '';
-                const autoEmail = user.email || '';
-
-                const loadedProfile = {
-                    ...defaultProfileState,
-                    name: autoName,
-                    email: autoEmail,
-                };
-
-                setProfile(loadedProfile);
-                initialProfileRef.current = loadedProfile;
-                initialPreferencesRef.current = defaultPreferencesState;
-                initialDarkModeRef.current = isDarkMode;
                 setInitialDataLoaded(true);
             }
+        });
 
-        } else {
-            setInitialDataLoaded(true);
-        }
-    });
-
-    return () => unsubscribe();
-}, []);
+        return () => unsubscribe();
+    }, []);
 
     // User profile state
     const [profile, setProfile] = useState(defaultProfileState);
@@ -163,90 +159,6 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
         if (!user || !user.providerData.length) return null;
         return user.providerData[0].providerId; // 'password', 'samsung.com', 'google.com', etc.
     };
-
-
-    const handleEnable2FA = async () => {
-        const user = auth.currentUser;
-        if (!user) return;
-
-        try {
-            setTwoFALoading(true);
-
-            const res = await fetch("http://localhost:5000/generate-2fa-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: user.email, uid: user.uid })
-            });
-
-            const data = await res.json();
-
-            if (!res.ok || !data.success) throw new Error("Failed to send OTP");
-
-            Toast.fire({ icon: "success", title: "OTP sent to your email!" });
-
-        } catch (err) {
-            console.error(err);
-            Toast.fire({ icon: "error", title: "Failed to send OTP" });
-        } finally {
-            setTwoFALoading(false);
-        }
-    };
-
-    const handleVerify2FA = async () => {
-        const user = auth.currentUser;
-        if (!user) return;
-
-        try {
-            const docRef = doc(db, "users", user.uid);
-            const docSnap = await getDoc(docRef);
-
-            if (!docSnap.exists()) return;
-
-            const data = docSnap.data();
-            const now = Date.now();
-
-            if (otp === data.twoFactorOTP && now < data.twoFactorOTPExpires) {
-                // OTP correct → enable 2FA
-                await updateDoc(docRef, {
-                    twoFactorEnabled: true,
-                    twoFactorOTP: "",
-                    twoFactorOTPExpires: 0
-                });
-
-                setTwoFAEnabled(true);
-                setOtp("");
-
-                Toast.fire({ icon: "success", title: "2FA Enabled!" });
-            } else {
-                Toast.fire({ icon: "error", title: "Invalid or expired OTP" });
-            }
-        } catch (err) {
-            console.error(err);
-            Toast.fire({ icon: "error", title: "Verification failed" });
-        }
-    };
-
-    const handleDisable2FA = async () => {
-        const user = auth.currentUser;
-        if (!user) return;
-
-        const docRef = doc(db, "users", user.uid);
-        await updateDoc(docRef, {
-            twoFactorEnabled: false
-        });
-
-        setTwoFAEnabled(false);
-        Toast.fire({ icon: "success", title: "2FA Disabled" });
-    };
-
-
-
-    // Password state
-    const [passwordData, setPasswordData] = useState({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-    });
 
     // Preferences state
     const [preferences, setPreferences] = useState(defaultPreferencesState);
@@ -354,13 +266,6 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
         });
     };
 
-    const handlePasswordChange = (e) => {
-        setPasswordData({
-            ...passwordData,
-            [e.target.name]: e.target.value
-        });
-    };
-
     const handlePreferenceToggle = (key) => {
         setPreferences({
             ...preferences,
@@ -385,101 +290,6 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
     const handleDietaryChange = (option) => togglePreferenceListItem("dietaryRestrictions", option);
 
     const handleAllergyChange = (option) => togglePreferenceListItem("allergies", option);
-
-    const handlePasswordUpdate = async () => {
-        try {
-            const user = auth.currentUser;
-
-            // 🔴 Check authentication
-            if (!user) {
-                Toast.fire({
-                    icon: "error",
-                    title: "User not authenticated"
-                });
-                return;
-            }
-
-            // 🔴 Check empty fields
-            if (
-                !passwordData.currentPassword ||
-                !passwordData.newPassword ||
-                !passwordData.confirmPassword
-            ) {
-                Toast.fire({
-                    icon: "warning",
-                    title: "All password fields are required"
-                });
-                return;
-            }
-
-            // 🔴 Check password length
-            if (passwordData.newPassword.length < 6) {
-                Toast.fire({
-                    icon: "warning",
-                    title: "Password must be at least 6 characters"
-                });
-                return;
-            }
-
-            // 🔴 Check match
-            if (passwordData.newPassword !== passwordData.confirmPassword) {
-                Toast.fire({
-                    icon: "error",
-                    title: "Passwords do not match"
-                });
-                return;
-            }
-
-            // ✅ Step 1: Reauthenticate with current password
-            const credential = EmailAuthProvider.credential(
-                user.email,
-                passwordData.currentPassword
-            );
-
-            await reauthenticateWithCredential(user, credential);
-
-            // ✅ Step 2: Update password
-            await updatePassword(user, passwordData.newPassword);
-
-            Toast.fire({
-                icon: "success",
-                title: "Password updated successfully"
-            });
-
-            // Clear fields
-            setPasswordData({
-                currentPassword: "",
-                newPassword: "",
-                confirmPassword: ""
-            });
-
-        } catch (error) {
-
-            let message = "Something went wrong";
-
-            if (error.code === "auth/wrong-password") {
-                message = "Current password is incorrect";
-            } else if (error.code === "auth/too-many-requests") {
-                message = "Too many attempts. Try again later";
-            } else if (error.code === "auth/requires-recent-login") {
-                message = "Please login again and try";
-            }
-
-            Toast.fire({
-                icon: "error",
-                title: message
-            });
-        }
-    };
-
-    const [showPassword, setShowPassword] = useState({
-        current: false,
-        new: false,
-        confirm: false
-    });
-
-
-
 
     const handleSave = async () => {
         try {
@@ -515,14 +325,7 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
         { id: 'security', label: 'Security', icon: Lock },
         { id: 'notifications', label: 'Notifications', icon: Bell }
     ];
-    // =========================
-    // 2FA State
-    // =========================
-    const [qrCode, setQrCode] = useState(null);
-    const [twoFASecret, setTwoFASecret] = useState("");
-    const [otp, setOtp] = useState("");
-    const [twoFALoading, setTwoFALoading] = useState(false);
-    const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+
 
 
     return (
@@ -824,116 +627,132 @@ const ProfileSettings = ({ isDarkMode, setIsDarkMode }) => {
                         {/* Security Tab */}
                         {activeTab === 'security' && (
                             <div className="security-tab">
-                                <h3 className="section-title">Change Password</h3>
 
-                                <div className="form-grid">
-                                    <div className="form-group full-width">
-                                        <label className="form-label">Current Password</label>
-                                        <div className="password-wrapper">
-                                            <input
-                                                type={showPassword.current ? "text" : "password"}
-                                                name="currentPassword"
-                                                value={passwordData.currentPassword}
-                                                onChange={handlePasswordChange}
-                                                className="form-input"
-                                            />
-                                            <span
-                                                className="password-toggle"
-                                                onClick={() =>
-                                                    setShowPassword({ ...showPassword, current: !showPassword.current })
+                                {/* Password Security */}
+                                <div className="security-section">
+                                    <h3 className="section-title">🔒 Password Security</h3>
+
+                                    <p style={{ marginBottom: "15px" }}>
+                                        For security reasons, password changes are handled through a secure reset email.
+                                    </p>
+
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={async () => {
+                                            try {
+                                                const user = auth.currentUser;
+
+                                                if (!user?.email) {
+                                                    Toast.fire({
+                                                        icon: "error",
+                                                        title: "User email not found"
+                                                    });
+                                                    return;
                                                 }
-                                            >
-                                                {showPassword.current ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </span>
+
+                                                const response = await fetch("/api/reset-password", {
+                                                    method: "POST",
+                                                    headers: {
+                                                        "Content-Type": "application/json"
+                                                    },
+                                                    body: JSON.stringify({
+                                                        email: user.email
+                                                    })
+                                                });
+
+                                                const data = await response.json();
+
+                                                if (!response.ok) {
+                                                    throw new Error(data.error || "Failed");
+                                                }
+
+                                                Toast.fire({
+                                                    icon: "success",
+                                                    title: "Password reset email sent"
+                                                });
+
+                                            } catch (err) {
+                                                Toast.fire({
+                                                    icon: "error",
+                                                    title: err.message
+                                                });
+                                            }
+                                        }}
+                                    >
+                                        Send Password Reset Email
+                                    </button>
+                                </div>
+
+                                {/* Account Status */}
+                                <div className="security-section" style={{ marginTop: "30px" }}>
+                                    <h3 className="section-title">🛡 Account Status</h3>
+
+                                    <div className="toggle-item">
+                                        <div className="toggle-info">
+                                            <h4>
+                                                {auth.currentUser?.emailVerified
+                                                    ? "✅ Email Verified"
+                                                    : "❌ Email Not Verified"}
+                                            </h4>
                                         </div>
                                     </div>
 
-
-                                    <div className="form-group">
-                                        <label className="form-label">New Password</label>
-                                        <div className="password-wrapper">
-                                            <input
-                                                type={showPassword.new ? "text" : "password"}
-                                                name="newPassword"
-                                                value={passwordData.newPassword}
-                                                onChange={handlePasswordChange}
-                                                className="form-input"
-                                            />
-                                            <span
-                                                className="password-toggle"
-                                                onClick={() =>
-                                                    setShowPassword({ ...showPassword, new: !showPassword.new })
-                                                }
-                                            >
-                                                {showPassword.new ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </span>
+                                    <div className="toggle-item">
+                                        <div className="toggle-info">
+                                            <h4>✅ Account Active</h4>
                                         </div>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">Confirm New Password</label>
-                                        <div className="password-wrapper">
-                                            <input
-                                                type={showPassword.confirm ? "text" : "password"}
-                                                name="confirmPassword"
-                                                value={passwordData.confirmPassword}
-                                                onChange={handlePasswordChange}
-                                                className="form-input"
-                                            />
-                                            <span
-                                                className="password-toggle"
-                                                onClick={() =>
-                                                    setShowPassword({ ...showPassword, confirm: !showPassword.confirm })
-                                                }
-                                            >
-                                                {showPassword.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ marginTop: "-5px", marginBottom: "20px" }}>
-                                        <button
-                                            type="button"
-                                            className="btn btn-primary"
-                                            onClick={handlePasswordUpdate}
-                                        >
-                                            Update Password
-                                        </button>
                                     </div>
                                 </div>
 
-                                {/* Two Factor Authentication Section */}
-                                <div className="security-section">
-                                    {!twoFAEnabled && (
-                                        <button className="btn btn-primary" onClick={handleEnable2FA}>
-                                            {twoFALoading ? "Sending OTP..." : "Enable Two-Factor Authentication"}
-                                        </button>
-                                    )}
+                                {/* Account Information */}
+                                <div className="security-section" style={{ marginTop: "30px" }}>
+                                    <h3 className="section-title">📧 Account Information</h3>
 
-                                    {!twoFAEnabled && (
-                                        <div style={{ marginTop: "10px" }}>
-                                            <input
-                                                type="text"
-                                                placeholder="Enter 6-digit code from email"
-                                                value={otp}
-                                                onChange={(e) => setOtp(e.target.value)}
-                                                className="form-input"
-                                            />
-                                            <button
-                                                className="btn btn-primary"
-                                                style={{ marginTop: "5px" }}
-                                                onClick={handleVerify2FA}
-                                            >
-                                                Verify OTP
-                                            </button>
-                                        </div>
-                                    )}
+                                    <div className="form-group">
+                                        <label className="form-label">Email Address</label>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            value={auth.currentUser?.email || ""}
+                                            readOnly
+                                        />
+                                    </div>
 
-                                    {twoFAEnabled && (
-                                        <button className="btn btn-danger" onClick={handleDisable2FA}>
-                                            DisableTwo-Factor Authentication
-                                        </button>
-                                    )}
+                                    <div className="form-group">
+                                        <label className="form-label">Login Provider</label>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            value={
+                                                auth.currentUser?.providerData?.[0]?.providerId === "google.com"
+                                                    ? "Google"
+                                                    : auth.currentUser?.providerData?.[0]?.providerId === "password"
+                                                        ? "Email & Password"
+                                                        : auth.currentUser?.providerData?.[0]?.providerId || "Unknown"
+                                            }
+                                            readOnly
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Last Login */}
+                                <div className="security-section" style={{ marginTop: "30px" }}>
+                                    <h3 className="section-title">🕒 Last Login</h3>
+
+                                    <div className="form-group">
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            value={
+                                                auth.currentUser?.metadata?.lastSignInTime
+                                                    ? new Date(
+                                                        auth.currentUser.metadata.lastSignInTime
+                                                    ).toLocaleString()
+                                                    : "Unavailable"
+                                            }
+                                            readOnly
+                                        />
+                                    </div>
                                 </div>
 
                             </div>
