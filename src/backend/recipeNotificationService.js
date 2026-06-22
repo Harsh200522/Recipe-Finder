@@ -14,7 +14,6 @@ export const sendNewRecipeNotifications = async (recipeData) => {
     console.log(`[RecipeNotifier] Triggered for recipe "${recipeTitle}" by Chef UID: ${chefUid}`);
 
     try {
-        // Step 1: Get the chef's document
         const chefSnap = await getDoc(doc(db, "users", chefUid));
         if (!chefSnap.exists()) {
             console.log(`[RecipeNotifier] Chef document not found for UID: ${chefUid}`);
@@ -29,7 +28,6 @@ export const sendNewRecipeNotifications = async (recipeData) => {
 
         console.log(`[RecipeNotifier] Checking preferences for ${followers.length} follower(s)...`);
 
-        // Step 2: Filter followers by notification preferences
         const followerChecks = await Promise.allSettled(
             followers.map(async (followerUid) => {
                 const followerSnap = await getDoc(doc(db, "users", followerUid));
@@ -38,7 +36,6 @@ export const sendNewRecipeNotifications = async (recipeData) => {
                 const followerData = followerSnap.data();
                 const prefs = followerData.preferences || {};
 
-                // Skip if master email toggle OR new recipes toggle is off
                 if (prefs.emailNotifications === false || prefs.newRecipes === false) {
                     console.log(`[RecipeNotifier] Skipped ${followerUid} — notifications disabled.`);
                     return null;
@@ -68,7 +65,6 @@ export const sendNewRecipeNotifications = async (recipeData) => {
 
         console.log(`[RecipeNotifier] Sending to ${recipients.length} eligible recipient(s)...`);
 
-        // Step 3: Hand off to the serverless function which holds the API key
         const response = await fetch("/api/send-recipe-notifications", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -93,6 +89,11 @@ export const sendNewRecipeNotifications = async (recipeData) => {
 
         if (!response.ok) {
             throw new Error(result.error || text || "Backend failed to send notification emails.");
+        }
+
+        // ✅ This will now show the exact Resend rejection reason in your browser console
+        if (result.errors?.length > 0) {
+            console.error("[RecipeNotifier] ❌ Resend errors:", JSON.stringify(result.errors, null, 2));
         }
 
         console.log(`[RecipeNotifier] ✅ Run Complete. Summary:`, result.summary);
