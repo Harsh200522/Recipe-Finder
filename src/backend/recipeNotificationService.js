@@ -1,4 +1,4 @@
-// src/services/recipeNotificationService.js
+// src/backend/recipeNotificationService.js
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firbase.js";
 
